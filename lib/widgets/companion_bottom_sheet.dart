@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class CompanionBottomSheet extends StatefulWidget {
   final String initialCompanion;
-  final List<String> initialPreferences;
-  final Function(String companion, List<String> prefs) onConfirm;
+  final String initialStyle;
+  final void Function(String companion, String style) onConfirm;
 
   const CompanionBottomSheet({
     super.key,
     required this.initialCompanion,
-    required this.initialPreferences,
+    required this.initialStyle,
     required this.onConfirm,
   });
 
@@ -17,38 +17,27 @@ class CompanionBottomSheet extends StatefulWidget {
 }
 
 class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
-  late String _selectedCompanion;
-  late List<String> _selectedPrefs;
+  late String _companion;
+  late String _style;
 
-  final List<Map<String, String>> _companions = [
-    {'label': '가족', 'icon': '👨‍👩‍👧'},
-    {'label': '연인', 'icon': '💑'},
-    {'label': '친구', 'icon': '👫'},
-    {'label': '혼자', 'icon': '🙋'},
+  static const _companions = [
+    ('가족', '👨‍👩‍👧'),
+    ('연인', '💑'),
+    ('친구', '👫'),
+    ('혼자', '🙋'),
   ];
-
-  final List<Map<String, String>> _preferences = [
-    {'label': '스릴·액티비티', 'icon': '🎢'},
-    {'label': '사진·인생샷', 'icon': '📸'},
-    {'label': '여유·힐링', 'icon': '🌿'},
-    {'label': '공연·퍼레이드', 'icon': '🎭'},
+  static const _styles = [
+    ('스릴·액티비티', '🎢'),
+    ('사진·인생샷', '📸'),
+    ('여유·힐링', '🌿'),
+    ('공연·퍼레이드', '🎭'),
   ];
 
   @override
   void initState() {
     super.initState();
-    _selectedCompanion = widget.initialCompanion;
-    _selectedPrefs = List.from(widget.initialPreferences);
-  }
-
-  void _togglePref(String pref) {
-    setState(() {
-      if (_selectedPrefs.contains(pref)) {
-        if (_selectedPrefs.length > 1) _selectedPrefs.remove(pref);
-      } else {
-        _selectedPrefs.add(pref);
-      }
-    });
+    _companion = widget.initialCompanion;
+    _style = widget.initialStyle;
   }
 
   @override
@@ -58,180 +47,155 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.only(
-        left: 24, right: 24, top: 8,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).viewInsets.bottom + 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 드래그 핸들
           Center(
             child: Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(2),
-              ),
+              width: 40, height: 5,
+              decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)),
             ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              const Expanded(
+                child: Text('마이 루나 조건 변경',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 32, height: 32,
+                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5), shape: BoxShape.circle),
+                  child: const Icon(Icons.close, size: 16, color: Color(0xFF888888)),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
-
-          // 제목
-          const Text(
-            '누구와 함께 오셨나요?',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            '맞춤형 동선 추천을 위해 정보를 선택해주세요.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-          ),
-          const SizedBox(height: 24),
-
-          // 구성원 섹션
+          const Text('구성원', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+          const SizedBox(height: 10),
           Row(
-            children: [
-              const Icon(Icons.people_outline_rounded, size: 16, color: Color(0xFF555555)),
-              const SizedBox(width: 6),
-              const Text(
-                '구성원',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF333333)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _companions.map((c) {
-              final isSelected = _selectedCompanion == c['label'];
-              return GestureDetector(
-                onTap: () => setState(() => _selectedCompanion = c['label']!),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFE60012) : Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFFE60012) : const Color(0xFFDDDDDD),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: const Color(0xFFE60012).withValues(alpha: 0.25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ] : null,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(c['icon']!, style: const TextStyle(fontSize: 15)),
-                      const SizedBox(width: 6),
-                      Text(
-                        c['label']!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : const Color(0xFF444444),
+            children: _companions
+                .map((c) => Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(right: c == _companions.last ? 0 : 8),
+                        child: _OptionTile(
+                          label: c.$1,
+                          emoji: c.$2,
+                          selected: _companion == c.$1,
+                          activeColor: const Color(0xFF1E3158),
+                          onTap: () => setState(() => _companion = c.$1),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 20),
+          const Text('선호 스타일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 3.2,
+            children: _styles
+                .map((s) => _OptionTile(
+                      label: s.$1,
+                      emoji: s.$2,
+                      selected: _style == s.$1,
+                      activeColor: const Color(0xFFE6A817),
+                      compact: false,
+                      inline: true,
+                      onTap: () => setState(() => _style = s.$1),
+                    ))
+                .toList(),
           ),
           const SizedBox(height: 24),
-
-          // 방문 목적 섹션
-          Row(
-            children: [
-              const Text('✦', style: TextStyle(color: Color(0xFFE60012), fontSize: 14)),
-              const SizedBox(width: 6),
-              const Text(
-                '방문 목적 및 선호도',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF333333)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _preferences.map((p) {
-              final isSelected = _selectedPrefs.contains(p['label']);
-              return GestureDetector(
-                onTap: () => _togglePref(p['label']!),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF1E3158) : Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFF1E3158) : const Color(0xFFDDDDDD),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: const Color(0xFF1E3158).withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ] : null,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(p['icon']!, style: const TextStyle(fontSize: 14)),
-                      const SizedBox(width: 6),
-                      Text(
-                        p['label']!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : const Color(0xFF444444),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 28),
-
-          // 확인 버튼
           SizedBox(
             width: double.infinity,
+            height: 52,
             child: ElevatedButton(
               onPressed: () {
-                widget.onConfirm(_selectedCompanion, _selectedPrefs);
+                widget.onConfirm(_companion, _style);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE60012),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text(
-                '맞춤 추천 받기 🚀',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
+              child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  final String label;
+  final String emoji;
+  final bool selected;
+  final Color activeColor;
+  final bool compact;
+  final bool inline;
+  final VoidCallback onTap;
+
+  const _OptionTile({
+    required this.label,
+    required this.emoji,
+    required this.selected,
+    required this.activeColor,
+    this.compact = true,
+    this.inline = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = selected ? activeColor : Colors.white;
+    final textColor = selected ? Colors.white : const Color(0xFF444444);
+    final borderColor = selected ? activeColor : const Color(0xFFDDDDDD);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor, width: 2),
+        ),
+        alignment: Alignment.center,
+        child: inline
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 14)),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(label,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: textColor),
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(height: 2),
+                  Text(label,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: textColor)),
+                ],
+              ),
       ),
     );
   }

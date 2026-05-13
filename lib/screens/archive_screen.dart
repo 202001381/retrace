@@ -2,211 +2,237 @@ import 'package:flutter/material.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
-
   @override
   State<ArchiveScreen> createState() => _ArchiveScreenState();
 }
 
+enum _Season { spring, summer, autumn, winter }
+
+class _SeasonConfig {
+  final String label, emoji, desc;
+  final Color bg, titleColor, borderColor, accentColor;
+  final IconData icon;
+  final List<Color> bookColors;
+  const _SeasonConfig({
+    required this.label,
+    required this.emoji,
+    required this.desc,
+    required this.bg,
+    required this.titleColor,
+    required this.borderColor,
+    required this.accentColor,
+    required this.icon,
+    required this.bookColors,
+  });
+}
+
 class _ArchiveScreenState extends State<ArchiveScreen> {
-  String _selectedSeason = '봄';
-  int _collectedBooks = 0;
+  _Season _season = _Season.spring;
+  int _booksCollected = 0;
+  String? _rewardPopup; // 'goods' | 'ticket' | null
 
-  final List<String> _seasons = ['봄', '여름', '가을', '겨울'];
-
-  final Map<String, Map<String, dynamic>> _chapterData = {
-    '봄': {
-      'icon': '🌸',
-      'title': '봄 챕터',
-      'desc': '벚꽃 흩날리는 봄날의 기억',
-      'bgColor': Color(0xFFFCEFF6),
-      'accentColor': Color(0xFFE91E63),
-      'books': 0,
-    },
-    '여름': {
-      'icon': '🌊',
-      'title': '여름 챕터',
-      'desc': '짜릿한 물놀이의 여름 기억',
-      'bgColor': Color(0xFFE3F2FD),
-      'accentColor': Color(0xFF1565C0),
-      'books': 0,
-    },
-    '가을': {
-      'icon': '🍂',
-      'title': '가을 챕터',
-      'desc': '단풍 물든 가을날의 추억',
-      'bgColor': Color(0xFFFFF8E1),
-      'accentColor': Color(0xFFE65100),
-      'books': 0,
-    },
-    '겨울': {
-      'icon': '❄️',
-      'title': '겨울 챕터',
-      'desc': '눈 내리는 겨울의 특별한 기억',
-      'bgColor': Color(0xFFE8EAF6),
-      'accentColor': Color(0xFF283593),
-      'books': 0,
-    },
+  static const Map<_Season, _SeasonConfig> _configs = {
+    _Season.spring: _SeasonConfig(
+      label: '봄',
+      emoji: '🌸',
+      desc: '벚꽃 흩날리는 봄날의 기억',
+      bg: Color(0xFFFDF2F8),
+      titleColor: Color(0xFFE91E63),
+      borderColor: Color(0xFFFBCFE8),
+      accentColor: Color(0xFFFFB6C1),
+      icon: Icons.local_florist_rounded,
+      bookColors: [
+        Color(0xFFF472B6),
+        Color(0xFFEC4899),
+        Color(0xFFD946EF),
+        Color(0xFFDB2777),
+        Color(0xFFBE185D),
+      ],
+    ),
+    _Season.summer: _SeasonConfig(
+      label: '여름',
+      emoji: '🌊',
+      desc: '눈부신 태양 아래 여름날',
+      bg: Color(0xFFEFF6FF),
+      titleColor: Color(0xFF1976D2),
+      borderColor: Color(0xFFBFDBFE),
+      accentColor: Color(0xFF87CEEB),
+      icon: Icons.wb_sunny_rounded,
+      bookColors: [
+        Color(0xFF60A5FA),
+        Color(0xFF38BDF8),
+        Color(0xFF22D3EE),
+        Color(0xFF2563EB),
+        Color(0xFF0EA5E9),
+      ],
+    ),
+    _Season.autumn: _SeasonConfig(
+      label: '가을',
+      emoji: '🍁',
+      desc: '단풍 물든 가을의 낭만',
+      bg: Color(0xFFFFF7ED),
+      titleColor: Color(0xFFEA580C),
+      borderColor: Color(0xFFFED7AA),
+      accentColor: Color(0xFFDEB887),
+      icon: Icons.eco_rounded,
+      bookColors: [
+        Color(0xFFFB923C),
+        Color(0xFFFBBF24),
+        Color(0xFFEAB308),
+        Color(0xFFEA580C),
+        Color(0xFFD97706),
+      ],
+    ),
+    _Season.winter: _SeasonConfig(
+      label: '겨울',
+      emoji: '❄️',
+      desc: '눈 내리는 겨울밤의 동화',
+      bg: Color(0xFFF1F5F9),
+      titleColor: Color(0xFF475569),
+      borderColor: Color(0xFFCBD5E1),
+      accentColor: Color(0xFFE0FFFF),
+      icon: Icons.ac_unit_rounded,
+      bookColors: [
+        Color(0xFF94A3B8),
+        Color(0xFF9CA3AF),
+        Color(0xFFA1A1AA),
+        Color(0xFF64748B),
+        Color(0xFF6B7280),
+      ],
+    ),
   };
 
-  void _simulateCollect() {
-    final chapter = _chapterData[_selectedSeason]!;
-    final currentBooks = chapter['books'] as int;
-    if (currentBooks >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 이미 챕터를 완성했어요!'),
-          backgroundColor: Color(0xFF2E7D32),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
+  void _addBook() {
+    if (_booksCollected >= 5) return;
+    final next = _booksCollected + 1;
+    setState(() => _booksCollected = next);
+    if (next == 3) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _rewardPopup = 'goods');
+      });
+    } else if (next == 5) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _rewardPopup = 'ticket');
+      });
     }
+  }
+
+  void _changeSeason(_Season s) {
     setState(() {
-      _chapterData[_selectedSeason]!['books'] = currentBooks + 1;
-      _collectedBooks++;
+      _season = s;
+      _booksCollected = 0;
+      _rewardPopup = null;
     });
-
-    final newCount = currentBooks + 1;
-    String msg = '📖 기억 조각이 수집되었습니다! ($newCount/5)';
-    if (newCount == 3) msg = '🎁 서울랜드 한정 굿즈 획득! ($newCount/5)';
-    if (newCount == 5) msg = '🎟️ 무료 입장권 획득! 챕터 완성! ($newCount/5)';
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: const Color(0xFF1E3158),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final chapter = _chapterData[_selectedSeason]!;
-    final books = chapter['books'] as int;
-    final accentColor = chapter['accentColor'] as Color;
-
+    final config = _configs[_season]!;
     return Scaffold(
-      backgroundColor: chapter['bgColor'] as Color,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // 헤더
-            SliverToBoxAdapter(
-              child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.menu_book_rounded, size: 26, color: Color(0xFF1E2D4E)),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Retrace Archive',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF1E2D4E),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const Spacer(),
-                        const Text('📚', style: TextStyle(fontSize: 28)),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '계절별 기억의 조각을 모아 책장을 채워보세요.',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                    ),
-                    const SizedBox(height: 16),
-                    // 계절 탭
-                    Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: _seasons.map((season) {
-                          final isActive = _selectedSeason == season;
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _selectedSeason = season),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: isActive ? const Color(0xFF1E3158) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    season,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                                      color: isActive ? Colors.white : const Color(0xFF666666),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+      backgroundColor: config.bg,
+      body: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _Header(season: _season, configs: _configs, onChange: _changeSeason),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+                    children: [
+                      _SeasonBanner(config: config),
+                      const SizedBox(height: 24),
+                      _Bookshelf(config: config, collected: _booksCollected),
+                      const SizedBox(height: 28),
+                      _SimulationCard(collected: _booksCollected, onAdd: _addBook),
+                      const SizedBox(height: 28),
+                      _RewardsGuide(config: config, collected: _booksCollected),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 챕터 카드
-                    _ChapterCard(chapter: chapter, accentColor: accentColor),
-                    const SizedBox(height: 16),
-
-                    // 책장 섹션
-                    _BookshelfSection(books: books, accentColor: accentColor),
-                    const SizedBox(height: 16),
-
-                    // 수집 안내 + CTA
-                    _CollectSection(
-                      books: books,
-                      onCollect: _simulateCollect,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 챕터 달성 보상
-                    _RewardSection(accentColor: accentColor, books: books),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+          ),
+          if (_rewardPopup != null)
+            _RewardPopup(
+              kind: _rewardPopup!,
+              config: config,
+              onClose: () => setState(() => _rewardPopup = null),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
-// ─── 챕터 카드 ─────────────────────────────────────────────
-class _ChapterCard extends StatelessWidget {
-  final Map<String, dynamic> chapter;
-  final Color accentColor;
+class _Header extends StatelessWidget {
+  final _Season season;
+  final Map<_Season, _SeasonConfig> configs;
+  final ValueChanged<_Season> onChange;
+  const _Header({required this.season, required this.configs, required this.onChange});
 
-  const _ChapterCard({required this.chapter, required this.accentColor});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white.withValues(alpha: 0.85),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.library_books_rounded, color: Color(0xFF1A2B4A), size: 24),
+              SizedBox(width: 6),
+              Text('Retrace Archive',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A2B4A))),
+              Spacer(),
+              Text('📚', style: TextStyle(fontSize: 22)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text('계절별 기억의 조각을 모아 책장을 채워보세요.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF888888), fontWeight: FontWeight.w500)),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Row(
+              children: _Season.values
+                  .map((s) => Expanded(
+                        child: GestureDetector(
+                          onTap: () => onChange(s),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: season == s ? const Color(0xFF1A2B4A) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(configs[s]!.label,
+                                style: TextStyle(
+                                  color: season == s ? Colors.white : const Color(0xFF888888),
+                                  fontSize: 12, fontWeight: FontWeight.w900,
+                                )),
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
+class _SeasonBanner extends StatelessWidget {
+  final _SeasonConfig config;
+  const _SeasonBanner({required this.config});
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -214,42 +240,26 @@ class _ChapterCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
+        border: Border.all(color: config.borderColor),
       ),
       child: Row(
         children: [
           Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(chapter['icon'], style: const TextStyle(fontSize: 26)),
-            ),
+            width: 48, height: 48,
+            decoration: BoxDecoration(color: config.bg, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Icon(config.icon, color: config.titleColor, size: 22),
           ),
           const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  chapter['title'],
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: accentColor,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  chapter['desc'],
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                ),
-              ],
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${config.label} 챕터',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: config.titleColor)),
+              const SizedBox(height: 2),
+              Text(config.desc,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF888888), fontWeight: FontWeight.w800)),
+            ],
           ),
         ],
       ),
@@ -257,104 +267,65 @@ class _ChapterCard extends StatelessWidget {
   }
 }
 
-// ─── 책장 섹션 ─────────────────────────────────────────────
-class _BookshelfSection extends StatelessWidget {
-  final int books;
-  final Color accentColor;
-
-  const _BookshelfSection({required this.books, required this.accentColor});
+class _Bookshelf extends StatelessWidget {
+  final _SeasonConfig config;
+  final int collected;
+  const _Bookshelf({required this.config, required this.collected});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text('기억의 책장', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1F1F1F))),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: books > 0 ? accentColor : const Color(0xFFEEEEEE),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '$books / 5 권',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: books > 0 ? Colors.white : const Color(0xFF888888),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              const Text('기억의 책장',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1A2B4A))),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(99),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
                 ),
+                child: Text('$collected / 5 권',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFFE60012))),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 10),
-        // 책장 그래픽
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 160,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF8B5A2B), Color(0xFF6D4520)],
-              ),
-            ),
-            child: Stack(
-              children: [
-                // 선반 라인들
-                ...List.generate(3, (i) => Positioned(
-                  top: 50.0 + (i * 50),
-                  left: 0, right: 0,
-                  child: Container(
-                    height: 6,
-                    color: const Color(0xFF5C3A1E),
-                  ),
-                )),
-                // 책들
-                Positioned(
-                  bottom: 6, left: 12,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(5, (i) {
-                      final hasBook = i < books;
-                      return _BookSpine(
-                        index: i,
-                        hasBook: hasBook,
-                        accentColor: accentColor,
-                      );
-                    }),
-                  ),
-                ),
-                // 비어있을 때 안내
-                if (books == 0)
-                  const Center(
-                    child: Text(
-                      '기억 조각을 수집하면\n책장이 채워집니다 ✨',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-              ],
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF8B5A2B),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            border: const Border(bottom: BorderSide(color: Color(0xFF5C3A21), width: 10)),
+          ),
+          child: SizedBox(
+            height: 132,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(5, (i) {
+                final filled = i < collected;
+                return _BookSlot(
+                  filled: filled,
+                  color: config.bookColors[i],
+                  index: i + 1,
+                );
+              }),
             ),
           ),
         ),
-        // 진행 바
-        const SizedBox(height: 10),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: books / 5,
-            backgroundColor: const Color(0xFFE0E0E0),
-            valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-            minHeight: 6,
+        Container(
+          height: 14,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: const BoxDecoration(
+            color: Color(0xFF6E4225),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
           ),
         ),
       ],
@@ -362,83 +333,98 @@ class _BookshelfSection extends StatelessWidget {
   }
 }
 
-class _BookSpine extends StatelessWidget {
+class _BookSlot extends StatelessWidget {
+  final bool filled;
+  final Color color;
   final int index;
-  final bool hasBook;
-  final Color accentColor;
-
-  const _BookSpine({required this.index, required this.hasBook, required this.accentColor});
-
-  static const List<Color> _bookColors = [
-    Color(0xFFE91E63),
-    Color(0xFF9C27B0),
-    Color(0xFF2196F3),
-    Color(0xFF4CAF50),
-    Color(0xFFFF9800),
-  ];
+  const _BookSlot({required this.filled, required this.color, required this.index});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutBack,
-      width: 22,
-      height: hasBook ? (80 + (index % 3) * 10).toDouble() : 0,
-      margin: const EdgeInsets.only(right: 5),
-      decoration: BoxDecoration(
-        color: hasBook ? _bookColors[index % _bookColors.length] : Colors.transparent,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-        boxShadow: hasBook ? [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(2, 0)),
-        ] : null,
+    return SizedBox(
+      width: 48,
+      height: 132,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          // empty slot
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: 42, height: 116,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF5C3A21).withValues(alpha: 0.4), style: BorderStyle.solid, width: 2),
+                borderRadius: BorderRadius.circular(2),
+                color: Colors.transparent,
+              ),
+            ),
+          ),
+          // book
+          if (filled)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 42, height: 116,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(2),
+                border: const Border(left: BorderSide(color: Colors.white24, width: 2)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 4, offset: const Offset(2, 2))],
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                children: [
+                  Container(width: 24, height: 3, color: Colors.white.withValues(alpha: 0.5)),
+                  const SizedBox(height: 8),
+                  RotatedBox(
+                    quarterTurns: 1,
+                    child: Text('CHAPTER $index',
+                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-// ─── 수집 CTA 섹션 ─────────────────────────────────────────
-class _CollectSection extends StatelessWidget {
-  final int books;
-  final VoidCallback onCollect;
-
-  const _CollectSection({required this.books, required this.onCollect});
+class _SimulationCard extends StatelessWidget {
+  final int collected;
+  final VoidCallback onAdd;
+  const _SimulationCard({required this.collected, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
+    final done = collected >= 5;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
+        border: Border.all(color: const Color(0xFFEEEEEE)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Column(
         children: [
-          const Text(
-            '이스터에그를 발견할 때마다 챕터가 기록됩니다.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF666666)),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 14),
+          const Text('이스터에그를 발견할 때마다 챕터가 기록됩니다.',
+              style: TextStyle(fontSize: 11, color: Color(0xFF888888), fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
+            height: 44,
             child: ElevatedButton.icon(
-              onPressed: books < 5 ? onCollect : null,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text(
-                books < 5 ? '(시뮬레이션) 책 한 권 획득하기' : '챕터 완성! 🎉',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-              ),
+              onPressed: done ? null : onAdd,
+              icon: Icon(done ? Icons.check_circle_rounded : Icons.add, size: 16),
+              label: Text(done ? '모든 챕터 수집 완료 🎉' : '(시뮬레이션) 책 한 권 획득하기',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3158),
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFF4CAF50),
-                disabledForegroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                backgroundColor: done ? const Color(0xFFE5E7EB) : const Color(0xFF1A2B4A),
+                disabledBackgroundColor: const Color(0xFFE5E7EB),
+                foregroundColor: done ? const Color(0xFF9CA3AF) : Colors.white,
+                disabledForegroundColor: const Color(0xFF9CA3AF),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
+                elevation: done ? 0 : 2,
               ),
             ),
           ),
@@ -448,47 +434,38 @@ class _CollectSection extends StatelessWidget {
   }
 }
 
-// ─── 보상 섹션 ─────────────────────────────────────────────
-class _RewardSection extends StatelessWidget {
-  final Color accentColor;
-  final int books;
-
-  const _RewardSection({required this.accentColor, required this.books});
+class _RewardsGuide extends StatelessWidget {
+  final _SeasonConfig config;
+  final int collected;
+  const _RewardsGuide({required this.config, required this.collected});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
+        color: Colors.white.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Text('🎁', style: TextStyle(fontSize: 18)),
-              SizedBox(width: 8),
-              Text('챕터 달성 보상', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F))),
-            ],
+          const Text('🎁 챕터 달성 보상',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1A2B4A))),
+          const SizedBox(height: 14),
+          _RewardRow(
+            label: '책 3권 수집 시',
+            reward: '서울랜드 한정 굿즈',
+            unlocked: collected >= 3,
+            accent: config.accentColor,
           ),
-          const SizedBox(height: 16),
-          _RewardItem(
-            icon: Icons.card_giftcard_rounded,
-            text: '책 3권 수집 시 : 서울랜드 한정 굿즈',
-            unlocked: books >= 3,
-            accentColor: accentColor,
-          ),
-          const SizedBox(height: 12),
-          _RewardItem(
-            icon: Icons.confirmation_number_rounded,
-            text: '책 5권 수집 시 : 무료 입장권 (1매)',
-            unlocked: books >= 5,
-            accentColor: accentColor,
+          const SizedBox(height: 10),
+          _RewardRow(
+            label: '책 5권 수집 시',
+            reward: '무료 입장권 (1매)',
+            unlocked: collected >= 5,
+            accent: config.accentColor,
           ),
         ],
       ),
@@ -496,58 +473,120 @@ class _RewardSection extends StatelessWidget {
   }
 }
 
-class _RewardItem extends StatelessWidget {
-  final IconData icon;
-  final String text;
+class _RewardRow extends StatelessWidget {
+  final String label, reward;
   final bool unlocked;
-  final Color accentColor;
-
-  const _RewardItem({
-    required this.icon,
-    required this.text,
-    required this.unlocked,
-    required this.accentColor,
-  });
+  final Color accent;
+  const _RewardRow({required this.label, required this.reward, required this.unlocked, required this.accent});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: unlocked ? accentColor.withValues(alpha: 0.08) : const Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: unlocked ? accentColor.withValues(alpha: 0.3) : const Color(0xFFEEEEEE),
-        ),
+        color: unlocked ? accent.withValues(alpha: 0.08) : const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: unlocked ? accent.withValues(alpha: 0.3) : const Color(0xFFEEEEEE), width: 2),
       ),
       child: Row(
         children: [
-          Icon(
-            unlocked ? Icons.lock_open_rounded : icon,
-            color: unlocked ? accentColor : const Color(0xFFBBBBBB),
-            size: 20,
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(color: unlocked ? Colors.white.withValues(alpha: 0.7) : Colors.white, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Icon(unlocked ? Icons.lock_open : Icons.lock, color: unlocked ? accent : const Color(0xFFBBBBBB), size: 16),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: unlocked ? const Color(0xFF1F1F1F) : const Color(0xFF999999),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: unlocked ? const Color(0xFF1F1F1F) : const Color(0xFF888888))),
+                const SizedBox(height: 2),
+                Text(reward, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: unlocked ? const Color(0xFF1F1F1F) : const Color(0xFFAAAAAA))),
+              ],
             ),
           ),
           if (unlocked)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: accentColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text('획득!', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+              decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(99)),
+              child: const Text('획득!', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _RewardPopup extends StatelessWidget {
+  final String kind;
+  final _SeasonConfig config;
+  final VoidCallback onClose;
+  const _RewardPopup({required this.kind, required this.config, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final isGoods = kind == 'goods';
+    return Positioned.fill(
+      child: ColoredBox(
+        color: Colors.black54,
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: isGoods ? Colors.white : const Color(0xFF1A2B4A),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: isGoods ? const Color(0xFFF0B429) : const Color(0xFFE8001C), width: 4),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72, height: 72,
+                  decoration: BoxDecoration(
+                    color: isGoods ? const Color(0xFFF0B429).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: isGoods ? null : Border.all(color: const Color(0xFFF0B429)),
+                  ),
+                  child: Icon(
+                    isGoods ? Icons.card_giftcard : Icons.confirmation_number,
+                    color: const Color(0xFFF0B429), size: 36,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isGoods ? '3챕터 달성 축하!' : '모든 챕터 완성! 🎉',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: isGoods ? const Color(0xFF1A2B4A) : Colors.white),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isGoods
+                      ? '세 번째 기억의 조각을 모으셨네요.\n기념으로 한정판 레트로 굿즈를 드립니다!'
+                      : '해당 계절의 모든 기억을 수집하셨습니다.\n서울랜드 무료 입장권 1매를 선물합니다!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: isGoods ? const Color(0xFF888888) : Colors.white70, height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: onClose,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isGoods ? const Color(0xFF1A2B4A) : const Color(0xFFE8001C),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(isGoods ? '리워드 보관함에 넣기' : '입장권 받기',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

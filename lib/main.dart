@@ -32,17 +32,6 @@ class SeoulLandApp extends StatelessWidget {
         ),
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF7F7F7),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          titleTextStyle: TextStyle(
-            color: Color(0xFF1F1F1F),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-          iconTheme: IconThemeData(color: Color(0xFF1F1F1F)),
-        ),
       ),
       home: const MainScreen(),
     );
@@ -58,21 +47,26 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _mapMyLuna = false;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    MapScreen(),
-    RecommendScreen(),
-    ArchiveScreen(),
-  ];
+  void _goToMap({bool myLuna = false}) {
+    setState(() {
+      _currentIndex = 1;
+      _mapMyLuna = myLuna;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screens = <Widget>[
+      HomeScreen(onOpenMyLuna: () => _goToMap(myLuna: true)),
+      MapScreen(showMyLunaInitially: _mapMyLuna),
+      const RecommendScreen(),
+      const ArchiveScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -110,7 +104,10 @@ class _MainScreenState extends State<MainScreen> {
     final color = isActive ? const Color(0xFFE60012) : const Color(0xFF9E9E9E);
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _currentIndex = index),
+        onTap: () => setState(() {
+          _currentIndex = index;
+          if (index != 1) _mapMyLuna = false;
+        }),
         behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
