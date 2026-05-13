@@ -32,6 +32,10 @@ class Spot {
   final bool isOperating;
   final String zone;
   final int visitDurationMin;
+  // 추천 스코어링용 부가 필드 (default 적용 — 기존 const 리터럴 호환)
+  final bool indoor;
+  final int thrillLevel; // 1~5
+  final int? heightLimitCm; // null = 키 제한 없음
 
   const Spot({
     required this.id,
@@ -51,6 +55,9 @@ class Spot {
     this.isOperating = true,
     required this.zone,
     required this.visitDurationMin,
+    this.indoor = false,
+    this.thrillLevel = 2,
+    this.heightLimitCm,
   });
 }
 

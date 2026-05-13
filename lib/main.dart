@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
@@ -5,7 +6,7 @@ import 'screens/map_screen.dart';
 import 'screens/recommend_screen.dart';
 import 'screens/archive_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -13,6 +14,11 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+  // Firebase 옵션이 아직 셋업 안 된 환경에서도 앱이 부팅되도록 try/catch.
+  // flutterfire configure 로 firebase_options.dart 생성 후 정식 init 으로 교체.
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {/* config 미완료 — Firestore/FCM 의존 기능은 비활성 */}
   runApp(const SeoulLandApp());
 }
 

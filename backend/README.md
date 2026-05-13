@@ -14,7 +14,7 @@ cp .env.example .env  # 값 채우기
 필수 파일:
 - `artifacts/crowd_model.pkl` — joblib.dump 형식의 학습된 XGBoost 회귀 모델
 - `secrets/firebase-admin.json` — Firebase Admin SDK 서비스 계정 키
-- `.env` — 기상청 인증키 등
+- `.env` — 기상청 인증키 + `ANTHROPIC_API_KEY`
 
 ## 실행
 
@@ -36,6 +36,8 @@ SCHEDULER_ENABLED=0 python -m backend.app
 | POST | `/api/predict` | 7개 피처 + `weather` (선택) | `{crowd_level, visitor_count, discount, score}` |
 | POST | `/api/run-pipeline?target=today\|tomorrow` | — | 파이프라인 결과 + FCM 발송 |
 | GET  | `/api/crowd-level?visitor_count=N` | — | 임계치 기반 등급 |
+| POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` |
+| POST | `/api/revisit-push/run` | — | `{counts, sent}` (수동 실행) |
 
 ### 예시
 
@@ -54,15 +56,16 @@ curl -X POST localhost:5000/api/score \
 
 ## 자동화 파이프라인
 
-`backend/scheduler.py` 가 APScheduler 로 매일 두 번 실행:
+`backend/scheduler.py` 가 APScheduler 로 매일 세 번 실행:
 
 | 시각 (KST) | 대상 | 동작 |
 |---|---|---|
-| 22:00 | 다음날 | 기상청 → XGBoost → 조건 충족 시 FCM |
+| 22:00 | 다음날 | 기상청 → XGBoost → 조건 충족 시 FCM (토픽) |
 | 07:00 | 당일 | 동일 |
+| 09:00 | 전체 유저 | 재방문 트리거 평가 → 우선순위 1개 FCM (토큰) |
 
-FCM 발송 조건: `혼잡도 == "하"` OR `강수확률 >= 50%`.
-FCM 메시지: `"오늘 서울랜드 방문 가치 {score}점 | {discount}% 할인 쿠폰 발급됨"`
+다이나믹 프라이싱 토픽 발송 조건: `혼잡도 == "하"` OR `강수확률 >= 50%`.
+재방문 트리거 우선순위: 계절 갱신일(3/1·6/1·9/1·12/1) > 30일+미완성 ≥ 1 > 14일+전부 미완성.
 
 ## 모델 평가 (Task 4)
 
@@ -82,16 +85,19 @@ python -m backend.evaluate \
 
 ```
 backend/
-  app.py          Flask 진입점 (엔드포인트 + 스케줄러 시작)
-  config.py       env 로드 + 상수
-  discount.py     Task 1 — 혼잡도 등급 → 할인율
-  score.py        Task 2 — 방문 가치 스코어 0~100
-  weather.py      기상청 동네예보 클라이언트
-  predictor.py    XGBoost 래퍼 (joblib 로드)
-  fcm.py          Firebase Admin → FCM topic 발송
-  pipeline.py     Task 3 — 기상청 → 모델 → 할인/스코어 → FCM
-  scheduler.py    APScheduler (07:00 / 22:00 KST)
-  evaluate.py     Task 4 — 모델 성능 평가 + 그래프
+  app.py             Flask 진입점 (엔드포인트 + 스케줄러 시작)
+  config.py          env 로드 + 상수
+  discount.py        혼잡도 등급 → 할인율
+  score.py           방문 가치 스코어 0~100
+  weather.py         기상청 동네예보 클라이언트
+  predictor.py       XGBoost 래퍼 (joblib 로드)
+  fcm.py             Firebase Admin → FCM 발송 (토픽/토큰)
+  firestore_client.py Firestore Admin 래퍼
+  pipeline.py        기상청 → 모델 → 할인/스코어 → 토픽 FCM
+  revisit_push.py    유저 평가 → 우선순위 1개 토큰 FCM
+  narrative.py       Claude API 서사 생성 (어트랙션별 history_text)
+  scheduler.py       APScheduler (07:00 / 09:00 / 22:00 KST)
+  evaluate.py        모델 성능 평가 + 그래프
 ```
 
 ## 보안

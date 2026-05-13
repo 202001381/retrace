@@ -9,6 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from . import config
 from .pipeline import run_pipeline
+from .revisit_push import run_revisit_push
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,21 @@ def start_scheduler() -> BackgroundScheduler:
         max_instances=1,
         coalesce=True,
     )
+    sched.add_job(
+        run_revisit_push,
+        CronTrigger(hour=9, minute=0, timezone=config.SCHEDULER_TIMEZONE),
+        id="revisit_push_0900",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
 
     sched.start()
     _scheduler = sched
-    logger.info("scheduler started: 07:00 (today) / 22:00 (tomorrow) %s", config.SCHEDULER_TIMEZONE)
+    logger.info(
+        "scheduler started: 07:00 today / 22:00 tomorrow / 09:00 revisit (%s)",
+        config.SCHEDULER_TIMEZONE,
+    )
     return sched
 
 

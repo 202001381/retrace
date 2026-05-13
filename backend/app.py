@@ -18,8 +18,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from . import config, discount, score
+from .narrative import generate_narrative
 from .pipeline import run_pipeline
 from .predictor import predict_one, to_crowd_level
+from .revisit_push import run_revisit_push
 from .scheduler import shutdown_scheduler, start_scheduler
 
 logging.basicConfig(
@@ -111,6 +113,39 @@ def create_app() -> Flask:
         except (KeyError, ValueError):
             return jsonify(error="visitor_count query param required"), 400
         return jsonify(visitor_count=vc, crowd_level=to_crowd_level(vc))
+
+    @app.post("/api/narrative")
+    def api_narrative():
+        body = request.get_json(force=True, silent=True) or {}
+        try:
+            out = generate_narrative(
+                attraction_id=body["attraction_id"],
+                companion_type=body.get("companion_type", "혼자"),
+                season=body.get("season", "spring"),
+                weather=body.get("weather", "맑음"),
+                visit_count=int(body.get("visit_count", 1)),
+            )
+        except (KeyError, ValueError) as e:
+            return jsonify(error=str(e)), 400
+        except LookupError as e:
+            return jsonify(error=str(e)), 404
+        except Exception as e:
+            logger.exception("narrative generation failed")
+            return jsonify(error=str(e)), 500
+        return jsonify(
+            attraction_id=out.attraction_id,
+            attraction_name=out.attraction_name,
+            narrative=out.narrative,
+        )
+
+    @app.post("/api/revisit-push/run")
+    def api_revisit_push_run():
+        try:
+            summary = run_revisit_push()
+        except Exception as e:
+            logger.exception("manual revisit push run failed")
+            return jsonify(error=str(e)), 500
+        return jsonify(summary)
 
     if config.SCHEDULER_ENABLED:
         start_scheduler()
