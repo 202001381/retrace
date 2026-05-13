@@ -69,6 +69,10 @@ Material 3, seed color `#E60012` (Seoul Land red), scaffold bg `#F7F7F7`. `fontF
 - Private widgets prefixed with `_` and kept in the same file as their parent screen (see `_WeatherCard`, `_CrowdCard` in `home_screen.dart`).
 - File names: screens `*_screen.dart`, widgets `*_sheet.dart` / `*_modal.dart`, models `*_model.dart`.
 
+## Backend
+
+Python/Flask backend lives under `backend/` (separate from the Flutter app). It hosts the XGBoost crowd-prediction model, the 기상청 → model → FCM pipeline, and the discount/score endpoints the Flutter client calls. See `backend/README.md` for setup, env vars, and the API surface.
+
 ## Branch policy
 
 Work happens on `claude/continue-flutter-development-r4WfU`. Push there; do not push to `main` without explicit instruction.
