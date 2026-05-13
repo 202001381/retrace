@@ -1,0 +1,74 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+Flutter app for Seoul Land theme park (경기 과천 서울랜드) — `seoul_land_app`. Visitor guide with personalized routing, interactive map, recommendations, and seasonal "archive" memory book. Korean UI throughout.
+
+## Common Commands
+
+```bash
+flutter pub get                # install deps
+flutter analyze                # lint (uses package:flutter_lints/flutter.yaml)
+flutter test                   # runs test/widget_test.dart only
+flutter test test/widget_test.dart -p chrome   # single test
+flutter run -d chrome          # fastest preview; map works, GPS needs HTTPS/permission
+flutter run -d <device-id>     # see `flutter devices`
+flutter build apk              # Android release
+flutter build web              # static web bundle in build/web/
+```
+
+No CI or pre-commit hooks configured.
+
+## Architecture
+
+### Navigation shell
+`lib/main.dart` → `MainScreen` keeps a 4-tab bottom nav over an `IndexedStack` (state preserved per tab):
+1. `HomeScreen` (홈) — weather/crowd cards, route preview, today's events
+2. `MapScreen` (MAP) — flutter_map + GPS + spot markers
+3. `RecommendScreen` (추천) — attraction cards w/ like state
+4. `ArchiveScreen` (Archive) — seasonal collectible "books"
+
+`RouteScreen` is not in the bottom nav — pushed via `Navigator` from MapScreen.
+
+### Data layer
+**All park data lives in one file: `lib/models/spot_model.dart` (~1100 lines).**
+
+- `Spot` — immutable data class with `LatLng position`, `SpotCategory` (attraction/food/photo), `List<SpotTheme>` (thrill/family/relaxed/photo/food), rating, zone, etc.
+- `SeoulLandSpots` — static container holding **all** spots in a `const List<Spot> all`. Park center `LatLng(37.4279, 127.0247)`.
+- Public query helpers: `byCategory(category)`, `byTheme(theme)`, `recommendedRoute({companionType, preferences, maxSpots})`. The recommender scores spots by theme overlap + rating boosts, picks 4 attractions + 3 photo spots + 2 food spots, then orders by nearest-neighbor proximity (`_sortByProximity`).
+
+To add or edit park content, edit `SeoulLandSpots.all` — there is no backend or JSON loader.
+
+### State model (important gotcha)
+There is **no state management library** despite `provider` being listed in `pubspec.yaml` (declared but unused — safe to remove if you don't plan to use it).
+
+User profile (`_companionType`, `_preferences`) is held locally in `HomeScreen._HomeScreenState` and **duplicated** in `MapScreen._MapScreenState`. Picking new values on Home does not propagate to Map. If you need shared state, you must wire it explicitly (lift state to `MainScreen`, add Provider/Riverpod, or pass via constructor + callback).
+
+`CompanionBottomSheet` (auto-shown on first Home frame via `addPostFrameCallback`) is the entry point for setting companion + preferences — pattern: pass `onConfirm(companion, prefs)` callback.
+
+### Map screen specifics
+- `flutter_map` 8.x with default OSM tiles
+- `geolocator` for GPS — requires runtime permission on Android (manifest already declared) and HTTPS on web
+- Category filter chips bind to `SpotCategory?` (`null` = all)
+- Tapping a marker sets `_selectedSpot` → shows `SpotDetailSheet`
+- "AI 스캔" FAB → `AiScanModal` (mock; no real camera/ML integration)
+
+### No persistence
+Favorites, archive collection, visited spots, etc. are all in-memory. `shared_preferences` is declared but currently not invoked anywhere. Restarting the app resets all user state.
+
+### Theming
+Material 3, seed color `#E60012` (Seoul Land red), scaffold bg `#F7F7F7`. `fontFamily: 'Pretendard'` is set on the theme but **the font is not bundled** in `pubspec.yaml` — falls back to system. Bundle the font files under `assets/fonts/` and declare them in `pubspec.yaml` if needed.
+
+## Conventions
+
+- Korean strings live inline as literals (no i18n setup). Keep new copy in Korean unless asked otherwise.
+- Hardcoded colors use `Color(0xFF...)` rather than theme tokens — match the existing palette (`#E60012` accent, `#1F1F1F` text, `#9E9E9E` inactive, `#F7F7F7` bg).
+- Card pattern: white container + `borderRadius: 12–16`, soft shadow `Colors.black.withValues(alpha: 0.05)`.
+- Private widgets prefixed with `_` and kept in the same file as their parent screen (see `_WeatherCard`, `_CrowdCard` in `home_screen.dart`).
+- File names: screens `*_screen.dart`, widgets `*_sheet.dart` / `*_modal.dart`, models `*_model.dart`.
+
+## Branch policy
+
+Work happens on `claude/continue-flutter-development-r4WfU`. Push there; do not push to `main` without explicit instruction.
