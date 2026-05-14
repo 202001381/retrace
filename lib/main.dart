@@ -54,24 +54,24 @@ class _AppGate extends StatefulWidget {
 }
 
 class _AppGateState extends State<_AppGate> {
-  Future<bool>? _needsSurvey;
+  Future<bool>? _needsOnboarding;
 
   @override
   void initState() {
     super.initState();
-    _needsSurvey = OnboardingService.needsSurvey();
+    _needsOnboarding = OnboardingService.needsOnboarding();
   }
 
   void _refresh() {
     setState(() {
-      _needsSurvey = OnboardingService.needsSurvey();
+      _needsOnboarding = OnboardingService.needsOnboarding();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: _needsSurvey,
+      future: _needsOnboarding,
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Scaffold(

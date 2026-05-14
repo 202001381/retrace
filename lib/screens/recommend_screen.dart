@@ -32,32 +32,29 @@ class _RecommendScreenState extends State<RecommendScreen> {
 
   /// 설문 응답 기반 동선 스코어링.
   ///
-  ///  필터:
-  ///   - '7세 미만' 포함 시 키 제한 어트랙션 제외
-  ///
-  ///  가중치:
-  ///   - 혼잡도 낮을수록 +
-  ///   - '7세 미만' 또는 '8~13세' 포함 → 실내 +30
-  ///   - favorite '스릴' → thrillLevel 4~5 어트랙션 +20
-  ///   - favorite '가족' → thrillLevel 1~2 +20, 실내 +10
+  ///   - 유아(infant) > 0 → 키 제한 어트랙션 필터링, 실내 +30, 거리 최소화
+  ///   - 어린이(child) > 0 → thrillLevel ≤ 2 가중치 +20
+  ///   - 청소년/성인 > 0 & 유아 == 0 → 스릴 허용 (보너스 없음, 필터링도 없음)
+  ///   - 중장년 > 0 → 거리 중간 정도, 휴식 — thrillLevel ≤ 3 가중치 +10
+  ///   - favoriteType 스릴 → thrillLevel 4~5 +20
+  ///   - favoriteType 가족 → thrillLevel 1~2 +20
   List<Attraction> _computeTop3(SurveyAnswers? ans) {
-    final answers = ans ??
-        const SurveyAnswers(
-          headcount: 2,
-          ageGroups: [],
-          gender: Gender.undisclosed,
-          favoriteType: FavoriteType.both,
-          purpose: VisitPurpose.rides,
-        );
+    final answers = ans;
 
-    // 1) 하드 필터 — 7세 미만이면 키 제한 있는 어트랙션 전부 제외
+    // 1) 필터
     Iterable<Attraction> pool = kAttractions;
-    if (answers.filterHeightLimited) {
+    if (answers?.hasInfant ?? false) {
       pool = pool.where((a) => a.heightLimit == 0);
     }
 
-    final isThrill = answers.favoriteType == FavoriteType.thrill;
-    final isFamily = answers.favoriteType == FavoriteType.family;
+    // 거리 정규화 (서울랜드 중심 기준)
+    const center = (lat: 37.4279, lng: 127.0247);
+    double distScore(Attraction a) {
+      final dLat = a.lat - center.lat;
+      final dLng = a.lng - center.lng;
+      final d2 = dLat * dLat + dLng * dLng;
+      return 1.0 / (1.0 + d2 * 1e6);
+    }
 
     // 2) 스코어링
     final scored = pool.map((a) {
@@ -66,31 +63,43 @@ class _RecommendScreenState extends State<RecommendScreen> {
       // 혼잡도 낮을수록 +
       score += (60 - a.estimatedWaitMin).clamp(-20, 60).toDouble();
 
-      // 아이 동반 → 실내 +30
-      if (answers.hasChild && a.indoor) score += 30;
+      if (answers != null) {
+        // 유아 동반: 실내 +30, 거리 짧을수록 큰 보너스
+        if (answers.hasInfant) {
+          if (a.indoor) score += 30;
+          score += distScore(a) * 25;
+        }
+        // 어린이 동반: 저스릴 +20
+        if (answers.hasChild && a.thrillLevel <= 2) {
+          score += 20;
+        }
+        // 중장년: 중간 강도, 적당한 거리
+        if (answers.hasSenior) {
+          if (a.thrillLevel <= 3) score += 10;
+          score += distScore(a) * 8;
+        }
+        // 청소년/성인만(유아 없음) → 별도 보너스 없음. (필터에서 이미 키 제한 해제)
 
-      // 선호 어트랙션 가중치
-      if (isThrill && a.thrillLevel >= 4) score += 20;
-      if (isFamily) {
-        if (a.thrillLevel <= 2) score += 20;
-        if (a.indoor) score += 10;
-      }
+        // 선호 어트랙션 가중치
+        if (answers.favoriteType == FavoriteType.thrill && a.thrillLevel >= 4) score += 20;
+        if (answers.favoriteType == FavoriteType.family && a.thrillLevel <= 2) score += 20;
 
-      // 방문 목적 부가 보정
-      switch (answers.purpose) {
-        case VisitPurpose.rides:
-          score += a.thrillLevel * 2.0;
-          break;
-        case VisitPurpose.picnic:
-          if (a.thrillLevel <= 2) score += 8;
-          break;
-        case VisitPurpose.kidsOuting:
-          if (a.heightLimit == 0) score += 10;
-          if (a.indoor) score += 6;
-          break;
-        case VisitPurpose.date:
-          if (a.thrillLevel >= 3 && a.thrillLevel <= 4) score += 10;
-          break;
+        // 방문 목적 보너스
+        switch (answers.purpose) {
+          case VisitPurpose.rides:
+            score += a.thrillLevel * 2.0;
+            break;
+          case VisitPurpose.picnic:
+            if (a.thrillLevel <= 2) score += 8;
+            break;
+          case VisitPurpose.kidsOuting:
+            if (a.heightLimit == 0) score += 10;
+            if (a.indoor) score += 6;
+            break;
+          case VisitPurpose.date:
+            if (a.thrillLevel >= 3 && a.thrillLevel <= 4) score += 10;
+            break;
+        }
       }
 
       return (attraction: a, score: score);
@@ -178,15 +187,19 @@ class _SummaryChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (answers == null) {
-      return const Text('설문 응답 없음 — 기본값으로 추천',
+      return const Text('설문 응답 없음 — 기본 우선순위로 추천',
           style: TextStyle(color: Color(0xFF888888), fontSize: 12));
     }
     final a = answers!;
+    final memberText = MemberCategory.values
+        .where((c) => a.count(c) > 0)
+        .map((c) => '${c.emoji}${a.count(c)}')
+        .join(' ');
     final chips = <String>[
-      '👥 ${a.headcount}명',
-      if (a.ageGroups.isNotEmpty) '🧑 ${a.ageGroups.join(", ")}',
-      '🎯 ${a.favoriteType}',
-      '📍 ${a.purpose}',
+      '👥 총 ${a.total}명',
+      if (memberText.isNotEmpty) memberText,
+      if (a.favoriteType != null) '🎯 ${a.favoriteType}',
+      if (a.purpose != null) '📍 ${a.purpose}',
     ];
     return Wrap(
       spacing: 6,

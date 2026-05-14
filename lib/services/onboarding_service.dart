@@ -1,22 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ─── 선택지 상수 (Firestore/UI 모두 동일 문자열 사용) ─────────
-class AgeGroups {
-  static const under7 = '7세 미만';
-  static const age8to13 = '8~13세';
-  static const age14to19 = '14~19세';
-  static const age20to39 = '20~39세';
-  static const age40plus = '40세 이상';
-  static const all = [under7, age8to13, age14to19, age20to39, age40plus];
-}
-
-class Gender {
-  static const male = '남성';
-  static const female = '여성';
-  static const undisclosed = '선택 안 함';
-  static const all = [male, female, undisclosed];
-}
-
+// ─── 선호 어트랙션 / 방문 목적 라벨 ─────────────────────────
 class FavoriteType {
   static const thrill = '스릴 어트랙션 위주';
   static const family = '가족·어린이 위주';
@@ -30,75 +14,177 @@ class VisitPurpose {
   static const date = '데이트';
 }
 
-// ─── 설문 응답 데이터 클래스 ──────────────────────────────────
+// ─── 구성원 카테고리 (7종) ──────────────────────────────────
+enum MemberCategory {
+  infant,        // 👶 유아 (7세 미만)
+  child,         // 🧒 어린이 (8~13세)
+  teen,          // 🧑 청소년 (14~19세)
+  adultMale,     // 👨 성인 남성 (20~39세)
+  adultFemale,   // 👩 성인 여성 (20~39세)
+  seniorMale,    // 🧓 중장년 남성 (40세 이상)
+  seniorFemale,  // 👵 중장년 여성 (40세 이상)
+}
+
+extension MemberCategoryX on MemberCategory {
+  String get prefsKey {
+    switch (this) {
+      case MemberCategory.infant:
+        return 'survey_infant';
+      case MemberCategory.child:
+        return 'survey_child';
+      case MemberCategory.teen:
+        return 'survey_teen';
+      case MemberCategory.adultMale:
+        return 'survey_adult_male';
+      case MemberCategory.adultFemale:
+        return 'survey_adult_female';
+      case MemberCategory.seniorMale:
+        return 'survey_senior_male';
+      case MemberCategory.seniorFemale:
+        return 'survey_senior_female';
+    }
+  }
+
+  String get emoji {
+    switch (this) {
+      case MemberCategory.infant:
+        return '👶';
+      case MemberCategory.child:
+        return '🧒';
+      case MemberCategory.teen:
+        return '🧑';
+      case MemberCategory.adultMale:
+        return '👨';
+      case MemberCategory.adultFemale:
+        return '👩';
+      case MemberCategory.seniorMale:
+        return '🧓';
+      case MemberCategory.seniorFemale:
+        return '👵';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case MemberCategory.infant:
+        return '유아';
+      case MemberCategory.child:
+        return '어린이';
+      case MemberCategory.teen:
+        return '청소년';
+      case MemberCategory.adultMale:
+        return '성인 남성';
+      case MemberCategory.adultFemale:
+        return '성인 여성';
+      case MemberCategory.seniorMale:
+        return '중장년 남성';
+      case MemberCategory.seniorFemale:
+        return '중장년 여성';
+    }
+  }
+
+  String get ageRange {
+    switch (this) {
+      case MemberCategory.infant:
+        return '7세 미만';
+      case MemberCategory.child:
+        return '8~13세';
+      case MemberCategory.teen:
+        return '14~19세';
+      case MemberCategory.adultMale:
+      case MemberCategory.adultFemale:
+        return '20~39세';
+      case MemberCategory.seniorMale:
+      case MemberCategory.seniorFemale:
+        return '40세 이상';
+    }
+  }
+}
+
+// ─── 응답 데이터 ────────────────────────────────────────────
 class SurveyAnswers {
-  final int headcount;
-  final List<String> ageGroups;
-  final String gender;
-  final String favoriteType;
-  final String purpose;
+  final Map<MemberCategory, int> members;
+  final String? favoriteType;
+  final String? purpose;
 
   const SurveyAnswers({
-    required this.headcount,
-    required this.ageGroups,
-    required this.gender,
+    required this.members,
     required this.favoriteType,
     required this.purpose,
   });
 
-  /// 아이 동반(7세 미만 또는 8~13세) 여부.
-  bool get hasChild =>
-      ageGroups.contains(AgeGroups.under7) || ageGroups.contains(AgeGroups.age8to13);
+  int count(MemberCategory c) => members[c] ?? 0;
+  int get total => members.values.fold(0, (a, b) => a + b);
 
-  /// 키 제한 어트랙션 필터링이 필요한지 (7세 미만 동반 시).
-  bool get filterHeightLimited => ageGroups.contains(AgeGroups.under7);
+  bool get hasInfant => count(MemberCategory.infant) > 0;
+  bool get hasChild => count(MemberCategory.child) > 0;
+  bool get hasTeenOrAdult =>
+      count(MemberCategory.teen) +
+          count(MemberCategory.adultMale) +
+          count(MemberCategory.adultFemale) >
+      0;
+  bool get hasSenior =>
+      count(MemberCategory.seniorMale) + count(MemberCategory.seniorFemale) > 0;
 }
 
 // ─── shared_preferences 래퍼 ────────────────────────────────
 class OnboardingService {
-  static const _kCompleted = 'survey_completed';
-  static const _kHeadcount = 'survey_headcount';
-  static const _kAgeGroups = 'survey_age_groups';
-  static const _kGender = 'survey_gender';
+  static const _kOnboardingCompleted = 'onboarding_completed';
+  static const _kSurveyCompleted = 'survey_completed';
   static const _kFavoriteType = 'survey_favorite_type';
   static const _kPurpose = 'survey_purpose';
 
-  /// 설문 미완료 시 true (= 온보딩 다시 보여줘야 함).
-  static Future<bool> needsSurvey() async {
+  /// 온보딩(인트로 + 설문 또는 스킵)을 본 적 없으면 true.
+  static Future<bool> needsOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    return !(prefs.getBool(_kCompleted) ?? false);
+    return !(prefs.getBool(_kOnboardingCompleted) ?? false);
+  }
+
+  /// 설문까지 완료했는지.
+  static Future<bool> isSurveyCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kSurveyCompleted) ?? false;
+  }
+
+  /// 인트로만 본 케이스 (skip). 설문 답변은 저장하지 않음.
+  static Future<void> markSkipped() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOnboardingCompleted, true);
+    await prefs.setBool(_kSurveyCompleted, false);
   }
 
   static Future<void> save(SurveyAnswers a) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kHeadcount, a.headcount);
-    await prefs.setStringList(_kAgeGroups, a.ageGroups);
-    await prefs.setString(_kGender, a.gender);
-    await prefs.setString(_kFavoriteType, a.favoriteType);
-    await prefs.setString(_kPurpose, a.purpose);
-    await prefs.setBool(_kCompleted, true);
+    for (final c in MemberCategory.values) {
+      await prefs.setInt(c.prefsKey, a.count(c));
+    }
+    if (a.favoriteType != null) await prefs.setString(_kFavoriteType, a.favoriteType!);
+    if (a.purpose != null) await prefs.setString(_kPurpose, a.purpose!);
+    await prefs.setBool(_kOnboardingCompleted, true);
+    await prefs.setBool(_kSurveyCompleted, true);
   }
 
   static Future<SurveyAnswers?> read() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!(prefs.getBool(_kCompleted) ?? false)) return null;
+    if (!(prefs.getBool(_kSurveyCompleted) ?? false)) return null;
     return SurveyAnswers(
-      headcount: prefs.getInt(_kHeadcount) ?? 2,
-      ageGroups: prefs.getStringList(_kAgeGroups) ?? const [],
-      gender: prefs.getString(_kGender) ?? Gender.undisclosed,
-      favoriteType: prefs.getString(_kFavoriteType) ?? FavoriteType.both,
-      purpose: prefs.getString(_kPurpose) ?? VisitPurpose.rides,
+      members: {
+        for (final c in MemberCategory.values) c: prefs.getInt(c.prefsKey) ?? 0,
+      },
+      favoriteType: prefs.getString(_kFavoriteType),
+      purpose: prefs.getString(_kPurpose),
     );
   }
 
-  /// 개발/테스트용 — 설문 다시 보기.
+  /// 개발/테스트용 — 온보딩 전체 초기화.
   static Future<void> reset() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kCompleted);
-    await prefs.remove(_kHeadcount);
-    await prefs.remove(_kAgeGroups);
-    await prefs.remove(_kGender);
+    await prefs.remove(_kOnboardingCompleted);
+    await prefs.remove(_kSurveyCompleted);
     await prefs.remove(_kFavoriteType);
     await prefs.remove(_kPurpose);
+    for (final c in MemberCategory.values) {
+      await prefs.remove(c.prefsKey);
+    }
   }
 }
