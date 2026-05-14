@@ -128,9 +128,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   @override
   Widget build(BuildContext context) {
     final config = _configs[_season]!;
-    return Scaffold(
-      backgroundColor: config.bg,
-      body: Stack(
+    return ColoredBox(
+      color: config.bg,
+      child: Stack(
         children: [
           SafeArea(
             bottom: false,

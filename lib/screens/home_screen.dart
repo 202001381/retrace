@@ -6,7 +6,8 @@ import '../widgets/companion_bottom_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenMyLuna;
-  const HomeScreen({super.key, this.onOpenMyLuna});
+  final VoidCallback? onResetOnboarding;
+  const HomeScreen({super.key, this.onOpenMyLuna, this.onResetOnboarding});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -105,8 +106,70 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
             const _TodayEventsSection(),
+            if (widget.onResetOnboarding != null) ...[
+              const SizedBox(height: 32),
+              _DebugResetTile(onTap: widget.onResetOnboarding!),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DebugResetTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _DebugResetTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFFB74D)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.bug_report_outlined, color: Color(0xFFEF6C00), size: 18),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('[디버그] 온보딩 다시 보기',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFEF6C00))),
+                SizedBox(height: 2),
+                Text('shared_preferences 초기화 후 첫 실행 플로우 재시작',
+                    style: TextStyle(fontSize: 10, color: Color(0xFF888888))),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('온보딩 초기화'),
+                  content: const Text('저장된 동행자/연령/목적을 모두 지우고 온보딩을 다시 보여줄까요?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx, true);
+                        onTap();
+                      },
+                      child: const Text('초기화', style: TextStyle(color: Color(0xFFE60012), fontWeight: FontWeight.w900)),
+                    ),
+                  ],
+                ),
+              );
+            },
+            child: const Text('Reset', style: TextStyle(color: Color(0xFFEF6C00), fontWeight: FontWeight.w900)),
+          ),
+        ],
       ),
     );
   }

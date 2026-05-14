@@ -137,9 +137,11 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     final counts = _categoryCounts;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: Stack(
+    // 같은 패턴: MainScreen 의 Scaffold 안에 IndexedStack 으로 들어가므로
+    // 여기서는 Scaffold 를 또 만들지 않는다. ColoredBox 로 배경만 깔고 Stack.
+    return ColoredBox(
+      color: const Color(0xFFF7F7F7),
+      child: Stack(
         children: [
           // ── 지도 ──────────────────────────────────────────
           Positioned.fill(

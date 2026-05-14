@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'screens/archive_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/recommend_screen.dart';
+import 'services/onboarding_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +17,6 @@ void main() async {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  // Firebase 옵션이 셋업 안 된 환경에서도 부팅되도록 try/catch.
   try {
     await Firebase.initializeApp();
   } catch (_) {/* config 미완료 — Firestore/FCM 의존 기능은 비활성 */}
@@ -39,13 +40,60 @@ class SeoulLandApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF7F7F7),
       ),
-      home: const MainScreen(),
+      home: const _AppGate(),
+    );
+  }
+}
+
+/// 최초 실행이면 OnboardingScreen, 아니면 MainScreen.
+class _AppGate extends StatefulWidget {
+  const _AppGate();
+
+  @override
+  State<_AppGate> createState() => _AppGateState();
+}
+
+class _AppGateState extends State<_AppGate> {
+  Future<bool>? _firstLaunch;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstLaunch = OnboardingService.isFirstLaunch();
+  }
+
+  void _refresh() {
+    setState(() {
+      _firstLaunch = OnboardingService.isFirstLaunch();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _firstLaunch,
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFF7F7F7),
+            body: Center(child: CircularProgressIndicator(color: Color(0xFFE60012))),
+          );
+        }
+        if (snap.data == true) {
+          return OnboardingScreen(onDone: _refresh);
+        }
+        return MainScreen(onResetOnboarding: () async {
+          await OnboardingService.reset();
+          _refresh();
+        });
+      },
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final VoidCallback? onResetOnboarding;
+  const MainScreen({super.key, this.onResetOnboarding});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -65,7 +113,10 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
-      HomeScreen(onOpenMyLuna: () => _goToMap(myLuna: true)),
+      HomeScreen(
+        onOpenMyLuna: () => _goToMap(myLuna: true),
+        onResetOnboarding: widget.onResetOnboarding,
+      ),
       MapScreen(showMyLunaInitially: _mapMyLuna),
       const RecommendScreen(),
       const ArchiveScreen(),
