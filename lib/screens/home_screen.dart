@@ -80,13 +80,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             const _UsageBanner(),
             const SizedBox(height: 16),
-            const Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _WeatherCard()),
-                SizedBox(width: 12),
-                Expanded(child: _CrowdCard()),
-              ],
+            // IntrinsicHeight: ListView 가 자식에 unbounded height 를 주기 때문에
+            // Row 의 crossAxisAlignment: stretch 는 그대로면 "BoxConstraints forces
+            // infinite height" 로 터진다. Row 의 intrinsic height 를 부모가 강제.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: const [
+                  Expanded(child: _WeatherCard()),
+                  SizedBox(width: 12),
+                  Expanded(child: _CrowdCard()),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
@@ -819,6 +824,7 @@ class _TodayEventsSection extends StatelessWidget {
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: const [
