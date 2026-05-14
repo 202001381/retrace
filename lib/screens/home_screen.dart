@@ -59,56 +59,97 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 디버그용 빌드 마커 — 이게 보이면 새 코드. 안 보이면 풀/리스타트 필요.
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              color: const Color(0xFFE60012),
-              child: const Text(
-                'BUILD v3 — 본문 보이면 OK',
-                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+    // ⚠️ DIAGNOSTIC BUILD — 본문 렌더링이 안 되는 원인 격리용.
+    // 이 빨강+노랑 화면이 보이면 main.dart / Scaffold / Stack 구조는 정상이고,
+    // 이전 비어있던 화면은 SingleChildScrollView/Card 위젯 측 문제.
+    // 안 보이면 main.dart 또는 빌드 자체 문제 → flutter clean 후 재실행 필요.
+    return Container(
+      color: const Color(0xFFFFE0E0),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                color: const Color(0xFFE60012),
+                padding: const EdgeInsets.all(16),
+                child: const Text(
+                  'DIAG v4 — 홈 본문 렌더링 OK',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            const _Header(),
-            const SizedBox(height: 12),
-            const _VisitScoreCard(score: _visitScore, discountPct: _discountPct, routeSummary: _routeSummary),
-            const SizedBox(height: 16),
-            if (_isOffPeak) ...[
-              const _OffPeakBanner(),
               const SizedBox(height: 16),
-            ],
-            const _UsageBanner(),
-            const SizedBox(height: 16),
-            const Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _WeatherCard()),
-                SizedBox(width: 12),
-                Expanded(child: _CrowdCard()),
+              Container(
+                color: const Color(0xFF1E3158),
+                padding: const EdgeInsets.all(16),
+                child: const Text(
+                  '이 두 컬러 박스가 보이면 Scaffold/Stack/Offstage 모두 정상.\n위젯 자체가 안 보이던 게 아니라 이전 카드 위젯들 중 하나가 빌드 에러를 던졌을 가능성.',
+                  style: TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _restoreFullHome,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                ),
+                child: const Text('탭하면 풀 홈 화면 (디버그 모드 해제)',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+              ),
+              if (_diagBypass) ...[
+                const SizedBox(height: 20),
+                _buildFullHome(context),
               ],
-            ),
-            const SizedBox(height: 16),
-            _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
-            const SizedBox(height: 16),
-            _MyLunaCard(
-              companion: _companion,
-              style: _style,
-              items: _routeItems,
-              onSettings: _openSettingsSheet,
-              onOpenMap: widget.onOpenMyLuna,
-            ),
-            const SizedBox(height: 24),
-            const _TodayEventsSection(),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  bool _diagBypass = false;
+  void _restoreFullHome() {
+    setState(() => _diagBypass = !_diagBypass);
+  }
+
+  Widget _buildFullHome(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Header(),
+        const SizedBox(height: 12),
+        const _VisitScoreCard(score: _visitScore, discountPct: _discountPct, routeSummary: _routeSummary),
+        const SizedBox(height: 16),
+        if (_isOffPeak) ...[
+          const _OffPeakBanner(),
+          const SizedBox(height: 16),
+        ],
+        const _UsageBanner(),
+        const SizedBox(height: 16),
+        const Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _WeatherCard()),
+            SizedBox(width: 12),
+            Expanded(child: _CrowdCard()),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
+        const SizedBox(height: 16),
+        _MyLunaCard(
+          companion: _companion,
+          style: _style,
+          items: _routeItems,
+          onSettings: _openSettingsSheet,
+          onOpenMap: widget.onOpenMyLuna,
+        ),
+        const SizedBox(height: 24),
+        const _TodayEventsSection(),
+      ],
     );
   }
 }
