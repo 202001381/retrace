@@ -4,10 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../widgets/companion_bottom_sheet.dart';
 
-/// 홈 화면 (메인 대시보드).
-///
-/// 본문은 ListView 를 Scaffold body 로 직접 사용해서 부모 제약 종류와 무관하게
-/// 렌더링되도록 설계함 (Column+Expanded 의 unbounded-height 트랩 회피).
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenMyLuna;
   const HomeScreen({super.key, this.onOpenMyLuna});
@@ -18,9 +14,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // ── Mock 시나리오 (API 연동 전 하드코딩) ─────────────────
-  static const int _visitScore = 78;          // 방문 가치 0~100
-  static const int _discountPct = 15;         // 할인율
-  static const bool _isOffPeak = true;        // 비수기 알림 노출 여부
+  static const int _visitScore = 78;
+  static const int _discountPct = 15;
+  static const bool _isOffPeak = true;
   static const String _routeSummary = '은하열차 888 → 후룸라이드 → 대관람차';
 
   String _companion = '가족';
@@ -59,97 +55,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ DIAGNOSTIC BUILD — 본문 렌더링이 안 되는 원인 격리용.
-    // 이 빨강+노랑 화면이 보이면 main.dart / Scaffold / Stack 구조는 정상이고,
-    // 이전 비어있던 화면은 SingleChildScrollView/Card 위젯 측 문제.
-    // 안 보이면 main.dart 또는 빌드 자체 문제 → flutter clean 후 재실행 필요.
-    return Container(
-      color: const Color(0xFFFFE0E0),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                color: const Color(0xFFE60012),
-                padding: const EdgeInsets.all(16),
-                child: const Text(
-                  'DIAG v4 — 홈 본문 렌더링 OK',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-                ),
+              const _Header(),
+              const SizedBox(height: 12),
+              const _VisitScoreCard(
+                score: _visitScore,
+                discountPct: _discountPct,
+                routeSummary: _routeSummary,
               ),
               const SizedBox(height: 16),
-              Container(
-                color: const Color(0xFF1E3158),
-                padding: const EdgeInsets.all(16),
-                child: const Text(
-                  '이 두 컬러 박스가 보이면 Scaffold/Stack/Offstage 모두 정상.\n위젯 자체가 안 보이던 게 아니라 이전 카드 위젯들 중 하나가 빌드 에러를 던졌을 가능성.',
-                  style: TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _restoreFullHome,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4CAF50),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                ),
-                child: const Text('탭하면 풀 홈 화면 (디버그 모드 해제)',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              ),
-              if (_diagBypass) ...[
-                const SizedBox(height: 20),
-                _buildFullHome(context),
+              if (_isOffPeak) ...[
+                const _OffPeakBanner(),
+                const SizedBox(height: 16),
               ],
+              const _UsageBanner(),
+              const SizedBox(height: 16),
+              const Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _WeatherCard()),
+                  SizedBox(width: 12),
+                  Expanded(child: _CrowdCard()),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
+              const SizedBox(height: 16),
+              _MyLunaCard(
+                companion: _companion,
+                style: _style,
+                items: _routeItems,
+                onSettings: _openSettingsSheet,
+                onOpenMap: widget.onOpenMyLuna,
+              ),
+              const SizedBox(height: 24),
+              const _TodayEventsSection(),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  bool _diagBypass = false;
-  void _restoreFullHome() {
-    setState(() => _diagBypass = !_diagBypass);
-  }
-
-  Widget _buildFullHome(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _Header(),
-        const SizedBox(height: 12),
-        const _VisitScoreCard(score: _visitScore, discountPct: _discountPct, routeSummary: _routeSummary),
-        const SizedBox(height: 16),
-        if (_isOffPeak) ...[
-          const _OffPeakBanner(),
-          const SizedBox(height: 16),
-        ],
-        const _UsageBanner(),
-        const SizedBox(height: 16),
-        const Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _WeatherCard()),
-            SizedBox(width: 12),
-            Expanded(child: _CrowdCard()),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
-        const SizedBox(height: 16),
-        _MyLunaCard(
-          companion: _companion,
-          style: _style,
-          items: _routeItems,
-          onSettings: _openSettingsSheet,
-          onOpenMap: widget.onOpenMyLuna,
-        ),
-        const SizedBox(height: 24),
-        const _TodayEventsSection(),
-      ],
     );
   }
 }
@@ -160,7 +112,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 12, 0, 4),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
       child: Row(
         children: [
           Column(
@@ -173,6 +125,7 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('RE-TRACE',
                       style: TextStyle(color: Color(0xFFE60012), fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
@@ -235,9 +188,11 @@ class _VisitScoreCard extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('$score', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: _scoreColor, height: 1)),
+                    Text('$score',
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: _scoreColor, height: 1)),
                     const SizedBox(height: 2),
-                    const Text('/100', style: TextStyle(fontSize: 10, color: Color(0xFF888888), fontWeight: FontWeight.w600)),
+                    const Text('/100',
+                        style: TextStyle(fontSize: 10, color: Color(0xFF888888), fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -247,6 +202,7 @@ class _VisitScoreCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('오늘의 방문 가치',
                     style: TextStyle(fontSize: 11, color: Color(0xFF888888), fontWeight: FontWeight.w800, letterSpacing: 1)),
@@ -254,18 +210,14 @@ class _VisitScoreCard extends StatelessWidget {
                 Text(_scoreLabel,
                     style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE60012).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text('🎟 $discountPct% 할인',
-                          style: const TextStyle(color: Color(0xFFE60012), fontSize: 11, fontWeight: FontWeight.w900)),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE60012).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text('🎟 $discountPct% 할인',
+                      style: const TextStyle(color: Color(0xFFE60012), fontSize: 11, fontWeight: FontWeight.w900)),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -502,6 +454,7 @@ class _LunaPricingCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -530,6 +483,7 @@ class _LunaPricingCard extends StatelessWidget {
               const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('$discountPct%',
                       style: const TextStyle(color: Color(0xFFF4B633), fontSize: 48, fontWeight: FontWeight.w900, height: 1)),
@@ -690,6 +644,7 @@ class _MyLunaCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -804,6 +759,7 @@ class _RouteRow extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
