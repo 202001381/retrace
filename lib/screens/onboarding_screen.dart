@@ -24,8 +24,12 @@ const int _kFirstSurveyPage = 4;
 const int _kLastSurveyPage = 6;
 const int _kDonePage = 7;
 
+// 데모용 — 오늘 할인 여부 / 할인율 (실제로는 백엔드 루나 프라이싱 응답).
+const bool _kHasDiscountToday = true;
+const int _kDiscountPct = 15;
+
 class OnboardingScreen extends StatefulWidget {
-  final VoidCallback onDone;
+  final void Function(OnboardingExit exit) onDone;
   const OnboardingScreen({super.key, required this.onDone});
 
   @override
@@ -74,17 +78,57 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _skipFromIntro() async {
     await OnboardingService.markSkipped();
     if (!mounted) return;
-    widget.onDone();
+    widget.onDone(OnboardingExit.home);
   }
 
-  Future<void> _finish() async {
-    await OnboardingService.save(SurveyAnswers(
-      members: Map.from(_members),
-      favoriteType: _favoriteType,
-      purpose: _purpose,
-    ));
+  Future<void> _finish(OnboardingExit exit) async {
+    await OnboardingService.save(
+      SurveyAnswers(
+        members: Map.from(_members),
+        favoriteType: _favoriteType,
+        purpose: _purpose,
+      ),
+      resultLabel: _resultLabel(),
+      totalMembers: _total,
+    );
     if (!mounted) return;
-    widget.onDone();
+    widget.onDone(exit);
+  }
+
+  // ── 구성원 요약 로직 ───────────────────────────────────────
+  int _count(MemberCategory c) => _members[c] ?? 0;
+
+  /// 우선순위: 가족 > 스릴 > 데이트 > 맞춤.
+  String _resultLabel() {
+    if (_count(MemberCategory.infant) > 0) return '가족 코스';
+    if (_count(MemberCategory.teen) > 0 || _favoriteType == FavoriteType.thrill) {
+      return '스릴 코스';
+    }
+    final adultsOnly = _count(MemberCategory.infant) == 0 &&
+        _count(MemberCategory.child) == 0 &&
+        _count(MemberCategory.teen) == 0 &&
+        _count(MemberCategory.seniorMale) == 0 &&
+        _count(MemberCategory.seniorFemale) == 0;
+    if (adultsOnly && _purpose == VisitPurpose.date) return '데이트 코스';
+    return '맞춤 코스';
+  }
+
+  /// 결과 화면 서브 텍스트.
+  String _summaryText() {
+    final label = _resultLabel();
+    final total = _total;
+    switch (label) {
+      case '가족 코스':
+        final infant = _count(MemberCategory.infant);
+        if (infant > 0) return '유아 $infant명과 함께하는 가족 코스로 짰어요 🎠';
+        return '$total인 가족 코스로 짰어요 🎠';
+      case '스릴 코스':
+        return '스릴을 즐기는 $total인 코스로 짰어요 🎢';
+      case '데이트 코스':
+        return '둘만의 데이트 코스로 짰어요 💑';
+      default:
+        return '$total인 맞춤 코스로 짰어요 ✨';
+    }
   }
 
   void _bump(MemberCategory c, int delta) {
@@ -189,7 +233,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onBack: _back,
               onNext: _purpose != null ? () => _goTo(7) : null,
             ),
-            _DonePage(onStart: _finish),
+            _ResultPage(
+              summaryText: _summaryText(),
+              hasDiscount: _kHasDiscountToday,
+              discountPct: _kDiscountPct,
+              onSeeRoute: () => _finish(OnboardingExit.mapTab),
+              onGetTicket: () => _finish(OnboardingExit.pricingPopup),
+            ),
           ],
         ),
       ),
@@ -479,31 +529,139 @@ class _IntroDarkCenterPage extends StatelessWidget {
   }
 }
 
-class _DonePage extends StatelessWidget {
-  final VoidCallback onStart;
-  const _DonePage({required this.onStart});
+// ─── 결과 화면 ─────────────────────────────────────────────
+class _ResultPage extends StatelessWidget {
+  final String summaryText;
+  final bool hasDiscount;
+  final int discountPct;
+  final VoidCallback onSeeRoute;
+  final VoidCallback onGetTicket;
+  const _ResultPage({
+    required this.summaryText,
+    required this.hasDiscount,
+    required this.discountPct,
+    required this.onSeeRoute,
+    required this.onGetTicket,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: _kDarkBg,
-      child: Column(
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const Spacer(),
+            // ── 상단: 마이 루나 완성 메시지 ──
+            const Text('🌙', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 20),
+            const Text('마이 루나가 준비됐어요!',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                summaryText,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            // ── 중간: 루나 프라이싱 카드 (조건부) ──
+            if (hasDiscount)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _PricingCard(discountPct: discountPct),
+              ),
+            const Spacer(flex: 2),
+            // ── 하단: CTA 버튼 ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: onSeeRoute,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: _kDarkBg,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('🗺️  오늘의 동선 보러가기',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+                  if (hasDiscount) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: onGetTicket,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.18),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('💰  할인 티켓 먼저 받기',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PricingCard extends StatelessWidget {
+  final int discountPct;
+  const _PricingCard({required this.discountPct});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
         children: [
-          const SizedBox(height: 56),
-          const Spacer(),
-          const Text('🌙', style: TextStyle(fontSize: 80)),
-          const SizedBox(height: 24),
-          const Text('마이 루나가 준비됐어요!',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 12),
-          Text('지금 바로 오늘의 동선을 확인해보세요',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 16, fontWeight: FontWeight.w600)),
-          const Spacer(flex: 2),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
-            child: _PrimaryCta(label: 'RE-TRACE 시작하기', onTap: onStart, color: Colors.white, fg: _kDarkBg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('💰 루나 프라이싱',
+                    style: TextStyle(color: _kAccent, fontSize: 14, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 8),
+                const Text('오늘 한산한 날이에요',
+                    style: TextStyle(color: _kText, fontSize: 18, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 4),
+                Text('지금 입장하면 정가 대비 $discountPct% 할인',
+                    style: const TextStyle(color: _kMuted, fontSize: 14)),
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
+          Text('$discountPct%',
+              style: const TextStyle(color: _kAccent, fontSize: 32, fontWeight: FontWeight.w900)),
         ],
       ),
     );

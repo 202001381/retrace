@@ -1,5 +1,12 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+// ─── 온보딩 종료 시 진입 의도 ──────────────────────────────
+enum OnboardingExit {
+  home,         // 그냥 홈으로 (skip 포함)
+  mapTab,       // 홈 진입 후 MAP 탭 자동 전환
+  pricingPopup, // 홈 진입 후 루나 프라이싱 팝업 자동 오픈
+}
+
 // ─── 선호 어트랙션 / 방문 목적 라벨 ─────────────────────────
 class FavoriteType {
   static const thrill = '스릴 어트랙션 위주';
@@ -133,6 +140,8 @@ class OnboardingService {
   static const _kSurveyCompleted = 'survey_completed';
   static const _kFavoriteType = 'survey_favorite_type';
   static const _kPurpose = 'survey_purpose';
+  static const _kResultLabel = 'survey_result_label';
+  static const _kTotalMembers = 'survey_total_members';
 
   /// 온보딩(인트로 + 설문 또는 스킵)을 본 적 없으면 true.
   static Future<bool> needsOnboarding() async {
@@ -153,15 +162,26 @@ class OnboardingService {
     await prefs.setBool(_kSurveyCompleted, false);
   }
 
-  static Future<void> save(SurveyAnswers a) async {
+  static Future<void> save(
+    SurveyAnswers a, {
+    String? resultLabel,
+    int? totalMembers,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     for (final c in MemberCategory.values) {
       await prefs.setInt(c.prefsKey, a.count(c));
     }
     if (a.favoriteType != null) await prefs.setString(_kFavoriteType, a.favoriteType!);
     if (a.purpose != null) await prefs.setString(_kPurpose, a.purpose!);
+    if (resultLabel != null) await prefs.setString(_kResultLabel, resultLabel);
+    if (totalMembers != null) await prefs.setInt(_kTotalMembers, totalMembers);
     await prefs.setBool(_kOnboardingCompleted, true);
     await prefs.setBool(_kSurveyCompleted, true);
+  }
+
+  static Future<String?> resultLabel() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_kResultLabel);
   }
 
   static Future<SurveyAnswers?> read() async {
@@ -183,6 +203,8 @@ class OnboardingService {
     await prefs.remove(_kSurveyCompleted);
     await prefs.remove(_kFavoriteType);
     await prefs.remove(_kPurpose);
+    await prefs.remove(_kResultLabel);
+    await prefs.remove(_kTotalMembers);
     for (final c in MemberCategory.values) {
       await prefs.remove(c.prefsKey);
     }

@@ -7,7 +7,14 @@ import '../widgets/companion_bottom_sheet.dart';
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenMyLuna;
   final VoidCallback? onResetOnboarding;
-  const HomeScreen({super.key, this.onOpenMyLuna, this.onResetOnboarding});
+  /// 온보딩 결과 화면 "할인 티켓 먼저 받기"로 진입 시 true → 500ms 후 팝업.
+  final bool openPricingOnStart;
+  const HomeScreen({
+    super.key,
+    this.onOpenMyLuna,
+    this.onResetOnboarding,
+    this.openPricingOnStart = false,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -22,6 +29,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _companion = '가족';
   String _style = '스릴·액티비티';
+
+  // 7회 연속 탭 → 온보딩 초기화 (숨겨진 디버그 제스처).
+  int _logoTapCount = 0;
+  DateTime? _lastLogoTap;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openPricingOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _openPricingPopup();
+        });
+      });
+    }
+  }
+
+  void _onLogoTap() {
+    final now = DateTime.now();
+    if (_lastLogoTap == null || now.difference(_lastLogoTap!) > const Duration(seconds: 2)) {
+      _logoTapCount = 1;
+    } else {
+      _logoTapCount += 1;
+    }
+    _lastLogoTap = now;
+    if (_logoTapCount >= 7) {
+      _logoTapCount = 0;
+      widget.onResetOnboarding?.call();
+    }
+  }
 
   static const List<_RouteItem> _routeItems = [
     _RouteItem(name: '은하열차 888', emoji: '🎢', type: '스릴', waitMin: 15, crowd: '보통', crowdColor: Color(0xFFFFC107)),
@@ -67,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
           children: [
-            const _Header(),
+            _Header(onLogoTap: _onLogoTap),
             const SizedBox(height: 12),
             const _VisitScoreCard(
               score: _visitScore,
@@ -177,37 +214,43 @@ class _DebugResetTile extends StatelessWidget {
 
 // ─── Header ────────────────────────────────────────────────
 class _Header extends StatelessWidget {
-  const _Header();
+  final VoidCallback? onLogoTap;
+  const _Header({this.onLogoTap});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
       child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '서울랜드',
-                style: TextStyle(color: Color(0xFF888888), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.2),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('RE-TRACE',
-                      style: TextStyle(color: Color(0xFFE60012), fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFE60012), borderRadius: BorderRadius.circular(4)),
-                    child: const Text('BETA',
-                        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                  ),
-                ],
-              ),
-            ],
+          GestureDetector(
+            onTap: onLogoTap,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '서울랜드',
+                  style: TextStyle(color: Color(0xFF888888), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.2),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('RE-TRACE',
+                        style: TextStyle(color: Color(0xFFE60012), fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFE60012), borderRadius: BorderRadius.circular(4)),
+                      child: const Text('BETA',
+                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const Spacer(),
           const Icon(Icons.search_rounded, color: Color(0xFF1F1F1F), size: 24),

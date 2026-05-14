@@ -55,6 +55,8 @@ class _AppGate extends StatefulWidget {
 
 class _AppGateState extends State<_AppGate> {
   Future<bool>? _needsOnboarding;
+  // 온보딩 종료 시 진입 의도 (결과 화면 버튼별).
+  OnboardingExit _exit = OnboardingExit.home;
 
   @override
   void initState() {
@@ -62,8 +64,16 @@ class _AppGateState extends State<_AppGate> {
     _needsOnboarding = OnboardingService.needsOnboarding();
   }
 
-  void _refresh() {
+  void _onOnboardingDone(OnboardingExit exit) {
     setState(() {
+      _exit = exit;
+      _needsOnboarding = OnboardingService.needsOnboarding();
+    });
+  }
+
+  void _resetToOnboarding() {
+    setState(() {
+      _exit = OnboardingExit.home;
       _needsOnboarding = OnboardingService.needsOnboarding();
     });
   }
@@ -80,12 +90,15 @@ class _AppGateState extends State<_AppGate> {
           );
         }
         if (snap.data == true) {
-          return OnboardingScreen(onDone: _refresh);
+          return OnboardingScreen(onDone: _onOnboardingDone);
         }
-        return MainScreen(onResetOnboarding: () async {
-          await OnboardingService.reset();
-          _refresh();
-        });
+        return MainScreen(
+          initialExit: _exit,
+          onResetOnboarding: () async {
+            await OnboardingService.reset();
+            _resetToOnboarding();
+          },
+        );
       },
     );
   }
@@ -93,7 +106,12 @@ class _AppGateState extends State<_AppGate> {
 
 class MainScreen extends StatefulWidget {
   final VoidCallback? onResetOnboarding;
-  const MainScreen({super.key, this.onResetOnboarding});
+  final OnboardingExit initialExit;
+  const MainScreen({
+    super.key,
+    this.onResetOnboarding,
+    this.initialExit = OnboardingExit.home,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -102,6 +120,23 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _mapMyLuna = false;
+  bool _openPricingOnStart = false;
+
+  @override
+  void initState() {
+    super.initState();
+    switch (widget.initialExit) {
+      case OnboardingExit.mapTab:
+        _currentIndex = 1;
+        break;
+      case OnboardingExit.pricingPopup:
+        _currentIndex = 0;
+        _openPricingOnStart = true;
+        break;
+      case OnboardingExit.home:
+        break;
+    }
+  }
 
   void _goToMap({bool myLuna = false}) {
     setState(() {
@@ -116,6 +151,7 @@ class _MainScreenState extends State<MainScreen> {
       HomeScreen(
         onOpenMyLuna: () => _goToMap(myLuna: true),
         onResetOnboarding: widget.onResetOnboarding,
+        openPricingOnStart: _openPricingOnStart,
       ),
       MapScreen(showMyLunaInitially: _mapMyLuna),
       const RecommendScreen(),
