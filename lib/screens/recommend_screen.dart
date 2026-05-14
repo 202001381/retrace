@@ -10,7 +10,7 @@ class RecommendScreen extends StatefulWidget {
 }
 
 class _RecommendScreenState extends State<RecommendScreen> {
-  OnboardingAnswers? _answers;
+  SurveyAnswers? _answers;
   List<Attraction> _top3 = const [];
   bool _loading = true;
 
@@ -30,74 +30,66 @@ class _RecommendScreenState extends State<RecommendScreen> {
     });
   }
 
-  /// 온보딩 결과 기반 스코어링.
+  /// 설문 응답 기반 동선 스코어링.
   ///
-  ///  유아 동반: 키 제한 없는 것만 → 실내 우선 → 거리 짧은 순
-  ///  초등 동반: 110cm 이하 허용 → 실내외 혼합
-  ///  성인/커플/친구: 스릴 우선 → 혼잡도 낮은 순
-  List<Attraction> _computeTop3(OnboardingAnswers? ans) {
+  ///  필터:
+  ///   - '7세 미만' 포함 시 키 제한 어트랙션 제외
+  ///
+  ///  가중치:
+  ///   - 혼잡도 낮을수록 +
+  ///   - '7세 미만' 또는 '8~13세' 포함 → 실내 +30
+  ///   - favorite '스릴' → thrillLevel 4~5 어트랙션 +20
+  ///   - favorite '가족' → thrillLevel 1~2 +20, 실내 +10
+  List<Attraction> _computeTop3(SurveyAnswers? ans) {
     final answers = ans ??
-        const OnboardingAnswers(
-          companion: CompanionType.family,
-          childAge: ChildAge.none,
-          purpose: VisitPurpose.both,
+        const SurveyAnswers(
+          headcount: 2,
+          ageGroups: [],
+          gender: Gender.undisclosed,
+          favoriteType: FavoriteType.both,
+          purpose: VisitPurpose.rides,
         );
 
-    // 하드 필터 (키 제한)
+    // 1) 하드 필터 — 7세 미만이면 키 제한 있는 어트랙션 전부 제외
     Iterable<Attraction> pool = kAttractions;
-    switch (answers.childAge) {
-      case ChildAge.under7:
-        pool = pool.where((a) => a.heightLimit == 0);
-        break;
-      case ChildAge.age7to13:
-        pool = pool.where((a) => a.heightLimit == 0 || a.heightLimit <= 110);
-        break;
-      case ChildAge.none:
-        break;
+    if (answers.filterHeightLimited) {
+      pool = pool.where((a) => a.heightLimit == 0);
     }
 
-    // 스코어링
-    const center = (lat: 37.4279, lng: 127.0247); // 서울랜드 중심 — 거리 기준점
-    double distScore(Attraction a) {
-      final dLat = a.lat - center.lat;
-      final dLng = a.lng - center.lng;
-      final d2 = (dLat * dLat + dLng * dLng); // 작을수록 가까움
-      return 1.0 / (1.0 + d2 * 1e6);          // 0~1 정규화
-    }
+    final isThrill = answers.favoriteType == FavoriteType.thrill;
+    final isFamily = answers.favoriteType == FavoriteType.family;
 
+    // 2) 스코어링
     final scored = pool.map((a) {
       double score = 0;
 
       // 혼잡도 낮을수록 +
       score += (60 - a.estimatedWaitMin).clamp(-20, 60).toDouble();
 
-      switch (answers.childAge) {
-        case ChildAge.under7:
-          if (a.indoor) score += 30;
-          score += distScore(a) * 20;
-          break;
-        case ChildAge.age7to13:
-          score += distScore(a) * 10;
-          break;
-        case ChildAge.none:
-          // 성인/청소년만 — 스릴 가중치
-          if (a.thrillLevel >= 4) score += 20;
-          // 오후 시간대 혼잡 회피
-          final hour = DateTime.now().hour;
-          if (hour >= 13 && a.estimatedWaitMin >= 15) score -= 10;
-          break;
+      // 아이 동반 → 실내 +30
+      if (answers.hasChild && a.indoor) score += 30;
+
+      // 선호 어트랙션 가중치
+      if (isThrill && a.thrillLevel >= 4) score += 20;
+      if (isFamily) {
+        if (a.thrillLevel <= 2) score += 20;
+        if (a.indoor) score += 10;
       }
 
-      // 방문 목적 보너스
+      // 방문 목적 부가 보정
       switch (answers.purpose) {
-        case VisitPurpose.thrill:
-          score += a.thrillLevel * 4;
+        case VisitPurpose.rides:
+          score += a.thrillLevel * 2.0;
           break;
-        case VisitPurpose.familyFriendly:
-          score += (6 - a.thrillLevel) * 4;
-          if (a.heightLimit == 0) score += 8;
+        case VisitPurpose.picnic:
+          if (a.thrillLevel <= 2) score += 8;
           break;
-        case VisitPurpose.both:
+        case VisitPurpose.kidsOuting:
+          if (a.heightLimit == 0) score += 10;
+          if (a.indoor) score += 6;
+          break;
+        case VisitPurpose.date:
+          if (a.thrillLevel >= 3 && a.thrillLevel <= 4) score += 10;
           break;
       }
 
@@ -119,7 +111,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
             : ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
                 children: [
-                  _Header(answers: _answers, onRefresh: _loadAndCompute),
+                  _HeaderRow(onRefresh: _loadAndCompute),
                   const SizedBox(height: 16),
                   _SummaryChips(answers: _answers),
                   const SizedBox(height: 20),
@@ -147,10 +139,9 @@ class _RecommendScreenState extends State<RecommendScreen> {
   }
 }
 
-class _Header extends StatelessWidget {
-  final OnboardingAnswers? answers;
+class _HeaderRow extends StatelessWidget {
   final VoidCallback onRefresh;
-  const _Header({required this.answers, required this.onRefresh});
+  const _HeaderRow({required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -181,24 +172,26 @@ class _Header extends StatelessWidget {
 }
 
 class _SummaryChips extends StatelessWidget {
-  final OnboardingAnswers? answers;
+  final SurveyAnswers? answers;
   const _SummaryChips({required this.answers});
 
   @override
   Widget build(BuildContext context) {
     if (answers == null) {
-      return const Text('온보딩 응답 없음 — 기본값(가족·둘 다)으로 추천',
+      return const Text('설문 응답 없음 — 기본값으로 추천',
           style: TextStyle(color: Color(0xFF888888), fontSize: 12));
     }
     final a = answers!;
+    final chips = <String>[
+      '👥 ${a.headcount}명',
+      if (a.ageGroups.isNotEmpty) '🧑 ${a.ageGroups.join(", ")}',
+      '🎯 ${a.favoriteType}',
+      '📍 ${a.purpose}',
+    ];
     return Wrap(
       spacing: 6,
       runSpacing: 6,
-      children: [
-        _Chip(text: '${a.companion.emoji} ${a.companion.label}'),
-        _Chip(text: '👶 ${a.childAge.label}'),
-        _Chip(text: '🎯 ${a.purpose.label}'),
-      ],
+      children: chips.map((t) => _Chip(text: t)).toList(),
     );
   }
 }
@@ -278,7 +271,10 @@ class _AttractionCard extends StatelessWidget {
                 Text('${item.zone} · ${item.indoor ? '실내' : '실외'} · 스릴 ${item.thrillLevel}/5',
                     style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
                 const SizedBox(height: 10),
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -296,14 +292,11 @@ class _AttractionCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 6),
                     Text('⏱ 예상 ${item.estimatedWaitMin}분',
                         style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
-                    if (item.heightLimit > 0) ...[
-                      const SizedBox(width: 6),
+                    if (item.heightLimit > 0)
                       Text('📏 ${item.heightLimit}cm+',
                           style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
-                    ],
                   ],
                 ),
               ],
