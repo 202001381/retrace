@@ -54,25 +54,52 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _mapMyLuna = false;
+  final Map<int, Widget> _built = {};
 
   void _goToMap({bool myLuna = false}) {
     setState(() {
       _currentIndex = 1;
       _mapMyLuna = myLuna;
+      _built.remove(1); // 마이루나 플래그가 바뀌면 재생성
     });
+  }
+
+  Widget _buildScreen(int index) {
+    switch (index) {
+      case 0:
+        return HomeScreen(onOpenMyLuna: () => _goToMap(myLuna: true));
+      case 1:
+        return MapScreen(showMyLunaInitially: _mapMyLuna);
+      case 2:
+        return const RecommendScreen();
+      case 3:
+        return const ArchiveScreen();
+    }
+    return const SizedBox.shrink();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screens = <Widget>[
-      HomeScreen(onOpenMyLuna: () => _goToMap(myLuna: true)),
-      MapScreen(showMyLunaInitially: _mapMyLuna),
-      const RecommendScreen(),
-      const ArchiveScreen(),
-    ];
+    // 최초 진입한 탭만 빌드해서 위젯 트리에 영구 보존 (탭 state 유지).
+    // 모든 자식을 StackFit.expand 로 tight 제약을 받게 하고, 비활성 탭은
+    // Offstage 로 페인트만 차단. 부모 위젯이 동일해야 state 가 손실되지 않으므로
+    // 활성/비활성 모두 같은 Offstage 래퍼를 거치게 한다.
+    _built.putIfAbsent(_currentIndex, () => _buildScreen(_currentIndex));
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: screens),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          for (final i in _built.keys)
+            Offstage(
+              offstage: i != _currentIndex,
+              child: TickerMode(
+                enabled: i == _currentIndex,
+                child: _built[i]!,
+              ),
+            ),
+        ],
+      ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
