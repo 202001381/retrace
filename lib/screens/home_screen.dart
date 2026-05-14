@@ -61,11 +61,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // 디버그용 빌드 마커 — 이게 보이면 새 코드. 안 보이면 풀/리스타트 필요.
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              color: const Color(0xFFE60012),
+              child: const Text(
+                'BUILD v3 — 본문 보이면 OK',
+                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+              ),
+            ),
+            const SizedBox(height: 12),
             const _Header(),
             const SizedBox(height: 12),
             const _VisitScoreCard(score: _visitScore, discountPct: _discountPct, routeSummary: _routeSummary),
