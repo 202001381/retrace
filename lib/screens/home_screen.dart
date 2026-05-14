@@ -55,51 +55,52 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: SafeArea(
+    // ⚠️ Scaffold 를 root 로 쓰지 않는다.
+    // MainScreen 이 이미 Scaffold 안에 IndexedStack 으로 이 화면을 넣는데,
+    // macOS desktop 에서 nested Scaffold + SafeArea + Scroll 조합이 본문을
+    // 통째로 무효화시키는 케이스가 있어서 ColoredBox 로 단순화.
+    return ColoredBox(
+      color: const Color(0xFFF7F7F7),
+      child: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
+        child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _Header(),
-              const SizedBox(height: 12),
-              const _VisitScoreCard(
-                score: _visitScore,
-                discountPct: _discountPct,
-                routeSummary: _routeSummary,
-              ),
+          children: [
+            const _Header(),
+            const SizedBox(height: 12),
+            const _VisitScoreCard(
+              score: _visitScore,
+              discountPct: _discountPct,
+              routeSummary: _routeSummary,
+            ),
+            const SizedBox(height: 16),
+            if (_isOffPeak) ...[
+              const _OffPeakBanner(),
               const SizedBox(height: 16),
-              if (_isOffPeak) ...[
-                const _OffPeakBanner(),
-                const SizedBox(height: 16),
-              ],
-              const _UsageBanner(),
-              const SizedBox(height: 16),
-              const Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _WeatherCard()),
-                  SizedBox(width: 12),
-                  Expanded(child: _CrowdCard()),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
-              const SizedBox(height: 16),
-              _MyLunaCard(
-                companion: _companion,
-                style: _style,
-                items: _routeItems,
-                onSettings: _openSettingsSheet,
-                onOpenMap: widget.onOpenMyLuna,
-              ),
-              const SizedBox(height: 24),
-              const _TodayEventsSection(),
             ],
-          ),
+            const _UsageBanner(),
+            const SizedBox(height: 16),
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _WeatherCard()),
+                SizedBox(width: 12),
+                Expanded(child: _CrowdCard()),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
+            const SizedBox(height: 16),
+            _MyLunaCard(
+              companion: _companion,
+              style: _style,
+              items: _routeItems,
+              onSettings: _openSettingsSheet,
+              onOpenMap: widget.onOpenMyLuna,
+            ),
+            const SizedBox(height: 24),
+            const _TodayEventsSection(),
+          ],
         ),
       ),
     );
