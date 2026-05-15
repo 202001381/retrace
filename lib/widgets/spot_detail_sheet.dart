@@ -3,8 +3,17 @@ import '../models/spot_model.dart';
 
 class SpotDetailSheet extends StatelessWidget {
   final Spot spot;
+  final VoidCallback? onNavigate;
+  final bool isNavigating;
+  final int? walkMinutes;
 
-  const SpotDetailSheet({super.key, required this.spot});
+  const SpotDetailSheet({
+    super.key,
+    required this.spot,
+    this.onNavigate,
+    this.isNavigating = false,
+    this.walkMinutes,
+  });
 
   Color get _catColor {
     switch (spot.category) {
@@ -206,24 +215,35 @@ class SpotDetailSheet extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // 길 찾기 버튼
+                if (walkMinutes != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _catColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.directions_walk_rounded, size: 16, color: _catColor),
+                        const SizedBox(width: 6),
+                        Text('예상 도보 $walkMinutes분',
+                            style: TextStyle(color: _catColor, fontSize: 13, fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('📍 ${spot.name}(으)로 길 안내 시작!'),
-                          backgroundColor: _catColor,
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.directions_walk_rounded, size: 20),
+                    onPressed: onNavigate,
+                    icon: Icon(
+                      isNavigating ? Icons.hourglass_top_rounded : Icons.directions_walk_rounded,
+                      size: 20,
+                    ),
                     label: Text(
-                      '여기로 이동하기',
+                      isNavigating ? '이동 중...' : '여기로 이동하기',
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                     ),
                     style: ElevatedButton.styleFrom(
