@@ -34,6 +34,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   bool _gpsLoading = false;
   bool _showRoute = false;
   String _activeFilter = '전체';     // 전체 / 어트랙션 / 음식점 / 포토존 / 이스터에그
+  String _facilityTab = '어트랙션';   // 어트랙션 / 음식점·상점 / 공연 / 편의시설
   bool _operatingOnly = false;
   bool _easterEggSubFilter = false;
 
@@ -43,6 +44,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   int? _navWalkMin;
   bool _navInProgress = false;
 
+  // 하단 시트 — 미니/중간/최대 3단 스냅 제어
+  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  double _sheetSize = 0.08;
+  static const double _kSheetMini = 0.08;
+  static const double _kSheetMid = 0.50;
+  static const double _kSheetMax = 0.92;
+
   // mock 발견된 이스터에그 ID (실제로는 shared_preferences 에서 로드)
   static const Set<String> _discoveredEggs = {'a01'};
 
@@ -50,6 +58,25 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _showRoute = widget.showMyLunaInitially;
+    _sheetController.addListener(_onSheetChanged);
+  }
+
+  void _onSheetChanged() {
+    if (!_sheetController.isAttached) return;
+    final s = _sheetController.size;
+    if ((s - _sheetSize).abs() > 0.005) {
+      setState(() => _sheetSize = s);
+    }
+  }
+
+  void _shrinkSheet() {
+    if (_sheetController.isAttached && _sheetController.size > _kSheetMini + 0.05) {
+      _sheetController.animateTo(
+        _kSheetMini,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   @override
@@ -62,6 +89,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _sheetController.removeListener(_onSheetChanged);
+    _sheetController.dispose();
     _positionStream?.cancel();
     super.dispose();
   }
@@ -94,6 +123,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 동선 토글 ─────────────────────────────────────────────
   void _toggleRoute() {
     setState(() => _showRoute = !_showRoute);
+    // 동선 ON: 패널을 미니로 축소해서 지도와 번호 마커가 잘 보이게.
+    // 동선 OFF: 패널 상태 그대로 유지.
+    if (_showRoute) _shrinkSheet();
+  }
+
+  /// 동선 ON 시 미니 패널에 표시할 한 줄 요약.
+  String get _routeSummaryText {
+    final names = _routeSpots.map((s) => s.name).join(' → ');
+    return '🗺️ $names';
   }
 
   // ── 카테고리 필터 ─────────────────────────────────────────
@@ -141,6 +179,25 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return list;
   }
 
+  /// 패널 전용 — facility tab + 보조 필터로 거름. 상단 칩과 독립.
+  List<Spot> get _panelSpots {
+    Iterable<Spot> list;
+    switch (_facilityTab) {
+      case '음식점·상점':
+        list = SeoulLandSpots.all.where((s) => s.category == SpotCategory.food);
+        break;
+      case '공연':
+      case '편의시설':
+        list = const Iterable<Spot>.empty(); // 매핑되는 카테고리 없음
+        break;
+      default: // 어트랙션
+        list = SeoulLandSpots.all.where((s) => s.category == SpotCategory.attraction);
+    }
+    if (_operatingOnly) list = list.where((s) => s.isOperating);
+    if (_easterEggSubFilter) list = list.where((s) => s.hasEasterEgg);
+    return list.toList();
+  }
+
   /// 마이 루나 동선 — 어트랙션 카테고리 상위 3개.
   List<Spot> get _routeSpots =>
       SeoulLandSpots.byCategory(SpotCategory.attraction).take(3).toList();
@@ -148,6 +205,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 카드 / 마커 인터랙션 ─────────────────────────────────
   void _openSpotDetail(Spot s) {
     setState(() => _selectedSpot = s);
+    _shrinkSheet();
     _mapController.move(s.position, math.max(_currentZoom, 17.5));
     showModalBottomSheet(
       context: context,
@@ -378,6 +436,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 initialZoom: _kInitialZoom,
                 minZoom: _kMinZoom,
                 maxZoom: _kMaxZoom,
+                cameraConstraint: CameraConstraint.contain(
+                  bounds: LatLngBounds(
+                    const LatLng(37.4240, 126.9750),
+                    const LatLng(37.4320, 126.9850),
+                  ),
+                ),
+                onTap: (_, __) => _shrinkSheet(),
                 onPositionChanged: (camera, _) {
                   if ((_currentZoom - camera.zoom).abs() > 0.05) {
                     setState(() => _currentZoom = camera.zoom);
@@ -457,20 +522,26 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
           // ── 하단 시설안내 시트 (DraggableScrollableSheet) ─
           DraggableScrollableSheet(
-            initialChildSize: 0.5,
-            minChildSize: 0.30,
-            maxChildSize: 0.9,
+            controller: _sheetController,
+            initialChildSize: _kSheetMini,
+            minChildSize: _kSheetMini,
+            maxChildSize: _kSheetMax,
             snap: true,
-            snapSizes: const [0.30, 0.50, 0.9],
+            snapSizes: const [_kSheetMini, _kSheetMid, _kSheetMax],
             builder: (context, scrollController) {
+              final isMini = _sheetSize < 0.20;
               return _FacilitySheet(
+                isMini: isMini,
+                routeOn: _showRoute,
+                routeSummaryText: _routeSummaryText,
                 scrollController: scrollController,
-                spots: _filteredSpots,
-                activeFilter: _activeFilter,
+                spots: _panelSpots,
+                facilityTab: _facilityTab,
                 operatingOnly: _operatingOnly,
                 easterEgg: _easterEggSubFilter,
                 catColor: _categoryColor,
                 catLabel: _categoryLabel,
+                onFacilityTab: (t) => setState(() => _facilityTab = t),
                 onOperatingOnly: () => setState(() => _operatingOnly = !_operatingOnly),
                 onEasterEgg: () => setState(() {
                   _easterEggSubFilter = !_easterEggSubFilter;
@@ -478,6 +549,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 }),
                 onCardTap: _openSpotDetail,
                 discoveredEggs: _discoveredEggs,
+                onExpandRequest: () {
+                  if (_sheetController.isAttached) {
+                    _sheetController.animateTo(
+                      _kSheetMid,
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeOutCubic,
+                    );
+                  }
+                },
               );
             },
           ),
@@ -703,31 +783,43 @@ class _StatusBadge extends StatelessWidget {
 
 // ─── 시설안내 DraggableScrollableSheet ───────────────────────
 class _FacilitySheet extends StatelessWidget {
+  final bool isMini;
+  final bool routeOn;
+  final String routeSummaryText;
   final ScrollController scrollController;
   final List<Spot> spots;
-  final String activeFilter;
+  final String facilityTab;
   final bool operatingOnly;
   final bool easterEgg;
   final Color Function(SpotCategory) catColor;
   final String Function(SpotCategory) catLabel;
+  final void Function(String) onFacilityTab;
   final VoidCallback onOperatingOnly;
   final VoidCallback onEasterEgg;
   final void Function(Spot) onCardTap;
   final Set<String> discoveredEggs;
+  final VoidCallback onExpandRequest;
 
   const _FacilitySheet({
+    required this.isMini,
+    required this.routeOn,
+    required this.routeSummaryText,
     required this.scrollController,
     required this.spots,
-    required this.activeFilter,
+    required this.facilityTab,
     required this.operatingOnly,
     required this.easterEgg,
     required this.catColor,
     required this.catLabel,
+    required this.onFacilityTab,
     required this.onOperatingOnly,
     required this.onEasterEgg,
     required this.onCardTap,
     required this.discoveredEggs,
+    required this.onExpandRequest,
   });
+
+  static const _facilityTabs = ['어트랙션', '음식점·상점', '공연', '편의시설'];
 
   @override
   Widget build(BuildContext context) {
@@ -737,128 +829,211 @@ class _FacilitySheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, -4))],
       ),
-      child: Column(
-        children: [
-          // 드래그 핸들 — DraggableScrollableSheet 의 드래그 영역이 됨
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Container(
-              width: 40, height: 5,
-              decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+      child: isMini ? _miniBody() : _fullBody(),
+    );
+  }
+
+  Widget _handle() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Container(
+          width: 40, height: 5,
+          decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)),
+        ),
+      );
+
+  // ── 미니 (0.08) ─────────────────────────────────────────
+  Widget _miniBody() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _handle(),
+        GestureDetector(
+          onTap: onExpandRequest,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Row(
               children: [
-                Text('${activeFilter == '전체' ? '전체' : activeFilter} ${spots.length}곳',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
-                const Spacer(),
-                _PulseDot(),
-                const SizedBox(width: 4),
-                const Text('실시간 연동 중',
-                    style: TextStyle(fontSize: 11, color: Color(0xFFE60012), fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text(
+                    routeOn ? routeSummaryText : '↑ 시설안내 보기',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: routeOn ? FontWeight.w800 : FontWeight.w600,
+                      color: routeOn ? const Color(0xFF1E2B4A) : const Color(0xFF888888),
+                    ),
+                  ),
+                ),
+                if (routeOn)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE60012),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: const Text('동선 ON',
+                        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                  ),
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFEEEEEE)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-            child: Row(
-              children: [
-                _SubChip(
-                  text: '운영중',
-                  active: operatingOnly,
-                  activeColor: const Color(0xFF4CAF50),
-                  onTap: onOperatingOnly,
-                ),
-                const SizedBox(width: 8),
-                _SubChip(
-                  text: '이스터에그 ✨',
-                  active: easterEgg,
-                  activeColor: const Color(0xFFF4B633),
-                  onTap: onEasterEgg,
-                ),
-              ],
+        ),
+      ],
+    );
+  }
+
+  // ── 중간/최대 (0.50 / 0.92) ─────────────────────────────
+  Widget _fullBody() {
+    return Column(
+      children: [
+        _handle(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+          child: Row(
+            children: [
+              Text('전체 ${spots.length}곳',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+              const Spacer(),
+              _PulseDot(),
+              const SizedBox(width: 4),
+              const Text('실시간 연동 중',
+                  style: TextStyle(fontSize: 11, color: Color(0xFFE60012), fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFFEEEEEE)),
+        // 카테고리 탭
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: SizedBox(
+            height: 32,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _facilityTabs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (_, i) {
+                final t = _facilityTabs[i];
+                final active = facilityTab == t;
+                return GestureDetector(
+                  onTap: () => onFacilityTab(t),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: active ? const Color(0xFF1E3158) : Colors.white,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: active ? const Color(0xFF1E3158) : const Color(0xFFDDDDDD)),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(t,
+                        style: TextStyle(
+                          color: active ? Colors.white : const Color(0xFF1F1F1F),
+                          fontSize: 12, fontWeight: FontWeight.w800,
+                        )),
+                  ),
+                );
+              },
             ),
           ),
-          Expanded(
-            child: spots.isEmpty
-                ? const Center(
-                    child: Text('해당하는 시설이 없습니다',
-                        style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13, fontWeight: FontWeight.w600)),
-                  )
-                : ListView.separated(
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                    itemCount: spots.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final s = spots[i];
-                      final undiscoveredEgg = activeFilter == '이스터에그' && !discoveredEggs.contains(s.id);
-                      final operatingDim = !s.isOperating;
-                      return Opacity(
-                        opacity: (undiscoveredEgg || operatingDim) ? 0.4 : 1.0,
-                        child: GestureDetector(
-                          onTap: () => onCardTap(s),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: s.hasEasterEgg ? const Color(0xFFF4B633) : const Color(0xFFEEEEEE),
+        ),
+        // 운영중 / 이스터에그 sub-chips
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          child: Row(
+            children: [
+              _SubChip(
+                text: '운영중',
+                active: operatingOnly,
+                activeColor: const Color(0xFF4CAF50),
+                onTap: onOperatingOnly,
+              ),
+              const SizedBox(width: 8),
+              _SubChip(
+                text: '이스터에그 ✨',
+                active: easterEgg,
+                activeColor: const Color(0xFFF4B633),
+                onTap: onEasterEgg,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: spots.isEmpty
+              ? const Center(
+                  child: Text('해당하는 시설이 없습니다',
+                      style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13, fontWeight: FontWeight.w600)),
+                )
+              : ListView.separated(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                  itemCount: spots.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) {
+                    final s = spots[i];
+                    final undiscoveredEgg = easterEgg && !discoveredEggs.contains(s.id);
+                    final operatingDim = !s.isOperating;
+                    return Opacity(
+                      opacity: (undiscoveredEgg || operatingDim) ? 0.4 : 1.0,
+                      child: GestureDetector(
+                        onTap: () => onCardTap(s),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: s.hasEasterEgg ? const Color(0xFFF4B633) : const Color(0xFFEEEEEE),
+                            ),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44, height: 44,
+                                decoration: BoxDecoration(
+                                  color: catColor(s.category).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(s.icon, style: const TextStyle(fontSize: 22)),
                               ),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44, height: 44,
-                                  decoration: BoxDecoration(
-                                    color: catColor(s.category).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(s.icon, style: const TextStyle(fontSize: 22)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(s.name,
+                                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F)),
+                                              overflow: TextOverflow.ellipsis),
+                                        ),
+                                        if (s.hasEasterEgg) const Padding(
+                                            padding: EdgeInsets.only(left: 4),
+                                            child: Text('🥚', style: TextStyle(fontSize: 12))),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${catLabel(s.category)} · ${s.zone}${s.waitTime != null ? ' · 대기 ${s.waitTime}' : ''}',
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Flexible(
-                                            child: Text(s.name,
-                                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F)),
-                                                overflow: TextOverflow.ellipsis),
-                                          ),
-                                          if (s.hasEasterEgg) const Padding(
-                                              padding: EdgeInsets.only(left: 4),
-                                              child: Text('🥚', style: TextStyle(fontSize: 12))),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${catLabel(s.category)} · ${s.zone}${s.waitTime != null ? ' · 대기 ${s.waitTime}' : ''}',
-                                        style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC), size: 20),
-                              ],
-                            ),
+                              ),
+                              const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC), size: 20),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
