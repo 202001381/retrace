@@ -19,17 +19,13 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 지도 상수 ──────────────────────────────────────────────
-  static const LatLng _kCenter = LatLng(37.4278, 126.9798);
-  static const LatLng _kGate = LatLng(37.4270, 126.9785);
-  static const double _kInitialZoom = 17.0;
-  static const double _kMinZoom = 15.0;
-  static const double _kMaxZoom = 19.0;
+  static const LatLng _seoullandCenter = LatLng(37.4278, 126.9798);
+  static const LatLng _kGate = LatLng(37.4270, 126.9785); // 정문 (GPS fallback / 경로 출발)
 
   // ── 컨트롤 / 상태 ──────────────────────────────────────────
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionStream;
   LatLng? _myPosition;
-  double _currentZoom = _kInitialZoom;
 
   bool _gpsLoading = false;
   bool _showRoute = false;
@@ -57,7 +53,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
-        _mapController.move(_kCenter, _kInitialZoom);
+        _mapController.move(_seoullandCenter, 17.0);
       } catch (_) {}
     });
   }
@@ -118,7 +114,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         setState(() => _myPosition = target);
       }
     } catch (_) {}
-    _mapController.move(target, math.max(_currentZoom, _kInitialZoom));
+    _mapController.move(target, 17.0);
     if (mounted) setState(() => _gpsLoading = false);
   }
 
@@ -130,10 +126,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   Color _categoryColor(String c) {
     switch (c) {
-      case '음식점':
-        return const Color(0xFFFF6D00);
-      default:
+      case '어트랙션':
         return const Color(0xFFE60012);
+      case '음식점':
+        return const Color(0xFFFF6B00);
+      default:
+        return const Color(0xFF6B21A8);
     }
   }
 
@@ -187,7 +185,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   void _openDetail(Attraction a) {
     setState(() => _selectedAttraction = a);
     _shrinkSheet();
-    _mapController.move(a.position, math.max(_currentZoom, 17.5));
+    _mapController.move(a.position, 17.5);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -234,139 +232,92 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   // ── 마커 ─────────────────────────────────────────────────
+  // 명세에 따라 단순 1-원 마커. 클러스터/순번 배지 제거.
   List<Marker> _buildMarkers() {
-    final list = _filteredAttractions;
-    final clustered = _currentZoom < 17.0;
-    if (!clustered) {
-      return [
-        for (final a in list) _individualMarker(a),
-        if (_myPosition != null) _gpsMarker(_myPosition!),
-      ];
-    }
-    final cell = 0.0005 * math.pow(2, 17 - _currentZoom).toDouble();
-    final buckets = <String, List<Attraction>>{};
-    for (final a in list) {
-      final key = '${(a.lat / cell).floor()},${(a.lng / cell).floor()}';
-      buckets.putIfAbsent(key, () => []).add(a);
-    }
-    final markers = <Marker>[];
-    for (final group in buckets.values) {
-      markers.add(group.length == 1 ? _individualMarker(group.first) : _clusterMarker(group));
-    }
-    if (_myPosition != null) markers.add(_gpsMarker(_myPosition!));
-    return markers;
-  }
-
-  Marker _individualMarker(Attraction a) {
-    final isRoute = _showRoute && _routeAttractions.any((r) => r.id == a.id);
-    final order = isRoute ? _routeAttractions.indexWhere((r) => r.id == a.id) + 1 : 0;
-    final color = _categoryColor(a.category);
-    double opacity = 1.0;
-    if (!a.isOperating) opacity = 0.4;
-    return Marker(
-      point: a.position,
-      width: 44, height: 44,
-      alignment: Alignment.topCenter,
-      child: Opacity(
-        opacity: opacity,
+    final markers = _filteredAttractions.map((a) {
+      return Marker(
+        point: LatLng(a.lat, a.lng),
+        width: 44,
+        height: 44,
         child: GestureDetector(
-          onTap: () => _openDetail(a),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: a.hasEasterEgg ? const Color(0xFFF4B633) : Colors.white,
-                    width: a.hasEasterEgg ? 3 : 2,
-                  ),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 2))],
+          onTap: () => _onMarkerTap(a),
+          child: Opacity(
+            opacity: a.isOperating ? 1.0 : 0.4,
+            child: Container(
+              decoration: BoxDecoration(
+                color: _getMarkerColor(a.category),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: a.hasEasterEgg ? const Color(0xFFF4B633) : Colors.white,
+                  width: a.hasEasterEgg ? 3 : 2,
                 ),
-                alignment: Alignment.center,
-                child: Text(a.icon, style: const TextStyle(fontSize: 18)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              if (a.hasEasterEgg)
-                const Positioned(top: -4, right: -4, child: Text('🥚', style: TextStyle(fontSize: 14))),
-              if (isRoute)
-                Positioned(
-                  top: -6, left: -6,
-                  child: Container(
-                    width: 20, height: 20,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE60012),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text('$order',
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Marker _clusterMarker(List<Attraction> group) {
-    double lat = 0, lng = 0;
-    for (final a in group) {
-      lat += a.lat;
-      lng += a.lng;
-    }
-    lat /= group.length;
-    lng /= group.length;
-    final dominantCat = group.first.category;
-    final color = _categoryColor(dominantCat);
-    return Marker(
-      point: LatLng(lat, lng),
-      width: 48, height: 48,
-      child: GestureDetector(
-        onTap: () => _mapController.move(LatLng(lat, lng), 17.5),
-        child: Container(
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
-          ),
-          alignment: Alignment.center,
-          child: Text('${group.length}',
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
-        ),
-      ),
-    );
-  }
-
-  Marker _gpsMarker(LatLng p) {
-    return Marker(
-      point: p,
-      width: 24, height: 24,
-      child: Center(
-        child: Container(
-          width: 18, height: 18,
-          decoration: BoxDecoration(color: const Color(0xFF4A90E2).withValues(alpha: 0.25), shape: BoxShape.circle),
-          alignment: Alignment.center,
-          child: Container(
-            width: 12, height: 12,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4A90E2),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              child: Center(child: Text(a.icon, style: const TextStyle(fontSize: 20))),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }).toList();
+
+    if (_myPosition != null) {
+      markers.add(Marker(
+        point: _myPosition!,
+        width: 24, height: 24,
+        child: Center(
+          child: Container(
+            width: 18, height: 18,
+            decoration: BoxDecoration(color: const Color(0xFF4A90E2).withValues(alpha: 0.25), shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Container(
+              width: 12, height: 12,
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A90E2),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+            ),
+          ),
+        ),
+      ));
+    }
+    return markers;
   }
+
+  // ── 동선 폴리라인 ─────────────────────────────────────────
+  List<Polyline> _buildRoute() {
+    if (!_showRoute) return const [];
+    final routeIds = ['galaxy_888', 'flume_ride', 'ferris_wheel'];
+    final routeSpots = kAttractions.where((a) => routeIds.contains(a.id)).toList();
+    if (routeSpots.length < 2) return const [];
+    return [
+      Polyline(
+        points: routeSpots.map((a) => LatLng(a.lat, a.lng)).toList(),
+        strokeWidth: 3.0,
+        color: const Color(0xFFE60012),
+        pattern: StrokePattern.dashed(segments: const [10, 5]),
+      ),
+    ];
+  }
+
+  Color _getMarkerColor(String category) {
+    switch (category) {
+      case '어트랙션': return const Color(0xFFE60012);
+      case '음식점': return const Color(0xFFFF6B00);
+      default: return const Color(0xFF6B21A8);
+    }
+  }
+
+  void _onMarkerTap(Attraction a) => _openDetail(a);
 
   @override
   Widget build(BuildContext context) {
-    final routeList = _routeAttractions;
     return ColoredBox(
       color: const Color(0xFFF7F7F7),
       child: Stack(
@@ -375,37 +326,26 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter: _kCenter,
-                initialZoom: _kInitialZoom,
-                minZoom: _kMinZoom,
-                maxZoom: _kMaxZoom,
-                cameraConstraint: CameraConstraint.contain(
-                  bounds: LatLngBounds(
-                    const LatLng(37.4200, 126.9700),
-                    const LatLng(37.4400, 126.9900),
-                  ),
-                ),
-                onTap: (_, __) => _shrinkSheet(),
-                onPositionChanged: (camera, _) {
-                  if ((_currentZoom - camera.zoom).abs() > 0.05) {
-                    setState(() => _currentZoom = camera.zoom);
-                  }
+                initialCenter: _seoullandCenter,
+                initialZoom: 17.0,
+                minZoom: 15.0,
+                maxZoom: 19.0,
+                onTap: (tapPosition, point) {
+                  // 지도 탭 시 패널 미니로
+                  _sheetController.animateTo(
+                    0.08,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
                 },
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.seoulland.seoul_land_app',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.seoulland.app',
                 ),
-                if (_showRoute && routeList.length > 1)
-                  PolylineLayer(polylines: [
-                    Polyline(
-                      points: routeList.map((a) => a.position).toList(),
-                      color: const Color(0xFFE60012),
-                      strokeWidth: 3.5,
-                      pattern: StrokePattern.dashed(segments: const [8, 5]),
-                    ),
-                  ]),
+                MarkerLayer(markers: _buildMarkers()),
+                if (_showRoute) PolylineLayer(polylines: _buildRoute()),
                 if (_navTarget != null)
                   PolylineLayer(polylines: [
                     Polyline(
@@ -414,7 +354,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       strokeWidth: 4.5,
                     ),
                   ]),
-                MarkerLayer(markers: _buildMarkers()),
               ],
             ),
           ),
