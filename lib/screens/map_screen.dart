@@ -59,6 +59,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     super.initState();
     _showRoute = widget.showMyLunaInitially;
     _sheetController.addListener(_onSheetChanged);
+    // MapController 가 mount 된 뒤 명시적으로 중심으로 이동.
+    // (initialCenter 만으로 안 잡히는 케이스를 위한 보강)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        _mapController.move(_kCenter, _kInitialZoom);
+      } catch (_) {/* not yet attached */}
+    });
   }
 
   void _onSheetChanged() {
@@ -438,8 +446,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 maxZoom: _kMaxZoom,
                 cameraConstraint: CameraConstraint.contain(
                   bounds: LatLngBounds(
-                    const LatLng(37.4240, 126.9750),
-                    const LatLng(37.4320, 126.9850),
+                    const LatLng(37.4200, 126.9700),
+                    const LatLng(37.4400, 126.9900),
                   ),
                 ),
                 onTap: (_, __) => _shrinkSheet(),
@@ -834,22 +842,28 @@ class _FacilitySheet extends StatelessWidget {
   }
 
   Widget _handle() => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Container(
-          width: 40, height: 5,
-          decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Center(
+          child: Container(
+            width: 40, height: 5,
+            decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)),
+          ),
         ),
       );
 
   // ── 미니 (0.08) ─────────────────────────────────────────
+  // ListView + scrollController 로 감싸야 DraggableScrollableSheet 가
+  // 패널 어디서나 드래그를 받음. Column 으로 두면 핸들 영역(20px)만
+  // 잡히고 그마저도 GestureDetector 가 흡수해서 안 올라옴.
   Widget _miniBody() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return ListView(
+      controller: scrollController,
+      physics: const ClampingScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         _handle(),
-        GestureDetector(
+        InkWell(
           onTap: onExpandRequest,
-          behavior: HitTestBehavior.opaque,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Row(
@@ -966,7 +980,9 @@ class _FacilitySheet extends StatelessWidget {
                 )
               : ListView.separated(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    20, 4, 20, 24 + MediaQuery.of(context).padding.bottom,
+                  ),
                   itemCount: spots.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, i) {
