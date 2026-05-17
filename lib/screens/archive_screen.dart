@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/attraction.dart';
+import '../services/easter_egg_service.dart';
+
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
   @override
@@ -102,27 +105,72 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     ),
   };
 
-  void _addBook() {
-    if (_booksCollected >= 5) return;
-    final next = _booksCollected + 1;
-    setState(() => _booksCollected = next);
-    if (next == 3) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) setState(() => _rewardPopup = 'goods');
-      });
-    } else if (next == 5) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) setState(() => _rewardPopup = 'ticket');
-      });
+  @override
+  void initState() {
+    super.initState();
+    _refreshFromEggs();
+  }
+
+  /// EasterEggService 에서 현재 챕터의 발견 카운트를 가져와 동기화.
+  Future<void> _refreshFromEggs() async {
+    final discovered = await EasterEggService.discoveredAll();
+    final chapterKey = _chapterKey(_season);
+    final targets = kChapterTargets[chapterKey] ?? const [];
+    // 챕터 타깃 중 hasEasterEgg=true 인 것만 카운트
+    final eggTargets = targets.where((id) {
+      final att = kAttractions.where((a) => a.id == id);
+      return att.isNotEmpty && att.first.hasEasterEgg;
+    }).toList();
+    final discoveredInChapter = eggTargets.where(discovered.contains).length;
+    if (!mounted) return;
+    setState(() {
+      _booksCollected = discoveredInChapter.clamp(0, 5);
+    });
+  }
+
+  String _chapterKey(_Season s) {
+    switch (s) {
+      case _Season.spring: return 'spring';
+      case _Season.summer: return 'summer';
+      case _Season.autumn: return 'autumn';
+      case _Season.winter: return 'winter';
     }
+  }
+
+  void _addBook() {
+    // 시뮬레이션: 현재 챕터의 미발견 이스터에그 어트랙션을 하나 더 발견 처리.
+    final chapterKey = _chapterKey(_season);
+    final targets = kChapterTargets[chapterKey] ?? const [];
+    () async {
+      final discovered = await EasterEggService.discoveredAll();
+      for (final id in targets) {
+        final att = kAttractions.where((a) => a.id == id);
+        if (att.isEmpty || !att.first.hasEasterEgg) continue;
+        if (!discovered.contains(id)) {
+          await EasterEggService.markDiscovered(id);
+          await _refreshFromEggs();
+          if (!mounted) return;
+          if (_booksCollected == 3) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) setState(() => _rewardPopup = 'goods');
+            });
+          } else if (_booksCollected >= 5) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) setState(() => _rewardPopup = 'ticket');
+            });
+          }
+          return;
+        }
+      }
+    }();
   }
 
   void _changeSeason(_Season s) {
     setState(() {
       _season = s;
-      _booksCollected = 0;
       _rewardPopup = null;
     });
+    _refreshFromEggs();
   }
 
   @override

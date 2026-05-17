@@ -42,7 +42,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
     final answers = ans;
 
     // 1) 필터
-    Iterable<Attraction> pool = kAttractions;
+    Iterable<Attraction> pool = kAttractions.where((a) => a.category == '어트랙션');
     if (answers?.hasInfant ?? false) {
       pool = pool.where((a) => a.heightLimit == 0);
     }
@@ -61,7 +61,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
       double score = 0;
 
       // 혼잡도 낮을수록 +
-      score += (60 - a.estimatedWaitMin).clamp(-20, 60).toDouble();
+      score += (60 - a.waitMinutes).clamp(-20, 60).toDouble();
 
       if (answers != null) {
         // 유아 동반: 실내 +30, 거리 짧을수록 큰 보너스
@@ -270,7 +270,7 @@ class _AttractionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             alignment: Alignment.center,
-            child: Text(item.emoji, style: const TextStyle(fontSize: 28)),
+            child: Text(item.icon, style: const TextStyle(fontSize: 28)),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -305,7 +305,7 @@ class _AttractionCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Text('⏱ 예상 ${item.estimatedWaitMin}분',
+                    Text('⏱ 예상 ${item.waitMinutes}분',
                         style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
                     if (item.heightLimit > 0)
                       Text('📏 ${item.heightLimit}cm+',
