@@ -837,7 +837,7 @@ class _FacilitySheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, -4))],
       ),
-      child: isMini ? _miniBody() : _fullBody(),
+      child: isMini ? _miniBody() : _fullBody(context),
     );
   }
 
@@ -899,7 +899,7 @@ class _FacilitySheet extends StatelessWidget {
   }
 
   // ── 중간/최대 (0.50 / 0.92) ─────────────────────────────
-  Widget _fullBody() {
+  Widget _fullBody(BuildContext context) {
     return Column(
       children: [
         _handle(),
