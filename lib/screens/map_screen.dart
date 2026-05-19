@@ -21,8 +21,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 지도 상수 ──────────────────────────────────────────────
   // 서울랜드 실제 위치 — 경기 과천시 광명로 181 (막계동)
   // rect 127.018,37.432,127.030,37.438 의 중심 부근으로 보정.
-  static const LatLng _seoullandCenter = LatLng(37.4278, 126.9798);
-  static const LatLng _kGate = LatLng(37.4267, 126.9771); // 정문 (대공원역 진입)
+  // 서울랜드 실제 좌표 — Naver/Google Maps 확인 (37.434327, 127.020105 근처).
+  static const LatLng _seoullandCenter = LatLng(37.4343, 127.0201);
+  static const LatLng _kGate = LatLng(37.4332, 127.0174); // 정문 (대공원역 진입)
 
   // ── 컨트롤 / 상태 ──────────────────────────────────────────
   final MapController _mapController = MapController();
@@ -43,12 +44,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   double _sheetSize = 0.08;
-
-  // 좌표 디버그 오버레이 — 사용자가 진짜 서울랜드 위치 찾을 때까지 임시.
-  double _debugLat = 37.4278;
-  double _debugLng = 126.9798;
-  double _debugZoom = 17.0;
-  bool _debugVisible = true;
   static const double _kSheetMini = 0.08;
   static const double _kSheetMid = 0.50;
   static const double _kSheetMax = 0.92;
@@ -346,13 +341,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     curve: Curves.easeOut,
                   );
                 },
-                onPositionChanged: (camera, _) {
-                  setState(() {
-                    _debugLat = camera.center.latitude;
-                    _debugLng = camera.center.longitude;
-                    _debugZoom = camera.zoom;
-                  });
-                },
               ),
               children: [
                 TileLayer(
@@ -575,42 +563,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               );
             },
           ),
-          // ── 좌표 디버그 오버레이 (임시) ───────────────────
-          if (_debugVisible)
-            Positioned(
-              top: MediaQuery.of(context).padding.top,
-              left: 0, right: 0,
-              child: Material(
-                color: const Color(0xFFFFEB3B),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.my_location, size: 14, color: Color(0xFF1F1F1F)),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'center: ${_debugLat.toStringAsFixed(6)}, ${_debugLng.toStringAsFixed(6)}  z=${_debugZoom.toStringAsFixed(1)}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1F1F1F),
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => setState(() => _debugVisible = false),
-                        child: const Padding(
-                          padding: EdgeInsets.all(4),
-                          child: Icon(Icons.close, size: 14, color: Color(0xFF1F1F1F)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
