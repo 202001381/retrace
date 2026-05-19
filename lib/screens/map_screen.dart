@@ -21,8 +21,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 지도 상수 ──────────────────────────────────────────────
   // 서울랜드 실제 위치 — 경기 과천시 광명로 181 (막계동)
   // rect 127.018,37.432,127.030,37.438 의 중심 부근으로 보정.
-  static const LatLng _seoullandCenter = LatLng(37.4350, 127.0240);
-  static const LatLng _kGate = LatLng(37.4338, 127.0235); // 정문 (대공원역 진입)
+  static const LatLng _seoullandCenter = LatLng(37.4278, 126.9798);
+  static const LatLng _kGate = LatLng(37.4267, 126.9771); // 정문 (대공원역 진입)
 
   // ── 컨트롤 / 상태 ──────────────────────────────────────────
   final MapController _mapController = MapController();
