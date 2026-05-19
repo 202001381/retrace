@@ -43,6 +43,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   double _sheetSize = 0.08;
+
+  // 좌표 디버그 오버레이 — 사용자가 진짜 서울랜드 위치 찾을 때까지 임시.
+  double _debugLat = 37.4278;
+  double _debugLng = 126.9798;
+  double _debugZoom = 17.0;
+  bool _debugVisible = true;
   static const double _kSheetMini = 0.08;
   static const double _kSheetMid = 0.50;
   static const double _kSheetMax = 0.92;
@@ -340,6 +346,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     curve: Curves.easeOut,
                   );
                 },
+                onPositionChanged: (camera, _) {
+                  setState(() {
+                    _debugLat = camera.center.latitude;
+                    _debugLng = camera.center.longitude;
+                    _debugZoom = camera.zoom;
+                  });
+                },
               ),
               children: [
                 TileLayer(
@@ -562,6 +575,42 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               );
             },
           ),
+          // ── 좌표 디버그 오버레이 (임시) ───────────────────
+          if (_debugVisible)
+            Positioned(
+              top: MediaQuery.of(context).padding.top,
+              left: 0, right: 0,
+              child: Material(
+                color: const Color(0xFFFFEB3B),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.my_location, size: 14, color: Color(0xFF1F1F1F)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'center: ${_debugLat.toStringAsFixed(6)}, ${_debugLng.toStringAsFixed(6)}  z=${_debugZoom.toStringAsFixed(1)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1F1F1F),
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => setState(() => _debugVisible = false),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(Icons.close, size: 14, color: Color(0xFF1F1F1F)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
