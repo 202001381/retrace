@@ -137,26 +137,35 @@ def main() -> int:
         time.sleep(DELAY_MS / 1000)
 
     pois = list(deduped.values())
-    pois.sort(key=lambda p: (p["category_group_code"], p["place_name"]))
+
+    # rect 범위 밖 항목 → 경고 + 제외
+    in_rect, out_of_rect = [], []
+    for p in pois:
+        if 37.432 <= p["lat"] <= 37.438 and 127.018 <= p["lng"] <= 127.030:
+            in_rect.append(p)
+        else:
+            out_of_rect.append(p)
+
+    in_rect.sort(key=lambda p: (p["category_group_code"], p["place_name"]))
 
     print("─" * 60)
     print(f"수집 결과 (중복 제거 후): {len(pois)}개")
     for lbl, n in label_counts.items():
         print(f"  {lbl:8s}  {n}")
-    print()
-    # 범위 외 항목 검증
-    out_of_rect = [p for p in pois if not (37.432 <= p["lat"] <= 37.438 and 127.018 <= p["lng"] <= 127.030)]
     if out_of_rect:
-        print(f"⚠️  rect 범위 밖: {len(out_of_rect)}개 (확인 필요)")
-        for p in out_of_rect[:5]:
+        print()
+        print(f"⚠️  rect 범위 밖 {len(out_of_rect)}개 — 제외:")
+        for p in out_of_rect:
             print(f"    - {p['place_name']}  ({p['lat']:.5f}, {p['lng']:.5f})  {p['address_name']}")
+    print()
+    print(f"최종 저장 대상: {len(in_rect)}개")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "rect": RECT,
         "source": "kakao_local_v2",
-        "pois": pois,
+        "pois": in_rect,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✓ 저장 완료: {OUT.relative_to(ROOT)}")
