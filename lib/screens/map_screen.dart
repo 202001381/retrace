@@ -19,8 +19,9 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 지도 상수 ──────────────────────────────────────────────
-  static const LatLng _seoullandCenter = LatLng(37.4278, 126.9798);
-  static const LatLng _kGate = LatLng(37.4270, 126.9785); // 정문 (GPS fallback / 경로 출발)
+  // 서울랜드 실제 위치 — 경기 과천시 광명로 181 (막계동)
+  static const LatLng _seoullandCenter = LatLng(37.4279, 127.0247);
+  static const LatLng _kGate = LatLng(37.4263, 127.0244); // 정문 (대공원역 진입)
 
   // ── 컨트롤 / 상태 ──────────────────────────────────────────
   final MapController _mapController = MapController();
