@@ -133,8 +133,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         return const Color(0xFFE60012);
       case '음식점':
         return const Color(0xFFFF6B00);
-      default:
+      case '카페':
+        return const Color(0xFF6F4E37);
+      case '포토스팟':
         return const Color(0xFF6B21A8);
+      default:
+        return const Color(0xFF888888);
     }
   }
 
@@ -144,6 +148,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         return a.category == '어트랙션';
       case '음식점':
         return a.category == '음식점';
+      case '카페':
+        return a.category == '카페';
+      case '포토스팟':
+        return a.category == '포토스팟';
       case '이스터에그':
         return a.hasEasterEgg;
       default:
@@ -162,12 +170,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   List<Attraction> get _panelAttractions {
     Iterable<Attraction> list;
     switch (_facilityTab) {
-      case '음식점·상점':
+      case '음식점':
         list = kAttractions.where((a) => a.category == '음식점');
         break;
-      case '공연':
-      case '편의시설':
-        list = const Iterable<Attraction>.empty();
+      case '카페':
+        list = kAttractions.where((a) => a.category == '카페');
+        break;
+      case '포토스팟':
+        list = kAttractions.where((a) => a.category == '포토스팟');
         break;
       default: // 어트랙션
         list = kAttractions.where((a) => a.category == '어트랙션');
@@ -312,8 +322,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Color _getMarkerColor(String category) {
     switch (category) {
       case '어트랙션': return const Color(0xFFE60012);
-      case '음식점': return const Color(0xFFFF6B00);
-      default: return const Color(0xFF6B21A8);
+      case '음식점':   return const Color(0xFFFF6B00);
+      case '카페':     return const Color(0xFF6F4E37);
+      case '포토스팟': return const Color(0xFF6B21A8);
+      default:         return const Color(0xFF888888);
     }
   }
 
@@ -498,7 +510,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 itemCount: 4,
                                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                                 itemBuilder: (_, i) {
-                                  final tabs = ['어트랙션', '음식점·상점', '공연', '편의시설'];
+                                  final tabs = ['어트랙션', '음식점', '카페', '포토스팟'];
                                   final t = tabs[i];
                                   final active = _facilityTab == t;
                                   return GestureDetector(
@@ -593,7 +605,7 @@ class _TopBar extends StatelessWidget {
     required this.onFilter,
   });
 
-  static const _filters = ['전체', '어트랙션', '음식점', '이스터에그'];
+  static const _filters = ['전체', '어트랙션', '음식점', '카페', '포토스팟', '이스터에그'];
 
   @override
   Widget build(BuildContext context) {
