@@ -344,7 +344,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  // VWorld (한국 국토교통부) 정밀 지도 타일. 한국 내부 사설 시설
+                  // 윤곽까지 잡아주므로 OSM 의 회색 영역 문제 해소.
+                  // 정식 출시 전 키 회전 + 도메인 제한 설정 필요.
+                  urlTemplate:
+                      'https://api.vworld.kr/req/wmts/1.0.0/{apiKey}/Base/{z}/{y}/{x}.png',
+                  additionalOptions: const {
+                    'apiKey': '9783E3A8-A564-37C0-A9DC-42D67CAA8112',
+                  },
                   userAgentPackageName: 'com.seoulland.app',
                 ),
                 MarkerLayer(markers: _buildMarkers()),
