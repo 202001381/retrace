@@ -7,6 +7,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/attraction.dart';
+import '../models/route_response.dart';
+import '../services/onboarding_service.dart';
+import '../services/route_service.dart';
 import '../widgets/attraction_detail_sheet.dart';
 
 class MapScreen extends StatefulWidget {
@@ -42,6 +45,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   int? _navWalkMin;
   bool _navInProgress = false;
 
+  // 동선 추천 상태
+  RouteResponse? _currentRoute;
+  bool _routeLoading = false;
+  SurveyAnswers? _onboardingAnswers;
+  LatLng? _lastRouteOrigin; // 100m 이상 이동 시 재요청용
+
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   double _sheetSize = 0.08;
   static const double _kSheetMini = 0.08;
@@ -59,6 +68,38 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         _mapController.move(_seoullandCenter, 17.0);
       } catch (_) {}
     });
+    _loadRoute('initial');
+  }
+
+  Future<void> _loadRoute(String reason) async {
+    if (_routeLoading) return;
+    setState(() => _routeLoading = true);
+    try {
+      _onboardingAnswers ??= await OnboardingService.read();
+      final origin = _myPosition ?? _kGate;
+      final survey = _onboardingAnswers ??
+          const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
+      final req = RouteRequest(
+        uid: 'guest',
+        lat: origin.latitude,
+        lng: origin.longitude,
+        hasGps: _myPosition != null,
+        onboarding: survey,
+        completedIds: const {},
+        discoveredEggs: const {},
+        requestReason: reason,
+      );
+      final resp = await RouteService.instance.fetchRoute(req);
+      if (!mounted) return;
+      setState(() {
+        _currentRoute = resp;
+        _lastRouteOrigin = origin;
+      });
+    } catch (_) {
+      // 실패 시 마지막 캐시 유지 (이미 _currentRoute 에 들어있음)
+    } finally {
+      if (mounted) setState(() => _routeLoading = false);
+    }
   }
 
   void _onSheetChanged() {
@@ -119,6 +160,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     } catch (_) {}
     _mapController.move(target, 17.0);
     if (mounted) setState(() => _gpsLoading = false);
+
+    // 100m 이상 이동했으면 동선 재요청
+    if (_lastRouteOrigin == null ||
+        _haversineMeters(_lastRouteOrigin!, target) >= 100) {
+      _loadRoute('gps_moved');
+    }
   }
 
   // ── 동선 / 필터 ──────────────────────────────────────────
@@ -187,12 +234,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return list.toList();
   }
 
-  /// 마이 루나 동선 — 어트랙션 상위 3개.
-  List<Attraction> get _routeAttractions =>
-      kAttractions.where((a) => a.category == '어트랙션').take(3).toList();
+  /// 마이 루나 동선 — RouteService 응답에서 stop id → Attraction 해석.
+  List<Attraction> get _routeAttractions {
+    final resp = _currentRoute;
+    if (resp == null) return const [];
+    final byId = {for (final a in kAttractions) a.id: a};
+    return resp.route
+        .map((s) => byId[s.id])
+        .whereType<Attraction>()
+        .toList();
+  }
 
-  String get _routeSummaryText =>
-      '🗺️ ${_routeAttractions.map((a) => a.name).join(' → ')}';
+  String get _routeSummaryText {
+    final names = _routeAttractions.map((a) => a.name).join(' → ');
+    if (names.isEmpty) return '🗺️ 동선 준비 중…';
+    return '🗺️ $names';
+  }
 
   // ── 인터랙션 ─────────────────────────────────────────────
   void _openDetail(Attraction a) {
@@ -306,12 +363,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 동선 폴리라인 ─────────────────────────────────────────
   List<Polyline> _buildRoute() {
     if (!_showRoute) return const [];
-    final routeIds = ['galaxy_888', 'flume_ride', 'ferris_wheel'];
-    final routeSpots = kAttractions.where((a) => routeIds.contains(a.id)).toList();
-    if (routeSpots.length < 2) return const [];
+    final spots = _routeAttractions;
+    if (spots.length < 2) return const [];
     return [
       Polyline(
-        points: routeSpots.map((a) => LatLng(a.lat, a.lng)).toList(),
+        points: spots.map((a) => LatLng(a.lat, a.lng)).toList(),
         strokeWidth: 3.0,
         color: const Color(0xFFE60012),
         pattern: StrokePattern.dashed(segments: const [10, 5]),
@@ -458,29 +514,54 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           if (_showRoute)
                             Padding(
                               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      _routeSummaryText,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF1E2B4A),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _routeSummaryText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF1E2B4A),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (_routeLoading)
+                                        const Padding(
+                                          padding: EdgeInsets.only(right: 6),
+                                          child: SizedBox(
+                                            width: 12, height: 12,
+                                            child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF1E2B4A)),
+                                          ),
+                                        ),
+                                      GestureDetector(
+                                        onTap: () => _loadRoute('manual_refresh'),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE60012),
+                                            borderRadius: BorderRadius.circular(99),
+                                          ),
+                                          child: const Text('다시 추천',
+                                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE60012),
-                                      borderRadius: BorderRadius.circular(99),
+                                  if (_currentRoute != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '총 ${_currentRoute!.totalMin}분 · ${_currentRoute!.rationale ?? ''}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
                                     ),
-                                    child: const Text('동선 ON',
-                                        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),

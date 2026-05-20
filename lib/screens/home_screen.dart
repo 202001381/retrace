@@ -2,6 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../models/attraction.dart';
+import '../models/route_response.dart';
+import '../services/onboarding_service.dart';
+import '../services/route_service.dart';
 import '../widgets/companion_bottom_sheet.dart';
 
 /// 홈 탭 — "방문 전" 전용 화면. 방문 결정 → 티켓 구매까지만 담당.
@@ -25,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // ── Mock 시나리오 (API 연동 전 하드코딩) ─────────────────
   static const int _visitScore = 78;
   static const int _discountPct = 15;
-  static const String _routeSummary = '은하열차 888 → 후룸라이드 → 대관람차';
 
   // 날씨 / 혼잡도 mock
   static const String _weatherIcon = '☁️';
@@ -42,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _logoTapCount = 0;
   DateTime? _lastLogoTap;
 
+  // 마이 루나 동선 (RouteService 응답)
+  RouteResponse? _route;
+  bool _routeLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +59,79 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       });
     }
+    _loadRoute('initial');
+  }
+
+  Future<void> _loadRoute(String reason) async {
+    if (_routeLoading) return;
+    setState(() => _routeLoading = true);
+    try {
+      final survey = (await OnboardingService.read()) ??
+          const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
+      // 홈 화면은 GPS 없이 정문 기준
+      const gateLat = 37.4332, gateLng = 127.0174;
+      final req = RouteRequest(
+        uid: 'guest',
+        lat: gateLat,
+        lng: gateLng,
+        hasGps: false,
+        onboarding: survey,
+        completedIds: const {},
+        discoveredEggs: const {},
+        requestReason: reason,
+      );
+      final resp = await RouteService.instance.fetchRoute(req);
+      if (!mounted) return;
+      setState(() => _route = resp);
+    } catch (_) {
+      // 캐시 유지
+    } finally {
+      if (mounted) setState(() => _routeLoading = false);
+    }
+  }
+
+  List<_RouteItem> get _routeItems {
+    final resp = _route;
+    if (resp == null) return const [];
+    final byId = {for (final a in kAttractions) a.id: a};
+    return resp.route
+        .map((s) => byId[s.id])
+        .whereType<Attraction>()
+        .take(3)
+        .map((a) {
+          final crowd = _crowdLabel(a);
+          return _RouteItem(
+            name: a.name,
+            emoji: a.icon,
+            type: _typeLabel(a),
+            waitMin: a.waitMinutes,
+            crowd: crowd.$1,
+            crowdColor: crowd.$2,
+          );
+        })
+        .toList();
+  }
+
+  static String _typeLabel(Attraction a) {
+    switch (a.category) {
+      case '음식점':
+        return '음식';
+      case '카페':
+        return '카페';
+      case '포토스팟':
+        return '포토';
+      default:
+        if (a.thrillLevel >= 4) return '스릴';
+        if (a.thrillLevel >= 3) return '액티비티';
+        return '여유';
+    }
+  }
+
+  static (String, Color) _crowdLabel(Attraction a) {
+    if (a.category != '어트랙션') return ('여유', const Color(0xFF4CAF50));
+    if (a.waitMinutes <= 10) return ('여유', const Color(0xFF4CAF50));
+    if (a.waitMinutes <= 25) return ('보통', const Color(0xFFFFC107));
+    return ('혼잡', const Color(0xFFE60012));
   }
 
   void _onLogoTap() {
@@ -141,8 +221,12 @@ class _HomeScreenState extends State<HomeScreen> {
               companion: _companion,
               style: _style,
               items: _routeItems,
+              rationale: _route?.rationale,
+              totalMin: _route?.totalMin,
+              loading: _routeLoading,
               onSettings: _openSettingsSheet,
               onOpenMap: widget.onOpenMyLuna,
+              onRefresh: () => _loadRoute('manual_refresh'),
             ),
             const SizedBox(height: 20),
             // 5. 오늘의 이벤트
@@ -153,11 +237,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  static const List<_RouteItem> _routeItems = [
-    _RouteItem(name: '은하열차 888', emoji: '🎢', type: '스릴', waitMin: 15, crowd: '보통', crowdColor: Color(0xFFFFC107)),
-    _RouteItem(name: '후룸라이드', emoji: '🌊', type: '어드벤처', waitMin: 15, crowd: '보통', crowdColor: Color(0xFFFFC107)),
-    _RouteItem(name: '대관람차', emoji: '🎠', type: '여유', waitMin: 5, crowd: '여유', crowdColor: Color(0xFF4CAF50)),
-  ];
 }
 
 // ─── 앱바 ──────────────────────────────────────────────────
@@ -673,14 +752,22 @@ class _MyLunaCard extends StatelessWidget {
   final String companion;
   final String style;
   final List<_RouteItem> items;
+  final String? rationale;
+  final int? totalMin;
+  final bool loading;
   final VoidCallback onSettings;
   final VoidCallback? onOpenMap;
+  final VoidCallback onRefresh;
   const _MyLunaCard({
     required this.companion,
     required this.style,
     required this.items,
+    required this.rationale,
+    required this.totalMin,
+    required this.loading,
     required this.onSettings,
     required this.onOpenMap,
+    required this.onRefresh,
   });
 
   @override
@@ -714,6 +801,19 @@ class _MyLunaCard extends StatelessWidget {
               ),
               const Spacer(),
               InkWell(
+                onTap: loading ? null : onRefresh,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: loading
+                      ? const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF1E3158)),
+                        )
+                      : const Icon(Icons.refresh, size: 16, color: Color(0xFF555555)),
+                ),
+              ),
+              InkWell(
                 onTap: onSettings,
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -744,15 +844,29 @@ class _MyLunaCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          const Text('지난번 못 찾은 이스터에그,',
-              style: TextStyle(color: Color(0xFF888888), fontSize: 13)),
-          const Text('오늘 동선에 넣었어요. 🥚',
-              style: TextStyle(color: Color(0xFF1F1F1F), fontSize: 15, fontWeight: FontWeight.w900)),
+          Text(
+            rationale ?? '오늘의 추천 동선을 준비하고 있어요 🌙',
+            style: const TextStyle(color: Color(0xFF1F1F1F), fontSize: 15, fontWeight: FontWeight.w900),
+          ),
+          if (totalMin != null) ...[
+            const SizedBox(height: 4),
+            Text('예상 소요 약 $totalMin분',
+                style: const TextStyle(color: Color(0xFF888888), fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
           const SizedBox(height: 16),
-          ...items.asMap().entries.map((e) => Padding(
-                padding: EdgeInsets.only(bottom: e.key == items.length - 1 ? 0 : 12),
-                child: _RouteRow(index: e.key + 1, item: e.value),
-              )),
+          if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Text('동선을 불러오는 중…',
+                    style: TextStyle(color: Color(0xFF888888), fontSize: 13, fontWeight: FontWeight.w600)),
+              ),
+            )
+          else
+            ...items.asMap().entries.map((e) => Padding(
+                  padding: EdgeInsets.only(bottom: e.key == items.length - 1 ? 0 : 12),
+                  child: _RouteRow(index: e.key + 1, item: e.value),
+                )),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
