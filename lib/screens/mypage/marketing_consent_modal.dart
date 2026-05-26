@@ -1,0 +1,166 @@
+import 'package:flutter/material.dart';
+
+/// 마케팅 정보 수신 동의 풀스크린 모달 (정통법 §50 명시적 동의).
+/// 호출 측은 [showMarketingConsentModal] 사용 → bool 반환 (true = 동의).
+///
+/// TODO: 법무 검토 필요 — 본문 텍스트, 수집 항목, 수신 시간대, 거부 흐름 모두
+/// placeholder 상태. 베타 출시 전 법무 팀 검토 + 약관 페이지 정식 텍스트 교체.
+class MarketingConsentModal extends StatelessWidget {
+  const MarketingConsentModal({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('마케팅 정보 수신 동의',
+            style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        foregroundColor: const Color(0xFF1F1F1F),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    _Section(
+                      title: '수신 동의 시 받게 되는 정보',
+                      lines: [
+                        '· 비수기·날씨 기반 한산 알림',
+                        '· 할인 쿠폰·이벤트 안내',
+                        '· 신규 어트랙션·시즌 콘텐츠 소식',
+                      ],
+                    ),
+                    _Section(
+                      title: '수신 시간대',
+                      lines: ['오전 8시 ~ 오후 9시'],
+                    ),
+                    _Section(
+                      title: '수집·이용 항목',
+                      lines: [
+                        '· 닉네임',
+                        '· 카카오톡 ID (선택)',
+                        '· 휴대폰 번호 (선택)',
+                        '· 방문 이력',
+                      ],
+                    ),
+                    _Section(
+                      title: '수신 거부 방법',
+                      lines: [
+                        '언제든 마이페이지 > 알림 설정에서 OFF 가능합니다.',
+                        '수신 거부 시 한산 알림 등 일부 기능이 제한됩니다.',
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      '법적 근거: 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFAAAAAA),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: Color(0xFFDDDDDD)),
+                        foregroundColor: const Color(0xFF555555),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('동의하지 않음',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w800)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color(0xFFE60012),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('동의하기',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Section extends StatelessWidget {
+  final String title;
+  final List<String> lines;
+  const _Section({required this.title, required this.lines});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1F1F1F),
+              )),
+          const SizedBox(height: 8),
+          ...lines.map((l) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(l,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF555555),
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    )),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+/// 마케팅 동의 모달을 풀스크린 라우트로 띄우고 결과(true=동의)를 반환.
+Future<bool> showMarketingConsentModal(BuildContext context) async {
+  final result = await Navigator.of(context).push<bool>(
+    MaterialPageRoute<bool>(
+      fullscreenDialog: true,
+      builder: (_) => const MarketingConsentModal(),
+    ),
+  );
+  return result ?? false;
+}

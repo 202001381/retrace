@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'screens/archive_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/mypage/mypage_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/recommend_screen.dart';
 import 'services/onboarding_service.dart';
@@ -145,11 +146,22 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void _openMyPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MypageScreen(
+          onResetOnboarding: widget.onResetOnboarding,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
       HomeScreen(
         onOpenMyLuna: () => _goToMap(myLuna: true),
+        onOpenMyPage: _openMyPage,
         onResetOnboarding: widget.onResetOnboarding,
         openPricingOnStart: _openPricingOnStart,
       ),

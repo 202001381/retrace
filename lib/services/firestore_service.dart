@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/chapter.dart';
+import '../models/user_preferences.dart';
 import '../models/user_profile.dart';
 
 /// users/{uid} 문서 CRUD + 챕터 상태 관리.
@@ -27,6 +28,21 @@ class FirestoreService {
   // ── FCM token ──────────────────────────────────────────────
   Future<void> upsertFcmToken(String uid, String token) async {
     await _userDoc(uid).set({'fcm_token': token}, SetOptions(merge: true));
+  }
+
+  // ── Preferences (알림·위치·마케팅) ─────────────────────────
+  Future<UserPreferences?> getPreferences(String uid) async {
+    final snap = await _userDoc(uid).get();
+    final m = snap.data()?['preferences'] as Map<String, dynamic>?;
+    if (m == null) return null;
+    return UserPreferences.fromMap(m);
+  }
+
+  Future<void> setPreferences(String uid, UserPreferences prefs) async {
+    await _userDoc(uid).set(
+      {'preferences': prefs.toMap()},
+      SetOptions(merge: true),
+    );
   }
 
   // ── Visit history ──────────────────────────────────────────

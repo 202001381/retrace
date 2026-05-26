@@ -20,11 +20,13 @@ import 'checkout_screen.dart';
 /// 핵심 3카드: 방문 가치 · 루나 프라이싱 · 마이 루나.
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenMyLuna;
+  final VoidCallback? onOpenMyPage;
   final VoidCallback? onResetOnboarding;
   final bool openPricingOnStart;
   const HomeScreen({
     super.key,
     this.onOpenMyLuna,
+    this.onOpenMyPage,
     this.onResetOnboarding,
     this.openPricingOnStart = false,
   });
@@ -322,7 +324,10 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
             children: [
             // 1. 앱바
-            _Header(onLogoTap: _onLogoTap),
+            _Header(
+              onLogoTap: _onLogoTap,
+              onProfileTap: widget.onOpenMyPage,
+            ),
             const SizedBox(height: 16),
             // 2. 방문 가치 카드 (날씨·혼잡도·할인·비수기 알림 통합)
             _VisitValueCard(
@@ -370,7 +375,8 @@ class _HomeScreenState extends State<HomeScreen> {
 // ─── 앱바 ──────────────────────────────────────────────────
 class _Header extends StatelessWidget {
   final VoidCallback? onLogoTap;
-  const _Header({this.onLogoTap});
+  final VoidCallback? onProfileTap;
+  const _Header({this.onLogoTap, this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -408,7 +414,21 @@ class _Header extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          // 검색/알림 아이콘은 핸들러 연결 전까지 노출 보류.
+          // 마이페이지 진입점 — 44x44 tap target (Apple HIG).
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: IconButton(
+              onPressed: onProfileTap,
+              padding: EdgeInsets.zero,
+              icon: const Icon(
+                Icons.account_circle_outlined,
+                size: 28,
+                color: Color(0xFF1F1F1F),
+              ),
+              tooltip: '마이페이지',
+            ),
+          ),
         ],
       ),
     );
