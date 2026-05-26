@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/attraction.dart';
 import '../models/route_response.dart';
@@ -48,25 +50,43 @@ class _HomeScreenState extends State<HomeScreen> {
   // 마이 루나 동선 (RouteService 응답)
   RouteResponse? _route;
   bool _routeLoading = false;
+  SurveyAnswers? _survey;
+
+  // 루나 프라이싱 자동 팝업 쿨다운 24h.
+  static const String _kPricingSeenAtKey = 'pricing_popup_last_seen_at';
+  static const int _kPricingCooldownMs = 24 * 60 * 60 * 1000;
 
   @override
   void initState() {
     super.initState();
+    _loadSurvey();
     if (widget.openPricingOnStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) _openPricingPopup();
-        });
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _autoOpenPricingIfDue());
     }
     _loadRoute('initial');
+  }
+
+  Future<void> _loadSurvey() async {
+    final s = await OnboardingService.read();
+    if (!mounted) return;
+    setState(() => _survey = s);
+  }
+
+  Future<void> _autoOpenPricingIfDue() async {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getInt(_kPricingSeenAtKey) ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - last < _kPricingCooldownMs) return;
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) _openPricingPopup();
   }
 
   Future<void> _loadRoute(String reason) async {
     if (_routeLoading) return;
     setState(() => _routeLoading = true);
     try {
-      final survey = (await OnboardingService.read()) ??
+      final survey = _survey ??
+          (await OnboardingService.read()) ??
           const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
       // 홈 화면은 GPS 없이 정문 기준
       const gateLat = 37.4332, gateLng = 127.0174;
@@ -88,6 +108,24 @@ class _HomeScreenState extends State<HomeScreen> {
     } finally {
       if (mounted) setState(() => _routeLoading = false);
     }
+  }
+
+  /// 온보딩 답변을 1줄 라벨로. 예: "👨‍👩‍👧 4명 · 데이트 · 가족·어린이 위주".
+  static String? _surveyLabelOf(SurveyAnswers? s) {
+    if (s == null || s.total == 0) return null;
+    String emoji = '👥';
+    var max = 0;
+    for (final c in MemberCategory.values) {
+      final n = s.count(c);
+      if (n > max) {
+        max = n;
+        emoji = c.emoji;
+      }
+    }
+    final parts = <String>['$emoji ${s.total}명'];
+    if (s.purpose != null) parts.add(s.purpose!);
+    if (s.favoriteType != null) parts.add(s.favoriteType!);
+    return parts.join(' · ');
   }
 
   List<_RouteItem> get _routeItems {
@@ -164,13 +202,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openPricingPopup() {
-    showModalBottomSheet(
+  Future<void> _openPricingPopup() async {
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const _LunaPricingSheet(discountPct: _discountPct),
     );
+    // 자동 팝업 쿨다운용 — 어떤 경로로 열렸든 dismiss 시점을 기록.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_kPricingSeenAtKey, DateTime.now().millisecondsSinceEpoch);
   }
 
   void _openVisitDetailSheet() {
@@ -220,6 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _MyLunaCard(
               companion: _companion,
               style: _style,
+              surveyLabel: _surveyLabelOf(_survey),
               items: _routeItems,
               rationale: _route?.rationale,
               totalMin: _route?.totalMin,
@@ -280,9 +322,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const Icon(Icons.search_rounded, color: Color(0xFF1F1F1F), size: 24),
-          const SizedBox(width: 16),
-          const Icon(Icons.notifications_outlined, color: Color(0xFF1F1F1F), size: 24),
+          // 검색/알림 아이콘은 핸들러 연결 전까지 노출 보류.
         ],
       ),
     );
@@ -631,15 +671,52 @@ class _LunaPricingCard extends StatelessWidget {
 }
 
 // ─── 루나 프라이싱 상세 시트 ───────────────────────────────
-class _LunaPricingSheet extends StatelessWidget {
+class _LunaPricingSheet extends StatefulWidget {
   final int discountPct;
   const _LunaPricingSheet({required this.discountPct});
+
+  @override
+  State<_LunaPricingSheet> createState() => _LunaPricingSheetState();
+}
+
+class _LunaPricingSheetState extends State<_LunaPricingSheet> {
+  Timer? _ticker;
+  Duration _remaining = _untilMidnight();
+
+  static Duration _untilMidnight() {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    return midnight.difference(now);
+  }
 
   static String _fmt(int n) =>
       n.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 
+  String _fmtRemaining() {
+    final h = _remaining.inHours.toString().padLeft(2, '0');
+    final m = (_remaining.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _remaining = _untilMidnight());
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final discountPct = widget.discountPct;
     const original = 30000;
     final discounted = original * (100 - discountPct) ~/ 100;
     final saved = original - discounted;
@@ -711,7 +788,18 @@ class _LunaPricingSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text('오늘 ${_fmt(saved)}원 아끼는 중', style: const TextStyle(color: Color(0xFF888888), fontSize: 12)),
           const SizedBox(height: 4),
-          const Text('⏰ 오늘 자정까지', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+          Row(
+            children: [
+              const Text('⏰ 오늘 자정까지 남은 시간 ',
+                  style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+              Text(_fmtRemaining(),
+                  style: const TextStyle(
+                    color: Color(0xFFE60012),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  )),
+            ],
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -751,6 +839,7 @@ class _RouteItem {
 class _MyLunaCard extends StatelessWidget {
   final String companion;
   final String style;
+  final String? surveyLabel;
   final List<_RouteItem> items;
   final String? rationale;
   final int? totalMin;
@@ -761,6 +850,7 @@ class _MyLunaCard extends StatelessWidget {
   const _MyLunaCard({
     required this.companion,
     required this.style,
+    required this.surveyLabel,
     required this.items,
     required this.rationale,
     required this.totalMin,
@@ -835,6 +925,21 @@ class _MyLunaCard extends StatelessWidget {
               ),
             ],
           ),
+          if (surveyLabel != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text('온보딩 답변',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF888888), letterSpacing: 0.6)),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(surveyLabel!,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF555555))),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 6,
