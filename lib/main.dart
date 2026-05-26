@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'screens/archive_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/myluna/myluna_screen.dart';
 import 'screens/mypage/mypage_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/recommend_screen.dart';
@@ -146,6 +147,14 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  /// 마이 루나 = bottom nav 별도 탭(index 2). 홈 카드의 "전체 동선 보기" 도 여기로.
+  void _goToMyLuna() {
+    setState(() {
+      _currentIndex = 2;
+      _mapMyLuna = false;
+    });
+  }
+
   void _openMyPage() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -160,12 +169,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final screens = <Widget>[
       HomeScreen(
-        onOpenMyLuna: () => _goToMap(myLuna: true),
+        onOpenMyLuna: _goToMyLuna,
         onOpenMyPage: _openMyPage,
         onResetOnboarding: widget.onResetOnboarding,
         openPricingOnStart: _openPricingOnStart,
       ),
       MapScreen(showMyLunaInitially: _mapMyLuna),
+      const MyLunaScreen(),
       const RecommendScreen(),
       const ArchiveScreen(),
     ];
@@ -195,8 +205,9 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               _navItem(0, Icons.home_rounded, '홈'),
               _navItem(1, Icons.map_rounded, 'MAP'),
-              _navItem(2, Icons.auto_awesome_rounded, '추천'),
-              _navItem(3, Icons.menu_book_rounded, 'Archive'),
+              _navItem(2, Icons.nightlight_round, '마이 루나'),
+              _navItem(3, Icons.auto_awesome_rounded, '추천'),
+              _navItem(4, Icons.menu_book_rounded, 'Archive'),
             ],
           ),
         ),
