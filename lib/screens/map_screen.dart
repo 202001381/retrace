@@ -7,7 +7,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/attraction.dart';
+import '../models/place_filter.dart';
 import '../models/route_response.dart';
+import '../services/easter_egg_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
 import '../widgets/attraction_detail_sheet.dart';
@@ -38,10 +40,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   bool _gpsLoading = false;
   bool _showRoute = false;
-  String _activeFilter = '전체'; // 전체 / 어트랙션 / 음식점 / 카페 / 포토스팟
-  String _facilityTab = '어트랙션';
-  bool _operatingOnly = false;
-  bool _easterEggSubFilter = false;
+
+  // 장소 리스트 화면의 단일 필터 — 카테고리(단일 선택) + 운영중/내 이스터에그(토글).
+  PlaceFilterState _filter = PlaceFilterState.empty;
+  // 사용자가 수집한 이스터에그 어트랙션 id (영속화) — "내 이스터에그" 토글의 모집단.
+  Set<String> _discoveredEggs = const {};
 
   // 상단 검색바 — 이름 부분 일치, 대소문자 무시.
   final TextEditingController _searchCtrl = TextEditingController();
@@ -76,6 +79,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       } catch (_) {}
     });
     _loadRoute('initial');
+    _loadDiscoveredEggs();
+  }
+
+  Future<void> _loadDiscoveredEggs() async {
+    final ids = await EasterEggService.discoveredAll();
+    if (!mounted) return;
+    setState(() => _discoveredEggs = ids);
   }
 
   Future<void> _loadRoute(String reason) async {
@@ -223,54 +233,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  bool _attractionPassesFilter(Attraction a) {
-    switch (_activeFilter) {
-      case '어트랙션':
-        return a.category == '어트랙션';
-      case '음식점':
-        return a.category == '음식점';
-      case '카페':
-        return a.category == '카페';
-      case '포토스팟':
-        return a.category == '포토스팟';
-      default:
-        return true;
-    }
-  }
-
   bool _matchesSearch(Attraction a) {
     if (_searchQuery.isEmpty) return true;
     return a.name.toLowerCase().contains(_searchQuery.toLowerCase());
   }
 
-  List<Attraction> get _filteredAttractions {
-    var list = kAttractions.where(_attractionPassesFilter).toList();
-    if (_operatingOnly) list = list.where((a) => a.isOperating).toList();
-    if (_easterEggSubFilter) list = list.where((a) => a.hasEasterEgg).toList();
-    list = list.where(_matchesSearch).toList();
-    return list;
-  }
-
-  /// 패널 카드 리스트 — facility tab 기반, 상단 칩과 독립.
-  List<Attraction> get _panelAttractions {
-    Iterable<Attraction> list;
-    switch (_facilityTab) {
-      case '음식점':
-        list = kAttractions.where((a) => a.category == '음식점');
-        break;
-      case '카페':
-        list = kAttractions.where((a) => a.category == '카페');
-        break;
-      case '포토스팟':
-        list = kAttractions.where((a) => a.category == '포토스팟');
-        break;
-      default: // 어트랙션
-        list = kAttractions.where((a) => a.category == '어트랙션');
-    }
-    if (_operatingOnly) list = list.where((a) => a.isOperating);
-    if (_easterEggSubFilter) list = list.where((a) => a.hasEasterEgg);
-    list = list.where(_matchesSearch);
-    return list.toList();
+  /// 마커·시트 카드 양쪽에서 사용하는 단일 표시 리스트.
+  List<Attraction> get _visibleAttractions {
+    return _filter
+        .apply(kAttractions, _discoveredEggs)
+        .where(_matchesSearch)
+        .toList();
   }
 
   /// 마이 루나 동선 — RouteService 응답에서 stop id → Attraction 해석.
@@ -288,6 +261,64 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final names = _routeAttractions.map((a) => a.name).join(' → ');
     if (names.isEmpty) return '🗺️ 동선 준비 중…';
     return '🗺️ $names';
+  }
+
+  /// 시트 카드 리스트가 빈 경우의 분기 — "내 이스터에그" 0건이 최우선.
+  Widget _buildEmptyState() {
+    if (_filter.onlyMyEasterEggs && _discoveredEggs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        child: Column(
+          children: [
+            Text('아직 수집한 이스터에그가 없어요',
+                style: TextStyle(
+                  color: Color(0xFF1F1F1F),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                )),
+            SizedBox(height: 6),
+            Text('지도에서 ✨ 표시된 곳을 방문해보세요',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF888888),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                )),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      child: Column(
+        children: [
+          const Text('조건에 맞는 장소가 없어요',
+              style: TextStyle(
+                color: Color(0xFF1F1F1F),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              )),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () =>
+                setState(() => _filter = PlaceFilterState.empty),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1E3158),
+              side: const BorderSide(color: Color(0xFFDDDDDD)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+            child: const Text('필터 초기화',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                )),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── 인터랙션 ─────────────────────────────────────────────
@@ -352,7 +383,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       }
     }
 
-    final markers = _filteredAttractions.map((a) {
+    final markers = _visibleAttractions.map((a) {
       final order = routeOrder[a.id];
       final hasBadge = order != null;
       final dot = Container(
@@ -548,18 +579,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
           _TopBar(
-            activeFilter: _activeFilter,
             routeOn: _showRoute,
             gpsLoading: _gpsLoading,
             searchController: _searchCtrl,
             onSearchChanged: (q) => setState(() => _searchQuery = q),
             onToggleRoute: _toggleRoute,
             onGps: _moveToGps,
-            onFilter: (f) => setState(() => _activeFilter = f),
           ),
           if (_showRoute || _navTarget != null)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 132,
+              top: MediaQuery.of(context).padding.top + 80,
               left: 16,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -679,13 +708,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                          // 헤더
+                          // 헤더 — 필터 활성 시 "전체" 단어 제거, 결과 N곳.
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                             child: Row(
                               children: [
-                                Text('전체 ${_panelAttractions.length}곳',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+                                Text(
+                                  _filter.isAnyActive
+                                      ? '결과 ${_visibleAttractions.length}곳'
+                                      : '전체 ${_visibleAttractions.length}곳',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF1F1F1F),
+                                  ),
+                                ),
                                 const Spacer(),
                                 _PulseDot(),
                                 const SizedBox(width: 4),
@@ -695,21 +732,26 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             ),
                           ),
                           const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                          // 카테고리 탭
+                          // 카테고리 칩 — 둥근 pill, 단일 선택. "전체" 포함 5개.
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                             child: SizedBox(
                               height: 32,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: 4,
+                                itemCount: PlaceCategory.values.length + 1,
                                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                                 itemBuilder: (_, i) {
-                                  final tabs = ['어트랙션', '음식점', '카페', '포토스팟'];
-                                  final t = tabs[i];
-                                  final active = _facilityTab == t;
+                                  final isAll = i == 0;
+                                  final cat = isAll ? null : PlaceCategory.values[i - 1];
+                                  final label = isAll ? '전체' : cat!.label;
+                                  final active = _filter.category == cat;
                                   return GestureDetector(
-                                    onTap: () => setState(() => _facilityTab = t),
+                                    onTap: () => setState(() {
+                                      _filter = isAll
+                                          ? _filter.copyWith(clearCategory: true)
+                                          : _filter.copyWith(category: cat);
+                                    }),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(
@@ -718,7 +760,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                         border: Border.all(color: active ? const Color(0xFF1E3158) : const Color(0xFFDDDDDD)),
                                       ),
                                       alignment: Alignment.center,
-                                      child: Text(t,
+                                      child: Text(label,
                                           style: TextStyle(
                                             color: active ? Colors.white : const Color(0xFF1F1F1F),
                                             fontSize: 12, fontWeight: FontWeight.w800,
@@ -729,51 +771,29 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-                          // sub chips — 카테고리 탭과 분리되는 토글 필터.
-                          const SizedBox(height: 10),
+                          // 상태 필터 — 카테고리 칩과 다른 인터랙션 문법(스위치)으로 분리.
+                          const SizedBox(height: 12),
                           const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.filter_alt_outlined,
-                                    size: 14, color: Color(0xFF888888)),
-                                const SizedBox(width: 4),
-                                const Text('필터',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF888888),
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.4,
-                                    )),
-                                const SizedBox(width: 12),
-                                _SubChip(
-                                  text: '운영중',
-                                  active: _operatingOnly,
-                                  activeColor: const Color(0xFF4CAF50),
-                                  onTap: () => setState(() => _operatingOnly = !_operatingOnly),
-                                ),
-                                const SizedBox(width: 8),
-                                _SubChip(
-                                  text: '이스터에그 ✨',
-                                  active: _easterEggSubFilter,
-                                  activeColor: const Color(0xFFF4B633),
-                                  onTap: () => setState(() => _easterEggSubFilter = !_easterEggSubFilter),
-                                ),
-                              ],
-                            ),
+                          _FilterToggleRow(
+                            label: '운영중만 보기',
+                            value: _filter.onlyOperating,
+                            onChanged: (v) => setState(
+                                () => _filter = _filter.copyWith(onlyOperating: v)),
                           ),
-                          // 카드 리스트
-                          if (_panelAttractions.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 40),
-                              child: Center(
-                                child: Text('해당하는 시설이 없습니다',
-                                    style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13, fontWeight: FontWeight.w600)),
-                              ),
-                            )
+                          const Divider(height: 1, color: Color(0xFFF1F1F1), indent: 20, endIndent: 20),
+                          _FilterToggleRow(
+                            label: '✨ 내 이스터에그',
+                            value: _filter.onlyMyEasterEggs,
+                            onChanged: (v) => setState(
+                                () => _filter = _filter.copyWith(onlyMyEasterEggs: v)),
+                          ),
+                          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                          const SizedBox(height: 8),
+                          // 카드 리스트 — 이중 빈 상태 분기.
+                          if (_visibleAttractions.isEmpty)
+                            _buildEmptyState()
                           else
-                            ..._panelAttractions.map((a) => Padding(
+                            ..._visibleAttractions.map((a) => Padding(
                                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                                   child: _AttractionCard(
                                     attraction: a,
@@ -798,27 +818,20 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
 // ─── 상단 바 ───────────────────────────────────────────────
 class _TopBar extends StatelessWidget {
-  final String activeFilter;
   final bool routeOn;
   final bool gpsLoading;
   final TextEditingController searchController;
   final void Function(String) onSearchChanged;
   final VoidCallback onToggleRoute;
   final VoidCallback onGps;
-  final void Function(String) onFilter;
   const _TopBar({
-    required this.activeFilter,
     required this.routeOn,
     required this.gpsLoading,
     required this.searchController,
     required this.onSearchChanged,
     required this.onToggleRoute,
     required this.onGps,
-    required this.onFilter,
   });
-
-  // 이스터에그는 시트 안 sub chip 으로 일원화 — 여기 상단 칩은 카테고리만.
-  static const _filters = ['전체', '어트랙션', '음식점', '카페', '포토스팟'];
 
   @override
   Widget build(BuildContext context) {
@@ -829,97 +842,61 @@ class _TopBar extends StatelessWidget {
         elevation: 2,
         child: SafeArea(
           bottom: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(12)),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.search, size: 16, color: Color(0xFF888888)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: searchController,
-                                onChanged: onSearchChanged,
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF1F1F1F)),
-                                decoration: const InputDecoration(
-                                  isCollapsed: true,
-                                  border: InputBorder.none,
-                                  hintText: '어트랙션, 음식점',
-                                  hintStyle: TextStyle(color: Color(0xFF888888), fontSize: 13),
-                                ),
-                              ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, size: 16, color: Color(0xFF888888)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: searchController,
+                            onChanged: onSearchChanged,
+                            style: const TextStyle(fontSize: 13, color: Color(0xFF1F1F1F)),
+                            decoration: const InputDecoration(
+                              isCollapsed: true,
+                              border: InputBorder.none,
+                              hintText: '어트랙션, 음식점',
+                              hintStyle: TextStyle(color: Color(0xFF888888), fontSize: 13),
                             ),
-                            if (searchController.text.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  searchController.clear();
-                                  onSearchChanged('');
-                                },
-                                child: const Icon(Icons.close, size: 16, color: Color(0xFF888888)),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _IconLabelButton(
-                      label: '🗺️ 동선',
-                      active: routeOn,
-                      activeColor: const Color(0xFF1E2B4A),
-                      onTap: onToggleRoute,
-                    ),
-                    const SizedBox(width: 6),
-                    _IconLabelButton(
-                      label: '📍 GPS',
-                      active: false,
-                      activeColor: const Color(0xFF4CAF50),
-                      loading: gpsLoading,
-                      onTap: onGps,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _filters.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final f = _filters[i];
-                      final active = activeFilter == f;
-                      return GestureDetector(
-                        onTap: () => onFilter(f),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: active ? const Color(0xFFE60012) : Colors.white,
-                            borderRadius: BorderRadius.circular(99),
-                            border: Border.all(color: active ? const Color(0xFFE60012) : const Color(0xFFDDDDDD)),
                           ),
-                          alignment: Alignment.center,
-                          child: Text(f,
-                              style: TextStyle(
-                                color: active ? Colors.white : const Color(0xFF1F1F1F),
-                                fontSize: 13, fontWeight: FontWeight.w800,
-                              )),
                         ),
-                      );
-                    },
+                        if (searchController.text.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              searchController.clear();
+                              onSearchChanged('');
+                            },
+                            child: const Icon(Icons.close, size: 16, color: Color(0xFF888888)),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                _IconLabelButton(
+                  label: '🗺️ 동선',
+                  active: routeOn,
+                  activeColor: const Color(0xFF1E2B4A),
+                  onTap: onToggleRoute,
+                ),
+                const SizedBox(width: 6),
+                _IconLabelButton(
+                  label: '📍 GPS',
+                  active: false,
+                  activeColor: const Color(0xFF4CAF50),
+                  loading: gpsLoading,
+                  onTap: onGps,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1019,45 +996,38 @@ class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixi
   }
 }
 
-/// 카테고리 탭(단일 선택 pill)과 시각적으로 구분되는 토글 칩.
-/// 작은 체크 인디케이터 + 살짝 옅은 배경으로 "on/off 필터" 임을 명시.
-class _SubChip extends StatelessWidget {
-  final String text;
-  final bool active;
-  final Color activeColor;
-  final VoidCallback onTap;
-  const _SubChip({required this.text, required this.active, required this.activeColor, required this.onTap});
+/// 카테고리 칩(둥근 pill, 단일 선택)과 시각·인터랙션 문법을 분리하기 위한
+/// 상태 필터 한 줄. 라벨 + Spacer + Switch.
+class _FilterToggleRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _FilterToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(8, 5, 12, 5),
-        decoration: BoxDecoration(
-          color: active ? activeColor.withValues(alpha: 0.12) : const Color(0xFFF7F7F7),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: active ? activeColor : const Color(0xFFE5E5E5),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              active ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-              size: 14,
-              color: active ? activeColor : const Color(0xFFAAAAAA),
-            ),
-            const SizedBox(width: 4),
-            Text(text,
-                style: TextStyle(
-                  color: active ? activeColor : const Color(0xFF555555),
-                  fontSize: 12, fontWeight: FontWeight.w800,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 2, 12, 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: const TextStyle(
+                  color: Color(0xFF1F1F1F),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                 )),
-          ],
-        ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF1E3158),
+          ),
+        ],
       ),
     );
   }
