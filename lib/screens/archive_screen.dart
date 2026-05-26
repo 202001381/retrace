@@ -33,10 +33,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   };
 
   final Map<_Season, List<String>> _chapterTargets = {
-    _Season.spring: ['ferris_wheel', 'carousel', 'bumper_car', 'flying_carpet', 'viking'],
-    _Season.summer: ['flume_ride', 'gyro_drop', 'viking', 'bumper_car', 'flying_carpet'],
-    _Season.autumn: ['galaxy_888', 'blackhole_2000', 'gyro_swing', 'gyro_drop', 'viking'],
-    _Season.winter: ['carousel', 'ferris_wheel', 'bumper_car', 'blackhole_2000', 'flying_carpet'],
+    _Season.spring: ['cherry_blossom_path', 'carousel', 'bumper_car', 'flying_carpet', 'viking'],
+    _Season.summer: ['flume_ride', 'sky_x', 'viking', 'bumper_car', 'flying_carpet'],
+    _Season.autumn: ['galaxy_888', 'blackhole_2000', 'gyro_swing', 'shot_drop', 'viking'],
+    _Season.winter: ['carousel', 'santa_restaurant', 'bumper_car', 'blackhole_2000', 'flying_carpet'],
   };
 
   final List<Map<String, dynamic>> _timelines = [

@@ -102,17 +102,6 @@ const List<Attraction> kAttractions = [
     icon: '🎡', isOperating: true,
   ),
   Attraction(
-    id: 'ferris_wheel',
-    name: '대관람차',
-    category: '어트랙션',
-    zone: '세계의 광장',
-    lat: 37.4338, lng: 127.0186,
-    indoor: false, heightLimit: 0, thrillLevel: 1, waitMinutes: 10,
-    rating: 4.2, hasEasterEgg: true, chapter: 'spring',
-    description: '서울랜드 전경을 한눈에 볼 수 있는 대형 관람차.',
-    icon: '🎠', isOperating: true,
-  ),
-  Attraction(
     id: 'carousel',
     name: '회전목마',
     category: '어트랙션',
@@ -144,17 +133,6 @@ const List<Attraction> kAttractions = [
     rating: 4.2, hasEasterEgg: true, chapter: 'summer',
     description: '좌우로 크게 흔들리는 해적선 어트랙션.',
     icon: '⚓', isOperating: true,
-  ),
-  Attraction(
-    id: 'gyro_drop',
-    name: '자이로드롭',
-    category: '어트랙션',
-    zone: '미래의 나라',
-    lat: 37.4351, lng: 127.0204,
-    indoor: false, heightLimit: 140, thrillLevel: 5, waitMinutes: 35,
-    rating: 4.6, hasEasterEgg: false, chapter: 'autumn',
-    description: '높은 곳에서 자유낙하하는 스릴 어트랙션.',
-    icon: '⬇️', isOperating: true,
   ),
   Attraction(
     id: 'flying_carpet',
@@ -314,17 +292,6 @@ const List<Attraction> kAttractions = [
     icon: '🥨', isOperating: true,
   ),
   Attraction(
-    id: 'luna_dessert',
-    name: '루나 디저트',
-    category: '카페',
-    zone: '캐릭터 타운',
-    lat: 37.4332, lng: 127.0192,
-    indoor: true, heightLimit: 0, thrillLevel: 0, waitMinutes: 0,
-    rating: 4.4, hasEasterEgg: false, chapter: null,
-    description: '계절 한정 디저트 카페.',
-    icon: '🍰', isOperating: true,
-  ),
-  Attraction(
     id: 'ice_cream_stand',
     name: '아이스크림 매대',
     category: '카페',
@@ -370,17 +337,6 @@ const List<Attraction> kAttractions = [
     icon: '🌷', isOperating: true,
   ),
   Attraction(
-    id: 'character_statue',
-    name: '루나 캐릭터 동상',
-    category: '포토스팟',
-    zone: '캐릭터 타운',
-    lat: 37.4334, lng: 127.0184,
-    indoor: false, heightLimit: 0, thrillLevel: 0, waitMinutes: 0,
-    rating: 4.3, hasEasterEgg: false, chapter: null,
-    description: '서울랜드 마스코트와 인증샷.',
-    icon: '🗿', isOperating: true,
-  ),
-  Attraction(
     id: 'lake_bridge',
     name: '호숫가 다리',
     category: '포토스팟',
@@ -403,17 +359,6 @@ const List<Attraction> kAttractions = [
     icon: '🌃', isOperating: true,
   ),
   // ─── 추가 어트랙션 (13) ─────────────────────────────────
-  Attraction(
-    id: 'double_rockspin',
-    name: '더블락스핀',
-    category: '어트랙션',
-    zone: '모험의 나라',
-    lat: 37.4341, lng: 127.0212,
-    indoor: false, heightLimit: 130, thrillLevel: 5, waitMinutes: 28,
-    rating: 4.4, hasEasterEgg: false, chapter: 'autumn',
-    description: '좌우·전후로 동시에 회전하는 스피닝 코스터.',
-    icon: '🌀', isOperating: true,
-  ),
   Attraction(
     id: 'shot_drop',
     name: '샷드롭',
@@ -512,17 +457,6 @@ const List<Attraction> kAttractions = [
     rating: 3.9, hasEasterEgg: false, chapter: 'spring',
     description: '하늘을 빙글빙글 도는 비행기.',
     icon: '✈️', isOperating: true,
-  ),
-  Attraction(
-    id: 'thomas_train',
-    name: '토마스 기차',
-    category: '어트랙션',
-    zone: '캐릭터 타운',
-    lat: 37.4325, lng: 127.0186,
-    indoor: false, heightLimit: 0, thrillLevel: 1, waitMinutes: 5,
-    rating: 4.0, hasEasterEgg: false, chapter: 'spring',
-    description: '캐릭터 타운을 한 바퀴 도는 기차.',
-    icon: '🚂', isOperating: true,
   ),
   Attraction(
     id: 'monorail',
@@ -927,8 +861,8 @@ const List<Attraction> kAttractions = [
 
 /// 챕터별 대상 어트랙션 ID. 챕터 내 이스터에그 어트랙션 전부 발견 → 챕터 완료.
 const Map<String, List<String>> kChapterTargets = {
-  'spring': ['ferris_wheel', 'carousel', 'bumper_car', 'flying_carpet', 'viking'],
-  'summer': ['flume_ride', 'gyro_drop', 'viking', 'bumper_car', 'flying_carpet'],
-  'autumn': ['galaxy_888', 'blackhole_2000', 'gyro_swing', 'gyro_drop', 'viking'],
-  'winter': ['carousel', 'ferris_wheel', 'bumper_car', 'blackhole_2000', 'flying_carpet'],
+  'spring': ['cherry_blossom_path', 'carousel', 'bumper_car', 'flying_carpet', 'viking'],
+  'summer': ['flume_ride', 'sky_x', 'viking', 'bumper_car', 'flying_carpet'],
+  'autumn': ['galaxy_888', 'blackhole_2000', 'gyro_swing', 'shot_drop', 'viking'],
+  'winter': ['carousel', 'santa_restaurant', 'bumper_car', 'blackhole_2000', 'flying_carpet'],
 };

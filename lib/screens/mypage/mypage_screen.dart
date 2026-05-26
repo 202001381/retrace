@@ -18,8 +18,8 @@ class MypageScreen extends StatefulWidget {
 }
 
 class _MypageScreenState extends State<MypageScreen> {
-  // kAttractions 중 hasEasterEgg=true 개수 (현재 22).
-  static const int _kTotalEggCount = 22;
+  // kAttractions 중 hasEasterEgg=true 개수 (현재 21).
+  static const int _kTotalEggCount = 21;
 
   SurveyAnswers? _survey;
   int _discoveredEggs = 0;

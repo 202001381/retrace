@@ -15,13 +15,13 @@ enum DemoScenario {
     stopIds: [
       'main_gate_arch',
       'carousel',
-      'thomas_train',
-      'family_coaster',
-      'mini_airplane',
+      'time_machine_5d',         // 가족형 indoor 어트랙션 (실재)
+      'family_coaster',          // TODO: 공식 목록 대조 필요
+      'mini_airplane',           // TODO: 공식 "깜부비행기" 와 동일 여부 확인
       'korean_kitchen',          // 점심
       'mini_viking',
-      'magic_studio',
-      'shooting_adventure',
+      'magic_studio',            // TODO: 공식 목록 대조 필요
+      'shooting_adventure',      // TODO: 공식 목록 대조 필요
       'flower_garden',
       'spinning_cup',
       'cafe_bene',               // 휴식
@@ -37,14 +37,14 @@ enum DemoScenario {
       'seoulland_sign',
       'carousel',
       'flume_ride',
-      'lake_bridge',
-      'cpk_restaurant',          // 점심
+      'lake_bridge',             // TODO: 공식 목록 대조 필요
+      'santa_restaurant',        // 점심 — 365 크리스마스 타운 (실재)
       'rose_garden',
-      'ferris_wheel',
-      'tunnel_of_lights',
-      'luna_dessert',            // 디저트
-      'fantasy_castle',
-      'night_view_deck',
+      'world_flag_plaza',        // 세계의 광장 (실재)
+      'tunnel_of_lights',        // TODO: 공식 목록 대조 필요 (계절 가능)
+      'cafe_bene',               // 디저트 — 실재 카페
+      'fantasy_castle',          // TODO: 공식 목록 대조 필요
+      'night_view_deck',         // TODO: 공식 목록 대조 필요
       'fountain_plaza',
     ],
   ),
@@ -57,17 +57,15 @@ enum DemoScenario {
       'main_gate_arch',
       'blackhole_2000',
       'galaxy_888',
-      'gyro_drop',
       'viking',
       'sky_x',
       'lava_twister',
       'galbi_house',             // 점심
-      'double_rockspin',
       'shot_drop',
       'x_flyer',
-      'gyro_swing',
-      'tom_n_toms',              // 카페
-      'night_view_deck',
+      'gyro_swing',              // TODO: 공식 "알포스윙" 과 동일 여부 확인
+      'tom_n_toms',              // TODO: 공식 목록 대조 필요
+      'night_view_deck',         // TODO: 공식 목록 대조 필요
     ],
   );
 
