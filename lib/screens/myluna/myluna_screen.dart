@@ -11,6 +11,7 @@ import '../../models/demo_scenario.dart';
 import '../../models/luna_recommendation.dart';
 import '../../models/route_response.dart';
 import '../../services/easter_egg_service.dart';
+import '../../services/luna_recommendation_store.dart';
 import '../../services/onboarding_service.dart';
 import '../../services/route_service.dart';
 import '../../widgets/companion_bottom_sheet.dart';
@@ -103,6 +104,12 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
 
   LatLng get _origin => _myPos ?? _kGate;
 
+  /// `_rec` 갱신과 store 동기화를 한 곳에서 — 맵 탭이 자동 반영.
+  void _setRec(LunaRecommendation? next) {
+    setState(() => _rec = next);
+    LunaRecommendationStore.instance.set(next);
+  }
+
   // ── Fetch ────────────────────────────────────────────────
   Future<void> _fetch({required String reason}) async {
     if (_loading) return;
@@ -117,13 +124,11 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
       final origin = _origin;
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
-      setState(() {
-        _rec = scenario.toRecommendation(
-          originLat: origin.latitude,
-          originLng: origin.longitude,
-        );
-        _loading = false;
-      });
+      _setRec(scenario.toRecommendation(
+        originLat: origin.latitude,
+        originLng: origin.longitude,
+      ));
+      setState(() => _loading = false);
       return;
     }
 
@@ -144,14 +149,12 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
       final resp = await RouteService.instance.fetchRoute(req);
       if (!mounted) return;
       final spots = _resolveSpots(resp);
-      setState(() {
-        _rec = LunaRecommendation(
-          spots: spots,
-          totalMin: resp.totalMin,
-          rationale: resp.rationale,
-          lockedAt: DateTime.now(),
-        );
-      });
+      _setRec(LunaRecommendation(
+        spots: spots,
+        totalMin: resp.totalMin,
+        rationale: resp.rationale,
+        lockedAt: DateTime.now(),
+      ));
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = '추천을 불러오지 못했어요');
@@ -166,8 +169,8 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
       _activeScenario = s;
       _consecutiveSkips = 0;
       _skipBlocked = false;
-      _rec = null;
     });
+    _setRec(null); // store 도 비움 → 맵 폴리라인 즉시 사라짐 + 새 데이터 기다림
     _fetch(reason: s == null ? 'scenario_cleared' : 'scenario_selected');
   }
 
@@ -192,15 +195,13 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
     // 모든 skip 을 카운트. 임계 도달 시 강제 빈 상태 → "조건 변경" CTA 노출.
     _consecutiveSkips += 1;
     if (_consecutiveSkips >= _kMaxConsecutiveSkips) {
-      setState(() {
-        _skipBlocked = true;
-        _rec = rec.copyWith(spots: const []);
-      });
+      setState(() => _skipBlocked = true);
+      _setRec(rec.copyWith(spots: const []));
       return;
     }
 
     final next = rec.skipFirst();
-    setState(() => _rec = next);
+    _setRec(next);
 
     // 풀 소진 → 자동 fetch (윈도우 reset, 새 lockedAt).
     if (next.isEmpty) {

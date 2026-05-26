@@ -10,6 +10,7 @@ import '../models/attraction.dart';
 import '../models/place_filter.dart';
 import '../models/route_response.dart';
 import '../services/easter_egg_service.dart';
+import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
 import '../widgets/attraction_detail_sheet.dart';
@@ -70,8 +71,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _showRoute = widget.showMyLunaInitially;
+    // 마이 루나에 활성 추천이 있으면 진입 시 자동 ON.
+    _showRoute = widget.showMyLunaInitially ||
+        (LunaRecommendationStore.instance.current?.spots.isNotEmpty ?? false);
     _sheetController.addListener(_onSheetChanged);
+    LunaRecommendationStore.instance.notifier.addListener(_onLunaStoreChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
@@ -80,6 +84,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     });
     _loadRoute('initial');
     _loadDiscoveredEggs();
+  }
+
+  void _onLunaStoreChanged() {
+    if (!mounted) return;
+    final hasRoute =
+        LunaRecommendationStore.instance.current?.spots.isNotEmpty ?? false;
+    setState(() {
+      // MyLuna 가 새 추천을 push 했고 사용자가 동선을 꺼둔 상태라면 자동 ON.
+      // (사용자가 명시적으로 끈 상태도 덮어쓰긴 하지만, 데모 의도 우선.)
+      if (hasRoute) _showRoute = true;
+    });
   }
 
   Future<void> _loadDiscoveredEggs() async {
@@ -153,6 +168,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   void dispose() {
     _sheetController.removeListener(_onSheetChanged);
     _sheetController.dispose();
+    LunaRecommendationStore.instance.notifier
+        .removeListener(_onLunaStoreChanged);
     _positionStream?.cancel();
     _searchCtrl.dispose();
     super.dispose();
@@ -246,8 +263,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         .toList();
   }
 
-  /// 마이 루나 동선 — RouteService 응답에서 stop id → Attraction 해석.
+  /// 마이 루나 동선 — store 가 우선, 비어있으면 자체 fetch 결과로 fallback.
+  /// store 는 MyLunaScreen 이 관리(데모 시나리오 선택 시 즉시 반영).
   List<Attraction> get _routeAttractions {
+    final stored = LunaRecommendationStore.instance.current;
+    if (stored != null && stored.spots.isNotEmpty) {
+      return stored.spots;
+    }
     final resp = _currentRoute;
     if (resp == null) return const [];
     final byId = {for (final a in kAttractions) a.id: a};
@@ -255,6 +277,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         .map((s) => byId[s.id])
         .whereType<Attraction>()
         .toList();
+  }
+
+  /// 동선 메타(총 분·rationale) 도 store 우선.
+  ({int? totalMin, String? rationale}) get _routeMeta {
+    final stored = LunaRecommendationStore.instance.current;
+    if (stored != null && stored.spots.isNotEmpty) {
+      return (totalMin: stored.totalMin, rationale: stored.rationale);
+    }
+    final r = _currentRoute;
+    if (r == null) return (totalMin: null, rationale: null);
+    return (totalMin: r.totalMin, rationale: r.rationale);
   }
 
   String get _routeSummaryText {
@@ -696,10 +729,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                       ),
                                     ],
                                   ),
-                                  if (_currentRoute != null) ...[
+                                  if (_routeMeta.totalMin != null) ...[
                                     const SizedBox(height: 4),
                                     Text(
-                                      '총 ${_currentRoute!.totalMin}분 · ${_currentRoute!.rationale ?? ''}',
+                                      '총 ${_routeMeta.totalMin}분 · ${_routeMeta.rationale ?? ''}',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
