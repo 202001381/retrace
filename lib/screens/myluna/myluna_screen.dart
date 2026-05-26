@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../models/attraction.dart';
+import '../../models/demo_scenario.dart';
 import '../../models/luna_recommendation.dart';
 import '../../models/route_response.dart';
 import '../../services/easter_egg_service.dart';
@@ -50,6 +51,9 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   // 사용자가 임의로 선택한 companion/style (CompanionBottomSheet).
   String _companion = '가족';
   String _style = '스릴·액티비티';
+
+  // 데모 시나리오 (백엔드 연동 전 한정) — null = 기본 추천 로직.
+  DemoScenario? _activeScenario;
 
   @override
   void initState() {
@@ -106,6 +110,23 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
       _loading = true;
       _error = null;
     });
+
+    // 데모 시나리오 활성 → RouteService 우회.
+    final scenario = _activeScenario;
+    if (scenario != null) {
+      final origin = _origin;
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      if (!mounted) return;
+      setState(() {
+        _rec = scenario.toRecommendation(
+          originLat: origin.latitude,
+          originLng: origin.longitude,
+        );
+        _loading = false;
+      });
+      return;
+    }
+
     try {
       final origin = _origin;
       final survey = _survey ??
@@ -137,6 +158,17 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _selectScenario(DemoScenario? s) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _activeScenario = s;
+      _consecutiveSkips = 0;
+      _skipBlocked = false;
+      _rec = null;
+    });
+    _fetch(reason: s == null ? 'scenario_cleared' : 'scenario_selected');
   }
 
   List<Attraction> _resolveSpots(RouteResponse resp) {
@@ -255,6 +287,12 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
+                    // 백엔드 연동 전 — 손수 큐레이션한 4시간 코스 데모.
+                    _DemoScenarioPicker(
+                      active: _activeScenario,
+                      onSelect: _selectScenario,
+                    ),
+                    const SizedBox(height: 12),
                     _MetaHeader(
                       surveyLabel: _surveyLabel,
                       missingEggs: _missingEggCount,
@@ -284,16 +322,31 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                         _WindowFooter(remaining: _rec!.remainingWindow()),
                       const SizedBox(height: 18),
                       if (_rec!.spots.length > 1) ...[
-                        const _SectionTitle('다음 후보'),
+                        _SectionTitle(
+                          _activeScenario != null
+                              ? '코스 (총 ${_rec!.spots.length}곳)'
+                              : '다음 후보',
+                        ),
                         const SizedBox(height: 8),
-                        ..._rec!.spots.skip(1).take(2).map(
-                              (a) => Padding(
+                        // 데모 시나리오 = 전체 노출, 기본 = 2개 미리보기.
+                        ..._rec!.spots
+                            .skip(1)
+                            .take(_activeScenario != null
+                                ? _rec!.spots.length
+                                : 2)
+                            .toList()
+                            .asMap()
+                            .entries
+                            .map(
+                              (e) => Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: _NextItemRow(
-                                  spot: a,
-                                  walkMin: _walkMinutesTo(a),
-                                  waitMin: _arrivalWaitMinutes(a),
-                                  onTap: () => _onNavigate(a),
+                                  order: e.key + 2,
+                                  showOrder: _activeScenario != null,
+                                  spot: e.value,
+                                  walkMin: _walkMinutesTo(e.value),
+                                  waitMin: _arrivalWaitMinutes(e.value),
+                                  onTap: () => _onNavigate(e.value),
                                 ),
                               ),
                             ),
@@ -611,11 +664,15 @@ class _NextItemRow extends StatelessWidget {
   final Attraction spot;
   final int walkMin;
   final int waitMin;
+  final int order;
+  final bool showOrder;
   final VoidCallback onTap;
   const _NextItemRow({
     required this.spot,
     required this.walkMin,
     required this.waitMin,
+    required this.order,
+    required this.showOrder,
     required this.onTap,
   });
 
@@ -631,6 +688,23 @@ class _NextItemRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
+              if (showOrder) ...[
+                Container(
+                  width: 24, height: 24,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1E3158),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text('$order',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      )),
+                ),
+                const SizedBox(width: 10),
+              ],
               Container(
                 width: 38, height: 38,
                 decoration: const BoxDecoration(
@@ -793,6 +867,129 @@ class _ErrorBlock extends StatelessWidget {
               )),
           const SizedBox(height: 12),
           OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+        ],
+      ),
+    );
+  }
+}
+
+class _DemoScenarioPicker extends StatelessWidget {
+  final DemoScenario? active;
+  final ValueChanged<DemoScenario?> onSelect;
+  const _DemoScenarioPicker({required this.active, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8EA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF4B633).withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('📺',
+                  style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 6),
+              const Text('데모 시나리오',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF8A6A1F),
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.4,
+                  )),
+              const SizedBox(width: 6),
+              const Text('백엔드 연동 전',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFAA8A4F),
+                    fontWeight: FontWeight.w700,
+                  )),
+              const Spacer(),
+              if (active != null)
+                GestureDetector(
+                  onTap: () => onSelect(null),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                    child: Text('기본으로',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF8A6A1F),
+                          fontWeight: FontWeight.w800,
+                          decoration: TextDecoration.underline,
+                        )),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 70,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: DemoScenario.values.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final s = DemoScenario.values[i];
+                final isActive = active == s;
+                return GestureDetector(
+                  onTap: () => onSelect(s),
+                  child: Container(
+                    width: 168,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? const Color(0xFF1E3158)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isActive
+                            ? const Color(0xFF1E3158)
+                            : const Color(0xFFEEDDB6),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Text(s.emoji,
+                                style: const TextStyle(fontSize: 14)),
+                            const SizedBox(width: 4),
+                            Text(s.title,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  color: isActive
+                                      ? Colors.white
+                                      : const Color(0xFF1F1F1F),
+                                )),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(s.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isActive
+                                  ? Colors.white.withValues(alpha: 0.85)
+                                  : const Color(0xFF888888),
+                            )),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
