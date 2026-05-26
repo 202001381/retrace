@@ -342,35 +342,80 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   // ── 마커 ─────────────────────────────────────────────────
-  // 명세에 따라 단순 1-원 마커. 클러스터/순번 배지 제거.
+  // 기본은 단순 1-원 마커. 동선 ON 일 때 해당 스팟엔 순번 배지 합성.
   List<Marker> _buildMarkers() {
+    final routeOrder = <String, int>{};
+    if (_showRoute) {
+      final spots = _routeAttractions;
+      for (var i = 0; i < spots.length; i++) {
+        routeOrder[spots[i].id] = i + 1;
+      }
+    }
+
     final markers = _filteredAttractions.map((a) {
-      return Marker(
-        point: LatLng(a.lat, a.lng),
+      final order = routeOrder[a.id];
+      final hasBadge = order != null;
+      final dot = Container(
         width: 44,
         height: 44,
+        decoration: BoxDecoration(
+          color: _getMarkerColor(a.category),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: a.hasEasterEgg ? const Color(0xFFF4B633) : Colors.white,
+            width: a.hasEasterEgg ? 3 : 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(child: Text(a.icon, style: const TextStyle(fontSize: 20))),
+      );
+
+      return Marker(
+        point: LatLng(a.lat, a.lng),
+        width: hasBadge ? 52 : 44,
+        height: hasBadge ? 52 : 44,
         child: GestureDetector(
           onTap: () => _onMarkerTap(a),
           child: Opacity(
             opacity: a.isOperating ? 1.0 : 0.4,
-            child: Container(
-              decoration: BoxDecoration(
-                color: _getMarkerColor(a.category),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: a.hasEasterEgg ? const Color(0xFFF4B633) : Colors.white,
-                  width: a.hasEasterEgg ? 3 : 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Center(child: Text(a.icon, style: const TextStyle(fontSize: 20))),
-            ),
+            child: hasBadge
+                ? Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      dot,
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E3158),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$order',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : dot,
           ),
         ),
       );
@@ -477,11 +522,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 TileLayer(
                   // VWorld (한국 국토교통부) 정밀 지도 타일. 한국 내부 사설 시설
                   // 윤곽까지 잡아주므로 OSM 의 회색 영역 문제 해소.
-                  // 정식 출시 전 키 회전 + 도메인 제한 설정 필요.
+                  // 키는 --dart-define=VWORLD_KEY=... 로 주입. 빌드시 미지정이면
+                  // 기존 키로 폴백 (정식 출시 전 키 회전 + 도메인 제한 필요).
                   urlTemplate:
                       'https://api.vworld.kr/req/wmts/1.0.0/{apiKey}/Base/{z}/{y}/{x}.png',
                   additionalOptions: const {
-                    'apiKey': '9783E3A8-A564-37C0-A9DC-42D67CAA8112',
+                    'apiKey': String.fromEnvironment(
+                      'VWORLD_KEY',
+                      defaultValue: '9783E3A8-A564-37C0-A9DC-42D67CAA8112',
+                    ),
                   },
                   userAgentPackageName: 'com.seoulland.app',
                 ),
