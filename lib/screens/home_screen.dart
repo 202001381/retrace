@@ -6,8 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/attraction.dart';
 import '../models/route_response.dart';
+import '../services/easter_egg_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
+import '../services/visit_history_service.dart';
 import '../widgets/companion_bottom_sheet.dart';
 
 /// 홈 탭 — "방문 전" 전용 화면. 방문 결정 → 티켓 구매까지만 담당.
@@ -52,6 +54,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _routeLoading = false;
   SurveyAnswers? _survey;
 
+  // 루나 프라이싱 입력값 (영속화 stub — 실제 함수 도입 전까지는 표시용).
+  int? _lastVisitDaysAgo;
+  int _missingEggCount = 0;
+  static const int _kTotalEggCount = 22; // kAttractions 중 hasEasterEgg=true 개수.
+
   // 루나 프라이싱 자동 팝업 쿨다운 24h.
   static const String _kPricingSeenAtKey = 'pricing_popup_last_seen_at';
   static const int _kPricingCooldownMs = 24 * 60 * 60 * 1000;
@@ -60,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadSurvey();
+    _loadPricingInputs();
     if (widget.openPricingOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _autoOpenPricingIfDue());
     }
@@ -70,6 +78,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final s = await OnboardingService.read();
     if (!mounted) return;
     setState(() => _survey = s);
+  }
+
+  Future<void> _loadPricingInputs() async {
+    final days = await VisitHistoryService.lastVisitDaysAgo();
+    final discovered = await EasterEggService.discoveredAll();
+    if (!mounted) return;
+    setState(() {
+      _lastVisitDaysAgo = days;
+      _missingEggCount = (_kTotalEggCount - discovered.length).clamp(0, _kTotalEggCount);
+    });
   }
 
   Future<void> _autoOpenPricingIfDue() async {
@@ -207,7 +225,11 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _LunaPricingSheet(discountPct: _discountPct),
+      builder: (_) => _LunaPricingSheet(
+        discountPct: _discountPct,
+        lastVisitDaysAgo: _lastVisitDaysAgo,
+        missingEggCount: _missingEggCount,
+      ),
     );
     // 자동 팝업 쿨다운용 — 어떤 경로로 열렸든 dismiss 시점을 기록.
     final prefs = await SharedPreferences.getInstance();
@@ -255,7 +277,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 14),
             // 3. 루나 프라이싱 카드
-            _LunaPricingCard(discountPct: _discountPct, onTap: _openPricingPopup),
+            _LunaPricingCard(
+              discountPct: _discountPct,
+              lastVisitDaysAgo: _lastVisitDaysAgo,
+              missingEggCount: _missingEggCount,
+              onTap: _openPricingPopup,
+            ),
             const SizedBox(height: 14),
             // 4. 마이 루나 카드
             _MyLunaCard(
@@ -522,11 +549,12 @@ class _VisitDetailSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onGetTicket,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE60012),
+                backgroundColor: const Color(0xFF1E3158),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('루나 티켓 받기',
+              // 이 시트는 결제가 아닌 프라이싱 상세 시트를 띄움 → 카피 정직화.
+              child: const Text('💰 오늘 할인 자세히 보기',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
@@ -604,11 +632,38 @@ class _GaugePainter extends CustomPainter {
 // ─── 루나 프라이싱 카드 ────────────────────────────────────
 class _LunaPricingCard extends StatelessWidget {
   final int discountPct;
+  final int? lastVisitDaysAgo;
+  final int missingEggCount;
   final VoidCallback onTap;
-  const _LunaPricingCard({required this.discountPct, required this.onTap});
+  const _LunaPricingCard({
+    required this.discountPct,
+    required this.lastVisitDaysAgo,
+    required this.missingEggCount,
+    required this.onTap,
+  });
+
+  ({String title, String body}) get _copy {
+    final days = lastVisitDaysAgo;
+    if (days == null) {
+      return (
+        title: '오늘이 가장 좋은 날이에요.',
+        body: '흐린 오늘 서울랜드엔 사람이 적당해요.\n첫 방문이라면 이스터에그도 가득 남아있어요.',
+      );
+    }
+    final months = (days / 30).floor();
+    final title = months >= 1 ? '$months개월 만이네요.' : '$days일 만이네요.';
+    final eggLine = missingEggCount > 0
+        ? '지난번 못 찾은 이스터에그 $missingEggCount개, 오늘 만날 수 있어요.'
+        : '오늘 새 챕터를 채워볼까요.';
+    return (
+      title: title,
+      body: '흐린 오늘 서울랜드엔 사람이 적당해요.\n$eggLine',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final copy = _copy;
     return Material(
       color: const Color(0xFF1E3158),
       borderRadius: BorderRadius.circular(16),
@@ -632,11 +687,11 @@ class _LunaPricingCard extends StatelessWidget {
                           style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
                     ),
                     const SizedBox(height: 12),
-                    const Text('3개월 만이네요.',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.3)),
+                    Text(copy.title,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.3)),
                     const SizedBox(height: 6),
                     Text(
-                      '흐린 오늘 서울랜드엔 사람이 적당해요.\n지난번 못 찾은 이스터에그, 오늘 만날 수 있어요.',
+                      copy.body,
                       style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, height: 1.5),
                     ),
                     const SizedBox(height: 14),
@@ -673,7 +728,13 @@ class _LunaPricingCard extends StatelessWidget {
 // ─── 루나 프라이싱 상세 시트 ───────────────────────────────
 class _LunaPricingSheet extends StatefulWidget {
   final int discountPct;
-  const _LunaPricingSheet({required this.discountPct});
+  final int? lastVisitDaysAgo;
+  final int missingEggCount;
+  const _LunaPricingSheet({
+    required this.discountPct,
+    required this.lastVisitDaysAgo,
+    required this.missingEggCount,
+  });
 
   @override
   State<_LunaPricingSheet> createState() => _LunaPricingSheetState();
@@ -720,10 +781,21 @@ class _LunaPricingSheetState extends State<_LunaPricingSheet> {
     const original = 30000;
     final discounted = original * (100 - discountPct) ~/ 100;
     final saved = original - discounted;
-    final reasons = const [
-      ('☁️', '흐린 평일', '+8%'),
-      ('📅', '3개월 만의 재방문', '+5%'),
-      ('🥚', '미수집 이스터에그 2개', '+2%'),
+    // 사유 표시는 입력값에 따라 가변 — 실제 비율은 추후 PricingService 합과 동기화.
+    final reasons = <(String, String, String)>[
+      const ('☁️', '흐린 평일', '+8%'),
+      if (widget.lastVisitDaysAgo == null)
+        const ('🎉', '첫 방문 환영', '+5%')
+      else
+        (
+          '📅',
+          widget.lastVisitDaysAgo! >= 30
+              ? '${(widget.lastVisitDaysAgo! / 30).floor()}개월 만의 재방문'
+              : '${widget.lastVisitDaysAgo!}일 만의 재방문',
+          '+5%',
+        ),
+      if (widget.missingEggCount > 0)
+        ('🥚', '미수집 이스터에그 ${widget.missingEggCount}개', '+2%'),
     ];
 
     return Container(
