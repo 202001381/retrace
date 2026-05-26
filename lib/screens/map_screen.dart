@@ -38,10 +38,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   bool _gpsLoading = false;
   bool _showRoute = false;
-  String _activeFilter = '전체'; // 전체 / 어트랙션 / 음식점 / 이스터에그
+  String _activeFilter = '전체'; // 전체 / 어트랙션 / 음식점 / 카페 / 포토스팟
   String _facilityTab = '어트랙션';
   bool _operatingOnly = false;
   bool _easterEggSubFilter = false;
+
+  // 상단 검색바 — 이름 부분 일치, 대소문자 무시.
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
   Attraction? _selectedAttraction;
   Attraction? _navTarget;
@@ -140,6 +144,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _sheetController.removeListener(_onSheetChanged);
     _sheetController.dispose();
     _positionStream?.cancel();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -228,17 +233,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         return a.category == '카페';
       case '포토스팟':
         return a.category == '포토스팟';
-      case '이스터에그':
-        return a.hasEasterEgg;
       default:
         return true;
     }
+  }
+
+  bool _matchesSearch(Attraction a) {
+    if (_searchQuery.isEmpty) return true;
+    return a.name.toLowerCase().contains(_searchQuery.toLowerCase());
   }
 
   List<Attraction> get _filteredAttractions {
     var list = kAttractions.where(_attractionPassesFilter).toList();
     if (_operatingOnly) list = list.where((a) => a.isOperating).toList();
     if (_easterEggSubFilter) list = list.where((a) => a.hasEasterEgg).toList();
+    list = list.where(_matchesSearch).toList();
     return list;
   }
 
@@ -260,6 +269,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
     if (_operatingOnly) list = list.where((a) => a.isOperating);
     if (_easterEggSubFilter) list = list.where((a) => a.hasEasterEgg);
+    list = list.where(_matchesSearch);
     return list.toList();
   }
 
@@ -492,6 +502,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             activeFilter: _activeFilter,
             routeOn: _showRoute,
             gpsLoading: _gpsLoading,
+            searchController: _searchCtrl,
+            onSearchChanged: (q) => setState(() => _searchQuery = q),
             onToggleRoute: _toggleRoute,
             onGps: _moveToGps,
             onFilter: (f) => setState(() => _activeFilter = f),
@@ -727,6 +739,8 @@ class _TopBar extends StatelessWidget {
   final String activeFilter;
   final bool routeOn;
   final bool gpsLoading;
+  final TextEditingController searchController;
+  final void Function(String) onSearchChanged;
   final VoidCallback onToggleRoute;
   final VoidCallback onGps;
   final void Function(String) onFilter;
@@ -734,12 +748,15 @@ class _TopBar extends StatelessWidget {
     required this.activeFilter,
     required this.routeOn,
     required this.gpsLoading,
+    required this.searchController,
+    required this.onSearchChanged,
     required this.onToggleRoute,
     required this.onGps,
     required this.onFilter,
   });
 
-  static const _filters = ['전체', '어트랙션', '음식점', '카페', '포토스팟', '이스터에그'];
+  // 이스터에그는 시트 안 sub chip 으로 일원화 — 여기 상단 칩은 카테고리만.
+  static const _filters = ['전체', '어트랙션', '음식점', '카페', '포토스팟'];
 
   @override
   Widget build(BuildContext context) {
@@ -761,14 +778,16 @@ class _TopBar extends StatelessWidget {
                         height: 40,
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(12)),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.search, size: 16, color: Color(0xFF888888)),
-                            SizedBox(width: 8),
+                            const Icon(Icons.search, size: 16, color: Color(0xFF888888)),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
-                                style: TextStyle(fontSize: 13, color: Color(0xFF1F1F1F)),
-                                decoration: InputDecoration(
+                                controller: searchController,
+                                onChanged: onSearchChanged,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF1F1F1F)),
+                                decoration: const InputDecoration(
                                   isCollapsed: true,
                                   border: InputBorder.none,
                                   hintText: '어트랙션, 음식점',
@@ -776,6 +795,14 @@ class _TopBar extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (searchController.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  searchController.clear();
+                                  onSearchChanged('');
+                                },
+                                child: const Icon(Icons.close, size: 16, color: Color(0xFF888888)),
+                              ),
                           ],
                         ),
                       ),
