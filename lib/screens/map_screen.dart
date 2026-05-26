@@ -28,6 +28,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   static const LatLng _seoullandCenter = LatLng(37.4343, 127.0201);
   static const LatLng _kGate = LatLng(37.4332, 127.0174); // 정문 (대공원역 진입)
 
+  // GPS 잡혀있으면 현재 위치, 아니면 정문을 출발점으로 사용.
+  LatLng get _currentOrigin => _myPosition ?? _kGate;
+
   // ── 컨트롤 / 상태 ──────────────────────────────────────────
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionStream;
@@ -156,6 +159,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         );
         target = LatLng(pos.latitude, pos.longitude);
         setState(() => _myPosition = target);
+        _startPositionStream();
       }
     } catch (_) {}
     _mapController.move(target, 17.0);
@@ -166,6 +170,31 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         _haversineMeters(_lastRouteOrigin!, target) >= 100) {
       _loadRoute('gps_moved');
     }
+  }
+
+  /// 권한 확보 후 1회만 구독 시작. 5m 이상 이동 시 콜백.
+  void _startPositionStream() {
+    if (_positionStream != null) return;
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen((pos) {
+      if (!mounted) return;
+      final next = LatLng(pos.latitude, pos.longitude);
+      setState(() => _myPosition = next);
+      // 100m 이상 이동했으면 동선 재요청 — 폭주 방지.
+      if (_lastRouteOrigin == null ||
+          _haversineMeters(_lastRouteOrigin!, next) >= 100) {
+        _loadRoute('gps_moved');
+      }
+      // 내비 중이면 도보 분 갱신.
+      if (_navTarget != null) {
+        final dist = _haversineMeters(next, _navTarget!.position);
+        setState(() => _navWalkMin = (dist / 66.67).ceil());
+      }
+    }, onError: (_) {});
   }
 
   // ── 동선 / 필터 ──────────────────────────────────────────
@@ -272,7 +301,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   void _startNavigation(Attraction target) {
-    final dist = _haversineMeters(_kGate, target.position);
+    final origin = _currentOrigin;
+    final dist = _haversineMeters(origin, target.position);
     final walkMin = (dist / 66.67).ceil(); // 4 km/h ≈ 66.67 m/min
     setState(() {
       _navTarget = target;
@@ -283,8 +313,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     Future.delayed(const Duration(milliseconds: 250), () {
       if (!mounted) return;
       final mid = LatLng(
-        (_kGate.latitude + target.position.latitude) / 2,
-        (_kGate.longitude + target.position.longitude) / 2,
+        (origin.latitude + target.position.latitude) / 2,
+        (origin.longitude + target.position.longitude) / 2,
       );
       _mapController.move(mid, 17);
     });
@@ -356,6 +386,24 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           ),
         ),
       ));
+    } else if (_showRoute || _navTarget != null) {
+      // GPS 가 없으면 동선/내비 출발점인 정문을 보여준다.
+      markers.add(Marker(
+        point: _kGate,
+        width: 32, height: 32,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF1E3158), width: 2),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 1)),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: const Text('🚪', style: TextStyle(fontSize: 16)),
+        ),
+      ));
     }
     return markers;
   }
@@ -364,10 +412,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   List<Polyline> _buildRoute() {
     if (!_showRoute) return const [];
     final spots = _routeAttractions;
-    if (spots.length < 2) return const [];
+    if (spots.isEmpty) return const [];
+    // 출발점(현재 GPS or 정문)에서 첫 스팟까지 잇는 선을 포함.
+    final points = <LatLng>[
+      _currentOrigin,
+      ...spots.map((a) => LatLng(a.lat, a.lng)),
+    ];
     return [
       Polyline(
-        points: spots.map((a) => LatLng(a.lat, a.lng)).toList(),
+        points: points,
         strokeWidth: 3.0,
         color: const Color(0xFFE60012),
         pattern: StrokePattern.dashed(segments: const [10, 5]),
@@ -427,7 +480,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 if (_navTarget != null)
                   PolylineLayer(polylines: [
                     Polyline(
-                      points: [_kGate, _navTarget!.position],
+                      points: [_currentOrigin, _navTarget!.position],
                       color: const Color(0xFFE60012),
                       strokeWidth: 4.5,
                     ),
