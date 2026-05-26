@@ -729,11 +729,24 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-                          // sub chips
+                          // sub chips — 카테고리 탭과 분리되는 토글 필터.
+                          const SizedBox(height: 10),
+                          const Divider(height: 1, color: Color(0xFFEEEEEE)),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
                             child: Row(
                               children: [
+                                const Icon(Icons.filter_alt_outlined,
+                                    size: 14, color: Color(0xFF888888)),
+                                const SizedBox(width: 4),
+                                const Text('필터',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF888888),
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.4,
+                                    )),
+                                const SizedBox(width: 12),
                                 _SubChip(
                                   text: '운영중',
                                   active: _operatingOnly,
@@ -1006,6 +1019,8 @@ class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixi
   }
 }
 
+/// 카테고리 탭(단일 선택 pill)과 시각적으로 구분되는 토글 칩.
+/// 작은 체크 인디케이터 + 살짝 옅은 배경으로 "on/off 필터" 임을 명시.
 class _SubChip extends StatelessWidget {
   final String text;
   final bool active;
@@ -1018,17 +1033,31 @@ class _SubChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.fromLTRB(8, 5, 12, 5),
         decoration: BoxDecoration(
-          color: active ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: active ? activeColor : const Color(0xFFDDDDDD)),
+          color: active ? activeColor.withValues(alpha: 0.12) : const Color(0xFFF7F7F7),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? activeColor : const Color(0xFFE5E5E5),
+            width: 1,
+          ),
         ),
-        child: Text(text,
-            style: TextStyle(
-              color: active ? Colors.white : const Color(0xFF1F1F1F),
-              fontSize: 12, fontWeight: FontWeight.w800,
-            )),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              active ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+              size: 14,
+              color: active ? activeColor : const Color(0xFFAAAAAA),
+            ),
+            const SizedBox(width: 4),
+            Text(text,
+                style: TextStyle(
+                  color: active ? activeColor : const Color(0xFF555555),
+                  fontSize: 12, fontWeight: FontWeight.w800,
+                )),
+          ],
+        ),
       ),
     );
   }
