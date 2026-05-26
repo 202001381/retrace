@@ -1,16 +1,20 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/attraction.dart';
+import '../models/pricing_state.dart';
 import '../models/route_response.dart';
 import '../services/analytics_service.dart';
 import '../services/easter_egg_service.dart';
+import '../services/luna_pricing_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
 import '../services/visit_history_service.dart';
 import '../widgets/companion_bottom_sheet.dart';
+import '../widgets/discount_cause_label.dart';
+import '../widgets/discount_countdown.dart';
+import '../widgets/price_display.dart';
+import 'checkout_screen.dart';
 
 /// 홈 탭 — "방문 전" 전용 화면. 방문 결정 → 티켓 구매까지만 담당.
 /// 핵심 3카드: 방문 가치 · 루나 프라이싱 · 마이 루나.
@@ -32,17 +36,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // ── Mock 시나리오 (API 연동 전 하드코딩) ─────────────────
   static const int _visitScore = 78;
-  static const int _discountPct = 15;
 
   // 날씨 / 혼잡도 mock
   static const String _weatherIcon = '☁️';
-  static const String _weatherWord = '흐림';        // 인과 라인용 단어
   static const String _weatherShort = '흐림 18°C';
   static const String _weatherDetail = '오늘 흐림 · 최저 15°C / 최고 20°C';
   static const String _weatherRain = '강수확률 60% · 과천, 경기도';
-  static const String _crowdWord = '한산';          // 날씨 인과의 결과로서의 혼잡도 단어
   static const String _crowdShort = '혼잡 중간';
   static const String _crowdDetail = '오전 11시 이후 방문을 추천드려요';
+
+  // 루나 프라이싱 — LunaPricingService 응답 1회 캐싱 + 만료 플래그.
+  PricingState? _pricing;
+  bool _pricingExpired = false;
 
   String _companion = '가족';
   String _style = '스릴·액티비티';
@@ -76,10 +81,20 @@ class _HomeScreenState extends State<HomeScreen> {
     AnalyticsService.instance.logScreenView('home');
     _loadSurvey();
     _loadPricingInputs();
+    _loadPricing();
     if (widget.openPricingOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _autoOpenPricingIfDue());
     }
     _loadRoute('initial');
+  }
+
+  Future<void> _loadPricing() async {
+    final p = await LunaPricingService.instance.current();
+    if (!mounted) return;
+    setState(() {
+      _pricing = p;
+      _pricingExpired = p.isExpired();
+    });
   }
 
   @override
@@ -249,19 +264,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openPricingPopup() async {
+    final p = _pricing;
+    if (p == null || _pricingExpired) return;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _LunaPricingSheet(
-        discountPct: _discountPct,
+        pricing: p,
         lastVisitDaysAgo: _lastVisitDaysAgo,
         missingEggCount: _missingEggCount,
+        onCheckout: () => _goToCheckout(p),
+        onExpired: () {
+          if (mounted) setState(() => _pricingExpired = true);
+        },
       ),
     );
     // 자동 팝업 쿨다운용 — 어떤 경로로 열렸든 dismiss 시점을 기록.
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_kPricingSeenAtKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  void _goToCheckout(PricingState pricing) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => CheckoutScreen(pricing: pricing)),
+    );
   }
 
   void _openVisitDetailSheet() {
@@ -273,8 +300,8 @@ class _HomeScreenState extends State<HomeScreen> {
         weatherDetail: _weatherDetail,
         weatherRain: _weatherRain,
         crowdDetail: _crowdDetail,
-        discountPct: _discountPct,
-        onGetTicket: () {
+        pricing: _pricing,
+        onMoreDiscount: () {
           Navigator.pop(context);
           _openPricingPopup();
         },
@@ -300,23 +327,22 @@ class _HomeScreenState extends State<HomeScreen> {
             // 2. 방문 가치 카드 (날씨·혼잡도·할인·비수기 알림 통합)
             _VisitValueCard(
               score: _visitScore,
-              discountPct: _discountPct,
+              pricing: _pricing,
               weatherIcon: _weatherIcon,
               weatherShort: _weatherShort,
               crowdShort: _crowdShort,
               onTap: _openVisitDetailSheet,
             ),
             const SizedBox(height: 14),
-            // 3. 루나 프라이싱 카드 — 인과 한 줄 + 카운트다운
-            _LunaPricingCard(
-              discountPct: _discountPct,
-              weatherEmoji: _weatherIcon,
-              weatherWord: _weatherWord,
-              crowdEmoji: '🟡',
-              crowdWord: _crowdWord,
-              onTap: _openPricingPopup,
-            ),
-            const SizedBox(height: 14),
+            // 3. 루나 프라이싱 카드 — 인과 + 가격 + 카운트다운
+            if (_pricing != null && !_pricingExpired)
+              _LunaPricingCard(
+                pricing: _pricing!,
+                onTap: _openPricingPopup,
+                onExpired: () => setState(() => _pricingExpired = true),
+              ),
+            if (_pricing != null && !_pricingExpired)
+              const SizedBox(height: 14),
             // 4. 마이 루나 카드
             _MyLunaCard(
               companion: _companion,
@@ -391,15 +417,15 @@ class _Header extends StatelessWidget {
 
 // ─── 방문 가치 카드 — 단일 상태 row, 점수 숫자 비노출 ──────────
 class _VisitValueCard extends StatelessWidget {
-  final int score;            // 내부 헤드라인 분기용 — UI 노출 X
-  final int discountPct;
+  final int score;              // 내부 헤드라인 분기용 — UI 노출 X
+  final PricingState? pricing;  // 할인율은 PricingState 가 진실
   final String weatherIcon;
   final String weatherShort;
   final String crowdShort;
   final VoidCallback onTap;
   const _VisitValueCard({
     required this.score,
-    required this.discountPct,
+    required this.pricing,
     required this.weatherIcon,
     required this.weatherShort,
     required this.crowdShort,
@@ -411,6 +437,12 @@ class _VisitValueCard extends StatelessWidget {
     if (score >= 80) return '오늘 방문 강추!';
     if (score >= 50) return '방문하기 좋은 날';
     return '오늘은 한산해요';
+  }
+
+  String get _subline {
+    final base = '$weatherShort · $crowdShort';
+    if (pricing == null) return base;
+    return '$base · ${pricing!.discountPercent}% 할인';
   }
 
   @override
@@ -440,7 +472,7 @@ class _VisitValueCard extends StatelessWidget {
                         )),
                     const SizedBox(height: 2),
                     Text(
-                      '$weatherShort · $crowdShort · $discountPct% 할인',
+                      _subline,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF888888),
@@ -471,14 +503,14 @@ class _VisitDetailSheet extends StatelessWidget {
   final String weatherDetail;
   final String weatherRain;
   final String crowdDetail;
-  final int discountPct;
-  final VoidCallback onGetTicket;
+  final PricingState? pricing;
+  final VoidCallback onMoreDiscount;
   const _VisitDetailSheet({
     required this.weatherDetail,
     required this.weatherRain,
     required this.crowdDetail,
-    required this.discountPct,
-    required this.onGetTicket,
+    required this.pricing,
+    required this.onMoreDiscount,
   });
 
   @override
@@ -513,25 +545,37 @@ class _VisitDetailSheet extends StatelessWidget {
             title: '혼잡도',
             lines: ['현재 혼잡도: 중간', crowdDetail],
           ),
-          const Divider(height: 28, color: Color(0xFFEEEEEE)),
-          // 할인
-          _SheetSection(
-            icon: '💰',
-            title: '할인',
-            lines: ['날씨 기반 오늘의 할인: $discountPct%'],
-          ),
+          if (pricing != null) ...[
+            const Divider(height: 28, color: Color(0xFFEEEEEE)),
+            // 할인 — PricingState 의 인과 라벨 + 가격 컴포넌트로 일관 표시.
+            Row(
+              children: [
+                const Text('💰', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
+                const Text('할인',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1F1F1F),
+                    )),
+              ],
+            ),
+            const SizedBox(height: 10),
+            DiscountCauseLabel(state: pricing!),
+            const SizedBox(height: 8),
+            PriceDisplay(state: pricing!),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: onGetTicket,
+              onPressed: onMoreDiscount,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E3158),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              // 이 시트는 결제가 아닌 프라이싱 상세 시트를 띄움 → 카피 정직화.
               child: const Text('💰 오늘 할인 자세히 보기',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
@@ -571,58 +615,16 @@ class _SheetSection extends StatelessWidget {
   }
 }
 
-// ─── 루나 프라이싱 카드 — 인과(날씨→한산→할인) 한 줄 + 카운트다운 ──
-class _LunaPricingCard extends StatefulWidget {
-  final int discountPct;
-  final String weatherEmoji;   // ex. "☁️"
-  final String weatherWord;    // ex. "흐림"
-  final String crowdEmoji;     // ex. "🟡"
-  final String crowdWord;      // ex. "한산"
+// ─── 루나 프라이싱 카드 — 인과 라벨 + 가격 + 카운트다운 ────────
+class _LunaPricingCard extends StatelessWidget {
+  final PricingState pricing;
   final VoidCallback onTap;
+  final VoidCallback onExpired;
   const _LunaPricingCard({
-    required this.discountPct,
-    required this.weatherEmoji,
-    required this.weatherWord,
-    required this.crowdEmoji,
-    required this.crowdWord,
+    required this.pricing,
     required this.onTap,
+    required this.onExpired,
   });
-
-  @override
-  State<_LunaPricingCard> createState() => _LunaPricingCardState();
-}
-
-class _LunaPricingCardState extends State<_LunaPricingCard> {
-  Timer? _ticker;
-  Duration _remaining = _untilMidnight();
-
-  static Duration _untilMidnight() {
-    final now = DateTime.now();
-    final midnight = DateTime(now.year, now.month, now.day + 1);
-    return midnight.difference(now);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _remaining = _untilMidnight());
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  String _fmtRemaining() {
-    final h = _remaining.inHours.toString().padLeft(2, '0');
-    final m = (_remaining.inMinutes % 60).toString().padLeft(2, '0');
-    final s = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -630,7 +632,7 @@ class _LunaPricingCardState extends State<_LunaPricingCard> {
       color: const Color(0xFF1E3158),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
@@ -652,33 +654,22 @@ class _LunaPricingCardState extends State<_LunaPricingCard> {
                     )),
               ),
               const SizedBox(height: 14),
-              // 인과 라인: 날씨 → 한산 → 할인
-              Row(
-                children: [
-                  _PricingStep(emoji: widget.weatherEmoji, label: widget.weatherWord),
-                  const _PricingArrow(),
-                  _PricingStep(emoji: widget.crowdEmoji, label: widget.crowdWord),
-                  const _PricingArrow(),
-                  _PricingStep(
-                    emoji: '💸',
-                    label: '${widget.discountPct}% 할인',
-                    accent: true,
-                  ),
-                ],
+              // 인과 라벨 ("🌥 흐려서 한산 → 15% 할인")
+              DiscountCauseLabel(state: pricing, dark: true),
+              const SizedBox(height: 10),
+              // 정가·할인가 표시 (PriceDisplay compact — 어두운 배경에 강조색 노랑)
+              PriceDisplay(
+                state: pricing,
+                accentColor: const Color(0xFFF4B633),
               ),
               const SizedBox(height: 14),
               // 카운트다운 + CTA
               Row(
                 children: [
-                  const Icon(Icons.schedule_rounded,
-                      size: 14, color: Color(0xFFAAB8D4)),
-                  const SizedBox(width: 4),
-                  Text('${_fmtRemaining()} 남음',
-                      style: const TextStyle(
-                        color: Color(0xFFAAB8D4),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      )),
+                  DiscountCountdown(
+                    validUntil: pricing.validUntil,
+                    onExpired: onExpired,
+                  ),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -703,116 +694,44 @@ class _LunaPricingCardState extends State<_LunaPricingCard> {
   }
 }
 
-class _PricingStep extends StatelessWidget {
-  final String emoji;
-  final String label;
-  final bool accent;
-  const _PricingStep({
-    required this.emoji,
-    required this.label,
-    this.accent = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 16)),
-        const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(
-              color: accent ? const Color(0xFFF4B633) : Colors.white,
-              fontSize: 13,
-              fontWeight: accent ? FontWeight.w900 : FontWeight.w800,
-            )),
-      ],
-    );
-  }
-}
-
-class _PricingArrow extends StatelessWidget {
-  const _PricingArrow();
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 6),
-      child: Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFFAAB8D4)),
-    );
-  }
-}
-
 // ─── 루나 프라이싱 상세 시트 ───────────────────────────────
-class _LunaPricingSheet extends StatefulWidget {
-  final int discountPct;
+class _LunaPricingSheet extends StatelessWidget {
+  final PricingState pricing;
   final int? lastVisitDaysAgo;
   final int missingEggCount;
+  final VoidCallback onCheckout;
+  final VoidCallback onExpired;
   const _LunaPricingSheet({
-    required this.discountPct,
+    required this.pricing,
     required this.lastVisitDaysAgo,
     required this.missingEggCount,
+    required this.onCheckout,
+    required this.onExpired,
   });
 
-  @override
-  State<_LunaPricingSheet> createState() => _LunaPricingSheetState();
-}
-
-class _LunaPricingSheetState extends State<_LunaPricingSheet> {
-  Timer? _ticker;
-  Duration _remaining = _untilMidnight();
-
-  static Duration _untilMidnight() {
-    final now = DateTime.now();
-    final midnight = DateTime(now.year, now.month, now.day + 1);
-    return midnight.difference(now);
-  }
-
-  static String _fmt(int n) =>
-      n.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-
-  String _fmtRemaining() {
-    final h = _remaining.inHours.toString().padLeft(2, '0');
-    final m = (_remaining.inMinutes % 60).toString().padLeft(2, '0');
-    final s = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _remaining = _untilMidnight());
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
+  static String _fmt(int n) => n.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},',
+      );
 
   @override
   Widget build(BuildContext context) {
-    final discountPct = widget.discountPct;
-    const original = 30000;
-    final discounted = original * (100 - discountPct) ~/ 100;
-    final saved = original - discounted;
-    // 사유 표시는 입력값에 따라 가변 — 실제 비율은 추후 PricingService 합과 동기화.
+    final saved = pricing.discountAmount;
+    // 사유 표시는 PricingState.reason 이 결정 + 보조 입력(재방문·미수집 에그) 가산.
     final reasons = <(String, String, String)>[
-      const ('☁️', '흐린 평일', '+8%'),
-      if (widget.lastVisitDaysAgo == null)
+      (pricing.reasonEmoji, pricing.reasonLabel, '+${pricing.discountPercent - _bonusPct()}%'),
+      if (lastVisitDaysAgo == null)
         const ('🎉', '첫 방문 환영', '+5%')
       else
         (
           '📅',
-          widget.lastVisitDaysAgo! >= 30
-              ? '${(widget.lastVisitDaysAgo! / 30).floor()}개월 만의 재방문'
-              : '${widget.lastVisitDaysAgo!}일 만의 재방문',
+          lastVisitDaysAgo! >= 30
+              ? '${(lastVisitDaysAgo! / 30).floor()}개월 만의 재방문'
+              : '${lastVisitDaysAgo!}일 만의 재방문',
           '+5%',
         ),
-      if (widget.missingEggCount > 0)
-        ('🥚', '미수집 이스터에그 ${widget.missingEggCount}개', '+2%'),
+      if (missingEggCount > 0)
+        ('🥚', '미수집 이스터에그 $missingEggCount개', '+2%'),
     ];
 
     return Container(
@@ -825,21 +744,39 @@ class _LunaPricingSheetState extends State<_LunaPricingSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)))),
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: Text(
-                  '오늘 루나가 $discountPct%\n드리는 이유',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F), height: 1.3),
+                  '오늘 루나가 ${pricing.discountPercent}%\n드리는 이유',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF1F1F1F),
+                    height: 1.3,
+                  ),
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  width: 32, height: 32,
-                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5), shape: BoxShape.circle),
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF5F5F5),
+                    shape: BoxShape.circle,
+                  ),
                   child: const Icon(Icons.close, size: 16, color: Color(0xFF888888)),
                 ),
               ),
@@ -850,55 +787,57 @@ class _LunaPricingSheetState extends State<_LunaPricingSheet> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(color: const Color(0xFFF7F7F7), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F7F7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Row(
                     children: [
                       Text(r.$1, style: const TextStyle(fontSize: 18)),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(r.$2, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
-                      Text(r.$3, style: const TextStyle(color: Color(0xFFE60012), fontSize: 14, fontWeight: FontWeight.w900)),
+                      Expanded(
+                        child: Text(r.$2,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            )),
+                      ),
+                      Text(r.$3,
+                          style: const TextStyle(
+                            color: Color(0xFFE60012),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          )),
                     ],
                   ),
                 ),
               )),
           const Divider(color: Color(0xFFEEEEEE), height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('${_fmt(original)}원',
-                  style: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 15, decoration: TextDecoration.lineThrough)),
-              const SizedBox(width: 6),
-              const Text('→', style: TextStyle(color: Color(0xFF888888))),
-              const SizedBox(width: 6),
-              Text('${_fmt(discounted)}원',
-                  style: const TextStyle(color: Color(0xFFE60012), fontSize: 24, fontWeight: FontWeight.w900)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text('오늘 ${_fmt(saved)}원 아끼는 중', style: const TextStyle(color: Color(0xFF888888), fontSize: 12)),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Text('⏰ 오늘 자정까지 남은 시간 ',
-                  style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
-              Text(_fmtRemaining(),
-                  style: const TextStyle(
-                    color: Color(0xFFE60012),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                  )),
-            ],
+          // 정가·할인가 hero 표시.
+          PriceDisplay(state: pricing, size: PriceDisplaySize.hero),
+          const SizedBox(height: 6),
+          Text('오늘 ${_fmt(saved)}원 아끼는 중',
+              style: const TextStyle(color: Color(0xFF888888), fontSize: 12)),
+          const SizedBox(height: 8),
+          DiscountCountdown(
+            validUntil: pricing.validUntil,
+            onExpired: onExpired,
+            defaultColor: const Color(0xFF888888),
           ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+                onCheckout();
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE60012),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: Text('루나 티켓 ${_fmt(saved)}원 아끼기',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
@@ -907,6 +846,13 @@ class _LunaPricingSheetState extends State<_LunaPricingSheet> {
         ],
       ),
     );
+  }
+
+  /// 보조 사유(재방문 5% + 미수집 에그 2%) 합산해 메인 인과의 잔여 비율 계산.
+  int _bonusPct() {
+    int b = 5; // 재방문/첫방문 카피 모두 +5%
+    if (missingEggCount > 0) b += 2;
+    return b;
   }
 }
 
