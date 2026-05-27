@@ -179,7 +179,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         child: _SeasonBanner(config: config),
                       ),
                       const SizedBox(height: 24),
-                      _Bookshelf(config: config, collected: _booksCollected),
+                      _Bookshelf(season: _season, config: config, collected: _booksCollected),
                       const SizedBox(height: 28),
                       _LocationVerifyCard(collected: _booksCollected, onVerify: _verifyLocationAndAddBook),
                       const SizedBox(height: 28),
@@ -431,9 +431,34 @@ class _SeasonBanner extends StatelessWidget {
 }
 
 class _Bookshelf extends StatelessWidget {
+  final _Season season;
   final _SeasonConfig config;
   final int collected;
-  const _Bookshelf({required this.config, required this.collected});
+  const _Bookshelf({required this.season, required this.config, required this.collected});
+
+  void _onBookTap(BuildContext context, int index, bool filled) {
+    if (!filled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${index + 1}번째 책은 아직 잠겨있어요 🔒'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final book = _kMockMemoryBooks[season]![index];
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _BookDetailSheet(
+        config: config,
+        bookIndex: index + 1,
+        book: book,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -467,7 +492,12 @@ class _Bookshelf extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(5, (i) {
                 final filled = i < collected;
-                return _BookSlot(filled: filled, color: config.bookColors[i], index: i + 1);
+                return _BookSlot(
+                  filled: filled,
+                  color: config.bookColors[i],
+                  index: i + 1,
+                  onTap: () => _onBookTap(context, i, filled),
+                );
               }),
             ),
           ),
@@ -482,36 +512,523 @@ class _BookSlot extends StatelessWidget {
   final bool filled;
   final Color color;
   final int index;
-  const _BookSlot({required this.filled, required this.color, required this.index});
+  final VoidCallback onTap;
+  const _BookSlot({
+    required this.filled,
+    required this.color,
+    required this.index,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 48, height: 132,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: 42, height: 116,
-              decoration: BoxDecoration(border: Border.all(color: const Color(0xFF5C3A21).withOpacity(0.4), style: BorderStyle.solid, width: 2), borderRadius: BorderRadius.circular(2), color: Colors.transparent),
-            ),
-          ),
-          if (filled)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 42, height: 116,
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2), border: const Border(left: BorderSide(color: Colors.white24, width: 2)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 4, offset: const Offset(2, 2))]),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: [
-                  Container(width: 24, height: 3, color: Colors.white.withOpacity(0.5)),
-                  const SizedBox(height: 8),
-                  RotatedBox(quarterTurns: 1, child: Text('CHAPTER $index', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 1.5))),
-                ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 48, height: 132,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Positioned(
+              bottom: 0,
+              child: Container(
+                width: 42, height: 116,
+                decoration: BoxDecoration(border: Border.all(color: const Color(0xFF5C3A21).withOpacity(0.4), style: BorderStyle.solid, width: 2), borderRadius: BorderRadius.circular(2), color: Colors.transparent),
               ),
             ),
+            if (filled)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 42, height: 116,
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2), border: const Border(left: BorderSide(color: Colors.white24, width: 2)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 4, offset: const Offset(2, 2))]),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    Container(width: 24, height: 3, color: Colors.white.withOpacity(0.5)),
+                    const SizedBox(height: 8),
+                    RotatedBox(quarterTurns: 1, child: Text('CHAPTER $index', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 1.5))),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 책 상세 모달 (목업 데이터) ───────────────────────────
+class _MemoryBook {
+  final String title;
+  final String story;
+  final DateTime recordedAt;
+  final String attractionId;
+  final String? photoEmoji; // 커버 일러스트 — 추후 실제 사진 URL 로 교체.
+  const _MemoryBook({
+    required this.title,
+    required this.story,
+    required this.recordedAt,
+    required this.attractionId,
+    this.photoEmoji,
+  });
+}
+
+// 시즌별 5권 — 챕터 타겟 어트랙션 순서와 일치.
+// 실제 백엔드 붙으면 GET /api/archive/books?season=spring 응답으로 교체.
+final Map<_Season, List<_MemoryBook>> _kMockMemoryBooks = {
+  _Season.spring: [
+    _MemoryBook(
+      title: '벚꽃 흩날리던 그 길',
+      story: '벚꽃이 만개한 4월의 오후, 친구들과 손을 잡고 걸었던 그 길. 바람이 불 때마다 머리 위로 꽃잎이 쏟아져 내렸어요. 그날의 풍경은 마치 영화 속 한 장면 같았답니다.',
+      recordedAt: DateTime(2026, 4, 14, 14, 30),
+      attractionId: 'cherry_blossom_path',
+      photoEmoji: '🌸',
+    ),
+    _MemoryBook(
+      title: '회전목마 위의 동심',
+      story: '어릴 적 엄마 손을 잡고 처음 탔던 회전목마. 어른이 되어 다시 올라타니 그 시절의 설렘이 그대로 떠올랐어요. 음악도, 조명도, 모든 것이 그대로였답니다.',
+      recordedAt: DateTime(2026, 4, 15, 11, 15),
+      attractionId: 'carousel',
+      photoEmoji: '🎠',
+    ),
+    _MemoryBook(
+      title: '범퍼카 대결',
+      story: '서로 부딪치며 깔깔 웃었던 범퍼카. 누가 더 잘 모는지 진지하게 경쟁했지만, 결국엔 부딪치는 재미가 최고였어요.',
+      recordedAt: DateTime(2026, 4, 15, 13, 0),
+      attractionId: 'bumper_car',
+      photoEmoji: '🚗',
+    ),
+    _MemoryBook(
+      title: '미니바이킹의 첫 모험',
+      story: '큰 바이킹은 무서워서 못 타던 동생이 미니바이킹에서 처음으로 환하게 웃었던 날. 그 순간을 잊을 수 없어요.',
+      recordedAt: DateTime(2026, 4, 16, 10, 45),
+      attractionId: 'mini_viking',
+      photoEmoji: '⚓',
+    ),
+    _MemoryBook(
+      title: '킹바이킹의 짜릿함',
+      story: '드디어 키 제한을 넘긴 그날, 처음 도전한 킹바이킹. 떨어질 것 같은 그 짜릿함, 그리고 친구들의 비명소리가 아직도 귀에 남아있어요.',
+      recordedAt: DateTime(2026, 4, 16, 15, 20),
+      attractionId: 'viking',
+      photoEmoji: '🏴‍☠️',
+    ),
+  ],
+  _Season.summer: [
+    _MemoryBook(
+      title: '급류타기의 시원함',
+      story: '한여름 무더위를 한 방에 날려준 급류타기. 물벼락에 옷이 다 젖었지만, 그 시원함은 잊을 수가 없어요.',
+      recordedAt: DateTime(2025, 7, 22, 14, 0),
+      attractionId: 'flume_ride',
+      photoEmoji: '🌊',
+    ),
+    _MemoryBook(
+      title: '스카이엑스에서 본 하늘',
+      story: '70m 상공에서 자유낙하하던 그 순간, 시간이 멈춘 듯했어요. 떨어지는 동안 본 푸른 여름 하늘이 잊혀지지 않아요.',
+      recordedAt: DateTime(2025, 7, 23, 13, 30),
+      attractionId: 'sky_x',
+      photoEmoji: '🪂',
+    ),
+    _MemoryBook(
+      title: '여름밤의 바이킹',
+      story: '해가 진 후 노을빛 아래 흔들리던 바이킹. 야간 라이딩의 매력을 처음 알게 된 날이에요.',
+      recordedAt: DateTime(2025, 8, 5, 19, 40),
+      attractionId: 'viking',
+      photoEmoji: '⚓',
+    ),
+    _MemoryBook(
+      title: '실내 범퍼카로 더위 피하기',
+      story: '에어컨 빵빵한 실내 범퍼카는 한여름 피난처였어요. 한 시간 동안 5번이나 다시 줄을 섰답니다.',
+      recordedAt: DateTime(2025, 8, 5, 15, 10),
+      attractionId: 'bumper_car',
+      photoEmoji: '🚗',
+    ),
+    _MemoryBook(
+      title: '샷드롭의 비명',
+      story: '발사되는 순간의 그 무중력감. 옆 사람이 비명을 지르고, 나도 모르게 따라 질렀어요. 내려와서 보니 다리가 후들거리더라구요.',
+      recordedAt: DateTime(2025, 8, 6, 16, 0),
+      attractionId: 'shot_drop',
+      photoEmoji: '🚀',
+    ),
+  ],
+  _Season.autumn: [
+    _MemoryBook(
+      title: '은하열차의 가을 라이드',
+      story: '단풍이 물든 풍경 사이로 질주하는 은하열차. 바람에 실려오는 가을 향기와 함께 달렸던 그 코스가 최고였어요.',
+      recordedAt: DateTime(2025, 10, 18, 14, 20),
+      attractionId: 'galaxy_888',
+      photoEmoji: '🎢',
+    ),
+    _MemoryBook(
+      title: '블랙홀 2000의 어둠',
+      story: '어둠 속에서 회전하던 그 순간, 방향감을 잃었어요. 출구로 나왔을 때의 그 안도감, 그리고 친구와 마주보며 웃었던 표정이 생생해요.',
+      recordedAt: DateTime(2025, 10, 19, 13, 0),
+      attractionId: 'blackhole_2000',
+      photoEmoji: '🌀',
+    ),
+    _MemoryBook(
+      title: '알포스윙 360도',
+      story: '360도 회전하는 그 순간, 거꾸로 본 가을 하늘. 무섭다고 했지만 다시 타고 싶다고 했던 그 모순적인 마음.',
+      recordedAt: DateTime(2025, 10, 20, 15, 30),
+      attractionId: 'gyro_swing',
+      photoEmoji: '🎡',
+    ),
+    _MemoryBook(
+      title: '단풍 사이의 샷드롭',
+      story: '올라가는 동안 본 단풍 풍경, 내려오는 순간의 무중력. 가을과 스릴이 만난 완벽한 조합이었어요.',
+      recordedAt: DateTime(2025, 10, 25, 16, 10),
+      attractionId: 'shot_drop',
+      photoEmoji: '🚀',
+    ),
+    _MemoryBook(
+      title: '가을의 마지막 바이킹',
+      story: '시즌이 끝나기 전 마지막으로 탄 바이킹. 흩날리는 낙엽 사이로 흔들렸던 그 순간이 올 가을의 마침표였어요.',
+      recordedAt: DateTime(2025, 11, 2, 17, 0),
+      attractionId: 'viking',
+      photoEmoji: '⚓',
+    ),
+  ],
+  _Season.winter: [
+    _MemoryBook(
+      title: '눈 내리는 회전목마',
+      story: '함박눈이 내리던 12월의 저녁, 조명이 켜진 회전목마. 한 폭의 동화 같았던 그 풍경을 잊을 수 없어요.',
+      recordedAt: DateTime(2024, 12, 20, 18, 30),
+      attractionId: 'carousel',
+      photoEmoji: '🎠',
+    ),
+    _MemoryBook(
+      title: '산타레스토랑의 따뜻함',
+      story: '추운 날 산타레스토랑에서 먹었던 따뜻한 한 끼. 창밖에 눈이 내리고, 안에서는 캐롤이 흘러나오던 그 순간.',
+      recordedAt: DateTime(2024, 12, 24, 19, 0),
+      attractionId: 'santa_restaurant',
+      photoEmoji: '🎅',
+    ),
+    _MemoryBook(
+      title: '실내 범퍼카 단체전',
+      story: '겨울 시즌엔 단연 실내 어트랙션이 최고예요. 친구 5명이서 단체로 부딪치며 깔깔 웃었던 그 시간.',
+      recordedAt: DateTime(2025, 1, 12, 14, 30),
+      attractionId: 'bumper_car',
+      photoEmoji: '🚗',
+    ),
+    _MemoryBook(
+      title: '블랙홀의 겨울밤',
+      story: '바깥은 영하인데 실내 라이드는 짜릿했어요. 어둠 속 그 회전을 친구와 함께 견뎌낸 추억.',
+      recordedAt: DateTime(2025, 1, 18, 16, 0),
+      attractionId: 'blackhole_2000',
+      photoEmoji: '🌀',
+    ),
+    _MemoryBook(
+      title: '타임머신의 새해 첫날',
+      story: '새해 첫날 가족과 함께 본 5D 영상. 미래의 한 장면 같았던 그 경험이 새해의 시작을 특별하게 만들어줬어요.',
+      recordedAt: DateTime(2025, 1, 1, 13, 0),
+      attractionId: 'time_machine_5d',
+      photoEmoji: '🎬',
+    ),
+  ],
+};
+
+class _BookDetailSheet extends StatelessWidget {
+  final _SeasonConfig config;
+  final int bookIndex;
+  final _MemoryBook book;
+  const _BookDetailSheet({
+    required this.config,
+    required this.bookIndex,
+    required this.book,
+  });
+
+  Attraction? get _attraction {
+    final list = kAttractions.where((a) => a.id == book.attractionId);
+    return list.isEmpty ? null : list.first;
+  }
+
+  String _formatDate(DateTime dt) {
+    final wd = const ['일', '월', '화', '수', '목', '금', '토'][dt.weekday % 7];
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return '${dt.year}년 ${dt.month}월 ${dt.day}일 ($wd) · $hh:$mm';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final attr = _attraction;
+    final bookColor = config.bookColors[bookIndex - 1];
+    return DraggableScrollableSheet(
+      initialChildSize: 0.78,
+      minChildSize: 0.45,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // 드래그 핸들
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                  children: [
+                    // 표지 영역 — 책 색상 그라데이션 + 이모지
+                    Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [bookColor, bookColor.withOpacity(0.7)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: bookColor.withOpacity(0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: 14, left: 16,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Text(
+                                '${config.label} · CHAPTER $bookIndex',
+                                style: const TextStyle(
+                                  color: Colors.white, fontSize: 11,
+                                  fontWeight: FontWeight.w900, letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: Text(
+                              book.photoEmoji ?? config.emoji,
+                              style: const TextStyle(fontSize: 80),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // 타이틀
+                    Text(
+                      book.title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1A2B4A),
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // 기록된 시간
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule_rounded,
+                            size: 14, color: Color(0xFF888888)),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(book.recordedAt),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF888888),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Container(height: 1, color: const Color(0xFFEEEEEE)),
+                    const SizedBox(height: 20),
+                    // 스토리
+                    const Text(
+                      '📖 그날의 이야기',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1A2B4A),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      book.story,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF333333),
+                        height: 1.7,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // 관련 어트랙션
+                    if (attr != null) ...[
+                      const Text(
+                        '📍 관련 어트랙션',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1A2B4A),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _AttractionInfoCard(attraction: attr, accent: config.titleColor),
+                    ],
+                    const SizedBox(height: 24),
+                    // 닫기 버튼
+                    SizedBox(
+                      width: double.infinity, height: 48,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: config.titleColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          '책장으로 돌아가기',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AttractionInfoCard extends StatelessWidget {
+  final Attraction attraction;
+  final Color accent;
+  const _AttractionInfoCard({required this.attraction, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEEEEEE)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Text(attraction.icon, style: const TextStyle(fontSize: 24)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      attraction.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1F1F1F),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${attraction.category} · ${attraction.zone}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _InfoChip(
+                icon: Icons.location_on_rounded,
+                text: '${attraction.lat.toStringAsFixed(4)}, ${attraction.lng.toStringAsFixed(4)}',
+              ),
+            ],
+          ),
+          if (attraction.description.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                attraction.description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF555555),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _InfoChip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: const Color(0xFFEEEEEE)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: const Color(0xFF888888)),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF555555),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
