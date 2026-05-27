@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 class CompanionBottomSheet extends StatefulWidget {
   final String initialCompanion;
   final String initialStyle;
@@ -44,7 +46,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).viewInsets.bottom + 28),
@@ -55,7 +57,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
           Center(
             child: Container(
               width: 40, height: 5,
-              decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(99)),
+              decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(99)),
             ),
           ),
           const SizedBox(height: 18),
@@ -63,20 +65,20 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
             children: [
               const Expanded(
                 child: Text('마이 루나 조건 변경',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 32, height: 32,
-                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5), shape: BoxShape.circle),
-                  child: const Icon(Icons.close, size: 16, color: Color(0xFF888888)),
+                  decoration: const BoxDecoration(color: AppColors.bgDeep, shape: BoxShape.circle),
+                  child: const Icon(Icons.close, size: 16, color: AppColors.textMuted),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          const Text('구성원', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+          const Text('구성원', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
           const SizedBox(height: 10),
           Row(
             children: _companions
@@ -87,7 +89,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                           label: c.$1,
                           emoji: c.$2,
                           selected: _companion == c.$1,
-                          activeColor: const Color(0xFF1E3158),
+                          activeColor: AppColors.amber,
                           onTap: () => setState(() => _companion = c.$1),
                         ),
                       ),
@@ -95,7 +97,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 .toList(),
           ),
           const SizedBox(height: 20),
-          const Text('선호 스타일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+          const Text('선호 스타일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
           const SizedBox(height: 10),
           GridView.count(
             crossAxisCount: 2,
@@ -126,7 +128,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE60012),
+                backgroundColor: AppColors.coral,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -161,8 +163,8 @@ class _OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = selected ? activeColor : Colors.white;
-    final textColor = selected ? Colors.white : const Color(0xFF444444);
-    final borderColor = selected ? activeColor : const Color(0xFFDDDDDD);
+    final textColor = selected ? Colors.white : AppColors.textPrimary;
+    final borderColor = selected ? activeColor : AppColors.bgDeep;
 
     return GestureDetector(
       onTap: onTap,

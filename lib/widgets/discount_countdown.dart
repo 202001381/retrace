@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 /// 할인 유효 시각까지의 카운트다운. 1초마다 갱신, 만료 시 onExpired 호출 + 자체 비노출.
 /// 호출 측은 onExpired 에서 카드 비활성/제거 등 후속 처리 담당.
 class DiscountCountdown extends StatefulWidget {
@@ -17,8 +19,8 @@ class DiscountCountdown extends StatefulWidget {
     super.key,
     required this.validUntil,
     this.onExpired,
-    this.defaultColor = const Color(0xFFAAB8D4),
-    this.urgentColor = const Color(0xFFE60012),
+    this.defaultColor = AppColors.textMuted,
+    this.urgentColor = AppColors.coral,
     this.fontSize = 12,
     this.fontWeight = FontWeight.w700,
     this.showIcon = true,

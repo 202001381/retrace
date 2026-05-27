@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 import '../models/pricing_state.dart';
 
 /// 할인 인과 라벨 — "🌥 흐려서 한산 → 15% 할인" 한 줄.
@@ -18,9 +20,9 @@ class DiscountCauseLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor = dark ? Colors.white : const Color(0xFF1F1F1F);
-    final accentColor = dark ? const Color(0xFFF4B633) : const Color(0xFFE60012);
-    final arrowColor = dark ? const Color(0xFFAAB8D4) : const Color(0xFFAAAAAA);
+    final labelColor = dark ? Colors.white : AppColors.textPrimary;
+    final accentColor = dark ? AppColors.yellow : AppColors.coral;
+    final arrowColor = dark ? AppColors.textMuted : AppColors.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 /// 정적 앱 정보 — 버전·라이선스·문의처 placeholder.
 class AppInfoScreen extends StatelessWidget {
   const AppInfoScreen({super.key});
@@ -10,13 +12,13 @@ class AppInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.bgBase,
       appBar: AppBar(
         title: const Text('앱 정보',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgSurface,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1F1F1F),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -66,7 +68,7 @@ class _InfoCard extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                 fontSize: 11,
-                color: Color(0xFF888888),
+                color: AppColors.textMuted,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.6,
               )),
@@ -75,14 +77,14 @@ class _InfoCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1F1F1F),
+                color: AppColors.textPrimary,
               )),
           if (sub != null) ...[
             const SizedBox(height: 4),
             Text(sub!,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF888888),
+                  color: AppColors.textMuted,
                   fontWeight: FontWeight.w600,
                 )),
           ],
@@ -114,10 +116,10 @@ class _LinkCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F1F1F),
+                  color: AppColors.textPrimary,
                 )),
             const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF888888)),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
           ],
         ),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 /// 마케팅 정보 수신 동의 풀스크린 모달 (정통법 §50 명시적 동의).
 /// 호출 측은 [showMarketingConsentModal] 사용 → bool 반환 (true = 동의).
 ///
@@ -11,13 +13,13 @@ class MarketingConsentModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgSurface,
       appBar: AppBar(
         title: const Text('마케팅 정보 수신 동의',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgSurface,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1F1F1F),
+        foregroundColor: AppColors.textPrimary,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(false),
@@ -65,7 +67,7 @@ class MarketingConsentModal extends StatelessWidget {
                       '법적 근거: 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFFAAAAAA),
+                        color: AppColors.textMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -73,7 +75,7 @@ class MarketingConsentModal extends StatelessWidget {
                 ),
               ),
             ),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            const Divider(height: 1, color: AppColors.bgDeep),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
               child: Row(
@@ -83,8 +85,8 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFFDDDDDD)),
-                        foregroundColor: const Color(0xFF555555),
+                        side: const BorderSide(color: AppColors.bgDeep),
+                        foregroundColor: AppColors.textMuted,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
@@ -99,7 +101,7 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: const Color(0xFFE60012),
+                        backgroundColor: AppColors.coral,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -135,7 +137,7 @@ class _Section extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1F1F1F),
+                color: AppColors.textPrimary,
               )),
           const SizedBox(height: 8),
           ...lines.map((l) => Padding(
@@ -143,7 +145,7 @@ class _Section extends StatelessWidget {
                 child: Text(l,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF555555),
+                      color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
                     )),

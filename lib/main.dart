@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'core/theme/app_colors.dart';
 import 'screens/archive_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
@@ -15,7 +16,8 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
     ),
   );
   try {
@@ -34,12 +36,36 @@ class SeoulLandApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Pretendard',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE60012),
-          primary: const Color(0xFFE60012),
-        ),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: AppColors.bgBase,
+        canvasColor: AppColors.bgBase,
+        dialogBackgroundColor: AppColors.bgSurface,
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.amber,
+          onPrimary: AppColors.bgBase,
+          secondary: AppColors.teal,
+          onSecondary: AppColors.bgBase,
+          tertiary: AppColors.coral,
+          onTertiary: AppColors.textPrimary,
+          surface: AppColors.bgSurface,
+          onSurface: AppColors.textPrimary,
+          surfaceContainerHighest: AppColors.bgDeep,
+          error: AppColors.coral,
+          onError: AppColors.textPrimary,
+          outline: AppColors.textMuted,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.bgSurface,
+          foregroundColor: AppColors.textPrimary,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
+        dividerColor: const Color(0xFF22405E),
+        textTheme: const TextTheme().apply(
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+        ),
       ),
       home: const _AppGate(),
     );
@@ -86,8 +112,9 @@ class _AppGateState extends State<_AppGate> {
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Scaffold(
-            backgroundColor: Color(0xFFF7F7F7),
-            body: Center(child: CircularProgressIndicator(color: Color(0xFFE60012))),
+            backgroundColor: AppColors.bgBase,
+            body: Center(
+                child: CircularProgressIndicator(color: AppColors.amber)),
           );
         }
         if (snap.data == true) {
@@ -177,10 +204,10 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -205,7 +232,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isActive = _currentIndex == index;
-    final color = isActive ? const Color(0xFFE60012) : const Color(0xFF9E9E9E);
+    final color = isActive ? AppColors.amber : AppColors.textMuted;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {

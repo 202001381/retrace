@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 import '../../services/easter_egg_service.dart';
 import '../../services/onboarding_service.dart';
 import 'app_info_screen.dart';
@@ -61,13 +63,13 @@ class _MypageScreenState extends State<MypageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.bgBase,
       appBar: AppBar(
         title: const Text('마이페이지',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgSurface,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1F1F1F),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
@@ -85,7 +87,7 @@ class _MypageScreenState extends State<MypageScreen> {
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF2F2F2),
+                        color: AppColors.bgDeep,
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -100,14 +102,14 @@ class _MypageScreenState extends State<MypageScreen> {
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF1F1F1F),
+                                color: AppColors.textPrimary,
                               )),
                           const SizedBox(height: 4),
                           Text(
                             _surveySummary ?? '온보딩 답변 없음',
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF888888),
+                              color: AppColors.textMuted,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -127,8 +129,8 @@ class _MypageScreenState extends State<MypageScreen> {
                   icon: const Icon(Icons.refresh_rounded, size: 16),
                   label: const Text('온보딩 다시하기'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1E3158),
-                    side: const BorderSide(color: Color(0xFFDDDDDD)),
+                    foregroundColor: AppColors.amber,
+                    side: const BorderSide(color: AppColors.bgDeep),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 8),
                     shape: RoundedRectangleBorder(
@@ -167,7 +169,7 @@ class _MypageScreenState extends State<MypageScreen> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFFF4B633),
+                  color: AppColors.yellow,
                 ),
               ),
               onTap: () => _snack('Archive 탭에서 확인하세요'),
@@ -193,8 +195,8 @@ class _MypageScreenState extends State<MypageScreen> {
             child: OutlinedButton(
               onPressed: () => _snack('건의·피드백 수집 채널 (준비 중)'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF555555),
-                side: const BorderSide(color: Color(0xFFDDDDDD)),
+                foregroundColor: AppColors.textMuted,
+                side: const BorderSide(color: AppColors.bgDeep),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -225,7 +227,7 @@ class _MenuGroup extends StatelessWidget {
             if (i != items.length - 1)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Divider(height: 1, color: Color(0xFFF1F1F1)),
+                child: Divider(height: 1, color: AppColors.bgDeep),
               ),
           ],
         ],
@@ -261,7 +263,7 @@ class _MenuItem extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F1F1F),
+                    color: AppColors.textPrimary,
                   )),
             ),
             if (trailing != null) ...[
@@ -269,7 +271,7 @@ class _MenuItem extends StatelessWidget {
               const SizedBox(width: 6),
             ],
             const Icon(Icons.chevron_right_rounded,
-                size: 18, color: Color(0xFFBBBBBB)),
+                size: 18, color: AppColors.textMuted),
           ],
         ),
       ),
@@ -285,14 +287,14 @@ class _PlaceholderTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
+        border: Border.all(color: AppColors.bgDeep),
       ),
       child: const Text('준비 중',
           style: TextStyle(
             fontSize: 10,
-            color: Color(0xFFAAAAAA),
+            color: AppColors.textMuted,
             fontWeight: FontWeight.w800,
           )),
     );

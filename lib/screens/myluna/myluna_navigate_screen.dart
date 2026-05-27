@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../models/attraction.dart';
 
 /// "지금 출발" 모드 — 전체 화면 지도 + 큰 폰트 거리·방향.
@@ -85,7 +86,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-          backgroundColor: const Color(0xFF1E3158),
+          backgroundColor: AppColors.amber,
           duration: const Duration(seconds: 5),
           content: Text(
             '🎯 거의 다 왔어요! ${widget.target.name}',
@@ -179,7 +180,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                 PolylineLayer(polylines: [
                   Polyline(
                     points: [_origin, widget.target.position],
-                    color: const Color(0xFFE60012),
+                    color: AppColors.coral,
                     strokeWidth: 5,
                   ),
                 ]),
@@ -190,7 +191,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                     height: 56,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE60012),
+                        color: AppColors.coral,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
@@ -212,7 +213,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                       height: 28,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A90E2),
+                          color: AppColors.teal,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
@@ -269,14 +270,14 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.info_outline_rounded,
-                          size: 16, color: Color(0xFF888888)),
+                          size: 16, color: AppColors.textMuted),
                       const SizedBox(width: 6),
                       const Expanded(
                         child: Text(
                           '폰을 보지 않으셔도 돼요 — 50m 안으로 들어가면 알려드릴게요.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF555555),
+                            color: AppColors.textMuted,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -346,7 +347,7 @@ class _DistanceCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF1F1F1F),
+                      color: AppColors.textPrimary,
                     )),
               ),
             ],
@@ -360,7 +361,7 @@ class _DistanceCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 38,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF1F1F1F),
+                    color: AppColors.textPrimary,
                     height: 1,
                   )),
               const SizedBox(width: 10),
@@ -370,7 +371,7 @@ class _DistanceCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF555555),
+                      color: AppColors.textMuted,
                     )),
               ),
               const Spacer(),
@@ -380,7 +381,7 @@ class _DistanceCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF888888),
+                      color: AppColors.textMuted,
                     )),
               ),
             ],

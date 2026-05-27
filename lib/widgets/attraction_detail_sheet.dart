@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 import '../models/attraction.dart';
 import '../services/easter_egg_service.dart';
 
@@ -41,7 +43,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
       case '음식점':
         return const Color(0xFFFF6D00);
       default:
-        return const Color(0xFFE60012);
+        return AppColors.coral;
     }
   }
 
@@ -89,7 +91,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -109,7 +111,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
               child: Container(
                 width: 40, height: 4,
                 margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(2)),
               ),
             ),
             Row(
@@ -139,20 +141,20 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                           ),
                           const SizedBox(width: 6),
                           Text(a.zone,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF888888), fontWeight: FontWeight.w600)),
+                              style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(a.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
                     ],
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Color(0xFF888888)),
+                  icon: const Icon(Icons.close, color: AppColors.textMuted),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5F5F5),
+                    backgroundColor: AppColors.bgDeep,
                     minimumSize: const Size(32, 32),
                     padding: EdgeInsets.zero,
                   ),
@@ -161,7 +163,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
             ),
             const SizedBox(height: 14),
             Text(a.description,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF555555), height: 1.6)),
+                style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.6)),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -240,11 +242,11 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(99),
       ),
       child: Text('$icon $text',
-          style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
+          style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w700)),
     );
   }
 }
@@ -259,7 +261,7 @@ class _EasterEggSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = discovered ? const Color(0xFFF0F0F0) : const Color(0xFFFFF5F0);
-    final border = discovered ? const Color(0xFFCCCCCC) : const Color(0xFFE60012);
+    final border = discovered ? AppColors.textMuted : AppColors.coral;
     final btnLabel = discovered ? '다시 듣기' : '이야기 들어보기';
     return Container(
       padding: const EdgeInsets.all(16),
@@ -273,7 +275,7 @@ class _EasterEggSection extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(discovered ? '🌙 발견한 이야기' : '🌙 이스터에그 발견!',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFFE60012))),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.coral)),
           const SizedBox(height: 4),
           const Text('이 어트랙션에 숨겨진 이야기가 있어요',
               style: TextStyle(fontSize: 13, color: Color(0xFF666666))),
@@ -284,7 +286,7 @@ class _EasterEggSection extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onTap,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE60012),
+                backgroundColor: AppColors.coral,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -303,7 +305,7 @@ class _LunaLoadingDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1E2B4A),
+      backgroundColor: AppColors.amber,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
@@ -312,7 +314,7 @@ class _LunaLoadingDialog extends StatelessWidget {
           children: const [
             SizedBox(
               width: 32, height: 32,
-              child: CircularProgressIndicator(color: Color(0xFFF4B633), strokeWidth: 3),
+              child: CircularProgressIndicator(color: AppColors.yellow, strokeWidth: 3),
             ),
             SizedBox(height: 14),
             Text('🌙 루나가 이야기를 찾고 있어요...',
@@ -333,7 +335,7 @@ class _NarrativePopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
-      backgroundColor: const Color(0xFF1E2B4A),
+      backgroundColor: AppColors.amber,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -348,7 +350,7 @@ class _NarrativePopup extends StatelessWidget {
               ),
               const Spacer(),
               const Text('✦ AI SCANNED',
-                  style: TextStyle(color: Color(0xFFF4B633), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  style: TextStyle(color: AppColors.yellow, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               const SizedBox(height: 18),
               Text(attraction.icon, style: const TextStyle(fontSize: 64)),
               const SizedBox(height: 14),
@@ -375,8 +377,8 @@ class _NarrativePopup extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF4B633),
-                    foregroundColor: const Color(0xFF1E2B4A),
+                    backgroundColor: AppColors.yellow,
+                    foregroundColor: AppColors.amber,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),

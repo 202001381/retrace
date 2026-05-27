@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 import '../models/pricing_state.dart';
 import '../services/visit_history_service.dart';
 import '../widgets/discount_cause_label.dart';
@@ -81,13 +83,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final p = widget.pricing;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.bgBase,
       appBar: AppBar(
         title: const Text('결제 확인',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgSurface,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1F1F1F),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: SafeArea(
         child: Padding(
@@ -98,9 +100,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.bgSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFEEEEEE)),
+                  border: Border.all(color: AppColors.bgDeep),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,25 +110,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const Text('입장권 (성인 1매)',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF888888),
+                          color: AppColors.textMuted,
                           fontWeight: FontWeight.w700,
                         )),
                     const SizedBox(height: 16),
                     _row('정가', '₩${_fmt(p.basePrice)}',
-                        color: const Color(0xFF555555)),
+                        color: AppColors.textMuted),
                     const SizedBox(height: 8),
                     _row(
                       '루나 할인 (${p.discountPercent}%)',
                       '-₩${_fmt(p.discountAmount)}',
-                      color: const Color(0xFFE60012),
+                      color: AppColors.coral,
                     ),
                     const SizedBox(height: 12),
-                    const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                    const Divider(height: 1, color: AppColors.bgDeep),
                     const SizedBox(height: 12),
                     _row(
                       '최종 결제액',
                       '₩${_fmt(p.finalPrice)}',
-                      color: const Color(0xFF1F1F1F),
+                      color: AppColors.textPrimary,
                       bold: true,
                       large: true,
                     ),
@@ -142,7 +144,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   DiscountCountdown(
                     validUntil: p.validUntil,
                     onExpired: () => setState(() => _expired = true),
-                    defaultColor: const Color(0xFF888888),
+                    defaultColor: AppColors.textMuted,
                   ),
                 ],
               ),
@@ -153,9 +155,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: ElevatedButton(
                   onPressed: (_expired || _processing) ? null : _onPay,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE60012),
+                    backgroundColor: AppColors.coral,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFCCCCCC),
+                    disabledBackgroundColor: AppColors.textMuted,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
@@ -180,7 +182,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   '결제 후엔 가격 변동의 영향을 받지 않아요.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF888888),
+                    color: AppColors.textMuted,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
                   ),
@@ -202,7 +204,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               fontSize: large ? 15 : 14,
               fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-              color: const Color(0xFF555555),
+              color: AppColors.textMuted,
             )),
         Text(value,
             style: TextStyle(

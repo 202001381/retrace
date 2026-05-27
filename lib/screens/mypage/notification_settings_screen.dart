@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 import '../../models/user_preferences.dart';
 import '../../services/preferences_service.dart';
 import 'marketing_consent_modal.dart';
@@ -80,13 +82,13 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     final s = _state;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.bgBase,
       appBar: AppBar(
         title: const Text('알림 설정',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgSurface,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1F1F1F),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -118,13 +120,13 @@ class _NotificationSettingsScreenState
                       _apply(s.copyWith(lowCrowdAlertEnabled: v)),
                 ),
                 if (s.lowCrowdAlertEnabled) ...[
-                  const Divider(height: 24, color: Color(0xFFF1F1F1)),
+                  const Divider(height: 24, color: AppColors.bgDeep),
                   const Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 8),
                     child: Text('발송 채널 (중복 선택)',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: AppColors.textMuted,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.4,
                         )),
@@ -157,7 +159,7 @@ class _NotificationSettingsScreenState
                         '※ 카카오·SMS 채널은 마케팅 정보 수신 동의 후 사용 가능합니다',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF888888),
+                          color: AppColors.textMuted,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -190,7 +192,7 @@ class _NotificationSettingsScreenState
                     '마지막 동의: ${_fmtConsentAt(s.marketingConsentAt)}',
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFFAAAAAA),
+                      color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -223,7 +225,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -244,7 +246,7 @@ class _SectionCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF1F1F1F),
+                      color: AppColors.textPrimary,
                     )),
                 if (badge != null) ...[
                   const SizedBox(width: 4),
@@ -285,13 +287,13 @@ class _ToggleRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F1F1F),
+                    color: AppColors.textPrimary,
                   )),
               const SizedBox(height: 4),
               Text(subtitle,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF888888),
+                    color: AppColors.textMuted,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
                   )),
@@ -301,7 +303,7 @@ class _ToggleRow extends StatelessWidget {
         Switch.adaptive(
           value: value,
           onChanged: onChanged,
-          activeColor: const Color(0xFF1E3158),
+          activeColor: AppColors.amber,
         ),
       ],
     );
@@ -342,7 +344,7 @@ class _ChannelCheck extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F1F1F),
+                    color: AppColors.textPrimary,
                   )),
             ],
           ),
@@ -370,12 +372,12 @@ class _LinkRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E3158),
+                  color: AppColors.amber,
                   decoration: TextDecoration.underline,
                 )),
             const SizedBox(width: 2),
             const Icon(Icons.chevron_right_rounded,
-                size: 14, color: Color(0xFF1E3158)),
+                size: 14, color: AppColors.amber),
           ],
         ),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 import '../models/pricing_state.dart';
 
 enum PriceDisplaySize { compact, hero }
@@ -14,7 +16,7 @@ class PriceDisplay extends StatelessWidget {
     super.key,
     required this.state,
     this.size = PriceDisplaySize.compact,
-    this.accentColor = const Color(0xFFE60012),
+    this.accentColor = AppColors.coral,
   });
 
   static String _fmt(int n) => n.toString().replaceAllMapped(
@@ -39,14 +41,14 @@ class PriceDisplay extends StatelessWidget {
       children: [
         Text('정가 ₩${_fmt(state.basePrice)}',
             style: const TextStyle(
-              color: Color(0xFFAAAAAA),
+              color: AppColors.textMuted,
               fontSize: 11,
               fontWeight: FontWeight.w600,
               decoration: TextDecoration.lineThrough,
             )),
         const SizedBox(width: 6),
         const Icon(Icons.arrow_forward_rounded,
-            size: 12, color: Color(0xFF888888)),
+            size: 12, color: AppColors.textMuted),
         const SizedBox(width: 6),
         Text('₩${_fmt(state.finalPrice)}',
             style: TextStyle(
@@ -67,7 +69,7 @@ class PriceDisplay extends StatelessWidget {
       children: [
         Text('정가 ₩${_fmt(state.basePrice)}',
             style: const TextStyle(
-              color: Color(0xFFAAAAAA),
+              color: AppColors.textMuted,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               decoration: TextDecoration.lineThrough,

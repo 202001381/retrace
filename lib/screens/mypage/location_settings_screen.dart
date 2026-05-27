@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../models/user_preferences.dart';
@@ -90,13 +92,13 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.bgBase,
       appBar: AppBar(
         title: const Text('위치 정보',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgSurface,
         elevation: 0.5,
-        foregroundColor: const Color(0xFF1F1F1F),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -130,14 +132,14 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF1F1F1F),
+                                      color: AppColors.textPrimary,
                                     )),
                                 const SizedBox(height: 4),
                                 const Text(
                                   '이스터에그 발견·동선 추천에 사용됩니다',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF888888),
+                                    color: AppColors.textMuted,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -148,11 +150,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                             value: _state.locationTrackingEnabled &&
                                 _isPermGranted,
                             onChanged: _onToggle,
-                            activeColor: const Color(0xFF1E3158),
+                            activeColor: AppColors.amber,
                           ),
                         ],
                       ),
-                      const Divider(height: 24, color: Color(0xFFF1F1F1)),
+                      const Divider(height: 24, color: AppColors.bgDeep),
                       _PermStatusRow(
                         granted: _isPermGranted,
                         permanentlyDenied: _isPermPermDenied,
@@ -181,11 +183,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1F1F1F),
+                              color: AppColors.textPrimary,
                             )),
                         Spacer(),
                         Icon(Icons.chevron_right_rounded,
-                            color: Color(0xFF888888)),
+                            color: AppColors.textMuted),
                       ],
                     ),
                   ),
@@ -250,8 +252,8 @@ class _PermStatusRow extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              side: const BorderSide(color: Color(0xFFDDDDDD)),
-              foregroundColor: const Color(0xFF1F1F1F),
+              side: const BorderSide(color: AppColors.bgDeep),
+              foregroundColor: AppColors.textPrimary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
