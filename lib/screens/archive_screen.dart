@@ -989,83 +989,78 @@ class _DiaryDialogState extends State<_DiaryDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 320),
-        switchInCurve: Curves.easeOutCubic,
-        child: Container(
-          key: ValueKey(_book.id),
-          decoration: BoxDecoration(
-            color: _Vintage.parchment,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-                color: _Vintage.leather.withOpacity(0.4), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 30,
-                offset: const Offset(0, 14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _Vintage.parchment,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: _Vintage.leather.withOpacity(0.4), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 30,
+              offset: const Offset(0, 14),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Column(
+            children: [
+              _DialogTopBar(
+                config: widget.config,
+                bookIndex: _bookIndex + 1,
+                totalBooks: widget.books.length,
+                onPrev: _bookIndex > 0 ? _goPrevBook : null,
+                onNext: _bookIndex < widget.books.length - 1
+                    ? _goNextBook
+                    : null,
+                onClose: () => Navigator.of(context).pop(),
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(13),
-            child: Column(
-              children: [
-                _DialogTopBar(
-                  config: widget.config,
-                  bookIndex: _bookIndex + 1,
-                  totalBooks: widget.books.length,
-                  onPrev: _bookIndex > 0 ? _goPrevBook : null,
-                  onNext: _bookIndex < widget.books.length - 1
-                      ? _goNextBook
-                      : null,
-                  onClose: () => Navigator.of(context).pop(),
-                ),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageCtrl,
-                    onPageChanged: (i) => setState(() => _pageIndex = i),
-                    itemCount: 3,
-                    itemBuilder: (ctx, i) {
-                      final pages = [
-                        _PageCover(book: _book, config: widget.config),
-                        _PageJournal(book: _book, config: widget.config),
-                        _PageMemory(
-                          book: _book,
-                          config: widget.config,
-                          onPickGallery: () => _pickPhoto(ImageSource.gallery),
-                          onPickCamera: () => _pickPhoto(ImageSource.camera),
-                          onRemovePhoto: _removePhoto,
-                        ),
-                      ];
-                      // 책장 넘김 트랜스폼 — 좌우 perspective rotateY.
-                      return AnimatedBuilder(
-                        animation: _pageCtrl,
-                        child: pages[i],
-                        builder: (_, child) {
-                          double delta = 0;
-                          if (_pageCtrl.position.hasContentDimensions) {
-                            delta = (_pageCtrl.page ?? 0) - i;
-                          }
-                          final clamped = delta.clamp(-1.0, 1.0);
-                          final m = Matrix4.identity()
-                            ..setEntry(3, 2, 0.0015)
-                            ..rotateY(clamped * 0.55);
-                          return Transform(
-                            transform: m,
-                            alignment: delta < 0
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: child,
-                          );
-                        },
-                      );
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageCtrl,
+                  onPageChanged: (i) => setState(() => _pageIndex = i),
+                  itemCount: 3,
+                  itemBuilder: (ctx, i) {
+                    final pages = [
+                      _PageCover(book: _book, config: widget.config),
+                      _PageJournal(book: _book, config: widget.config),
+                      _PageMemory(
+                        book: _book,
+                        config: widget.config,
+                        onPickGallery: () => _pickPhoto(ImageSource.gallery),
+                        onPickCamera: () => _pickPhoto(ImageSource.camera),
+                        onRemovePhoto: _removePhoto,
+                      ),
+                    ];
+                    return AnimatedBuilder(
+                      animation: _pageCtrl,
+                      child: pages[i],
+                      builder: (_, child) {
+                        double delta = 0;
+                        if (_pageCtrl.hasClients &&
+                            _pageCtrl.position.hasContentDimensions) {
+                          delta = (_pageCtrl.page ?? 0) - i;
+                        }
+                        final clamped = delta.clamp(-1.0, 1.0);
+                        final m = Matrix4.identity()
+                          ..setEntry(3, 2, 0.0015)
+                          ..rotateY(clamped * 0.55);
+                        return Transform(
+                          transform: m,
+                          alignment: delta < 0
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: child,
+                        );
+                      },
+                    );
                     },
                   ),
                 ),
-                _PageIndicator(current: _pageIndex, total: 3),
-              ],
-            ),
+              _PageIndicator(current: _pageIndex, total: 3),
+            ],
           ),
         ),
       ),
