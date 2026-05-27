@@ -16,8 +16,8 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ),
   );
   try {
@@ -37,23 +37,23 @@ class SeoulLandApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'Pretendard',
         useMaterial3: true,
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.bgBase,
         canvasColor: AppColors.bgBase,
         dialogBackgroundColor: AppColors.bgSurface,
-        colorScheme: const ColorScheme.dark(
-          primary: AppColors.amber,
-          onPrimary: AppColors.bgBase,
-          secondary: AppColors.teal,
-          onSecondary: AppColors.bgBase,
-          tertiary: AppColors.coral,
+        colorScheme: const ColorScheme.light(
+          primary: AppColors.brandCoral,
+          onPrimary: AppColors.textOnDark,
+          secondary: AppColors.brandNavy,
+          onSecondary: AppColors.textOnDark,
+          tertiary: AppColors.pricing,
           onTertiary: AppColors.textPrimary,
           surface: AppColors.bgSurface,
           onSurface: AppColors.textPrimary,
-          surfaceContainerHighest: AppColors.bgDeep,
-          error: AppColors.coral,
-          onError: AppColors.textPrimary,
-          outline: AppColors.textMuted,
+          surfaceContainerHighest: AppColors.bgSunken,
+          error: AppColors.statusBusy,
+          onError: AppColors.textOnDark,
+          outline: AppColors.textSecondary,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.bgSurface,
@@ -61,7 +61,7 @@ class SeoulLandApp extends StatelessWidget {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
-        dividerColor: const Color(0xFF22405E),
+        dividerColor: AppColors.bgSunken,
         textTheme: const TextTheme().apply(
           bodyColor: AppColors.textPrimary,
           displayColor: AppColors.textPrimary,
@@ -114,7 +114,7 @@ class _AppGateState extends State<_AppGate> {
           return const Scaffold(
             backgroundColor: AppColors.bgBase,
             body: Center(
-                child: CircularProgressIndicator(color: AppColors.amber)),
+                child: CircularProgressIndicator(color: AppColors.brandCoral)),
           );
         }
         if (snap.data == true) {
@@ -232,7 +232,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isActive = _currentIndex == index;
-    final color = isActive ? AppColors.amber : AppColors.textMuted;
+    final color = isActive ? AppColors.brandCoral : AppColors.textSecondary;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {

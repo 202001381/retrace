@@ -102,7 +102,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.bgSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.bgDeep),
+                  border: Border.all(color: AppColors.bgSunken),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,20 +110,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const Text('입장권 (성인 1매)',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textMuted,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w700,
                         )),
                     const SizedBox(height: 16),
                     _row('정가', '₩${_fmt(p.basePrice)}',
-                        color: AppColors.textMuted),
+                        color: AppColors.textSecondary),
                     const SizedBox(height: 8),
                     _row(
                       '루나 할인 (${p.discountPercent}%)',
                       '-₩${_fmt(p.discountAmount)}',
-                      color: AppColors.coral,
+                      color: AppColors.brandCoral,
                     ),
                     const SizedBox(height: 12),
-                    const Divider(height: 1, color: AppColors.bgDeep),
+                    const Divider(height: 1, color: AppColors.bgSunken),
                     const SizedBox(height: 12),
                     _row(
                       '최종 결제액',
@@ -144,7 +144,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   DiscountCountdown(
                     validUntil: p.validUntil,
                     onExpired: () => setState(() => _expired = true),
-                    defaultColor: AppColors.textMuted,
+                    defaultColor: AppColors.textSecondary,
                   ),
                 ],
               ),
@@ -155,9 +155,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: ElevatedButton(
                   onPressed: (_expired || _processing) ? null : _onPay,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.coral,
+                    backgroundColor: AppColors.brandCoral,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.textMuted,
+                    disabledBackgroundColor: AppColors.textSecondary,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
@@ -182,7 +182,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   '결제 후엔 가격 변동의 영향을 받지 않아요.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
                   ),
@@ -204,7 +204,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               fontSize: large ? 15 : 14,
               fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-              color: AppColors.textMuted,
+              color: AppColors.textSecondary,
             )),
         Text(value,
             style: TextStyle(

@@ -76,7 +76,7 @@ class _MypageScreenState extends State<MypageScreen> {
         children: [
           // 프로필 row
           Container(
-            color: Colors.white,
+            color: AppColors.bgSurface,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +87,7 @@ class _MypageScreenState extends State<MypageScreen> {
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        color: AppColors.bgDeep,
+                        color: AppColors.bgSunken,
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -109,7 +109,7 @@ class _MypageScreenState extends State<MypageScreen> {
                             _surveySummary ?? '온보딩 답변 없음',
                             style: const TextStyle(
                               fontSize: 12,
-                              color: AppColors.textMuted,
+                              color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -129,8 +129,8 @@ class _MypageScreenState extends State<MypageScreen> {
                   icon: const Icon(Icons.refresh_rounded, size: 16),
                   label: const Text('온보딩 다시하기'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.amber,
-                    side: const BorderSide(color: AppColors.bgDeep),
+                    foregroundColor: AppColors.brandNavy,
+                    side: const BorderSide(color: AppColors.bgSunken),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 8),
                     shape: RoundedRectangleBorder(
@@ -169,7 +169,7 @@ class _MypageScreenState extends State<MypageScreen> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.yellow,
+                  color: AppColors.game,
                 ),
               ),
               onTap: () => _snack('Archive 탭에서 확인하세요'),
@@ -195,8 +195,8 @@ class _MypageScreenState extends State<MypageScreen> {
             child: OutlinedButton(
               onPressed: () => _snack('건의·피드백 수집 채널 (준비 중)'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textMuted,
-                side: const BorderSide(color: AppColors.bgDeep),
+                foregroundColor: AppColors.textSecondary,
+                side: const BorderSide(color: AppColors.bgSunken),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -219,7 +219,7 @@ class _MenuGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: AppColors.bgSurface,
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
@@ -227,7 +227,7 @@ class _MenuGroup extends StatelessWidget {
             if (i != items.length - 1)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Divider(height: 1, color: AppColors.bgDeep),
+                child: Divider(height: 1, color: AppColors.bgSunken),
               ),
           ],
         ],
@@ -271,7 +271,7 @@ class _MenuItem extends StatelessWidget {
               const SizedBox(width: 6),
             ],
             const Icon(Icons.chevron_right_rounded,
-                size: 18, color: AppColors.textMuted),
+                size: 18, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -289,12 +289,12 @@ class _PlaceholderTag extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.bgBase,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.bgDeep),
+        border: Border.all(color: AppColors.bgSunken),
       ),
       child: const Text('준비 중',
           style: TextStyle(
             fontSize: 10,
-            color: AppColors.textMuted,
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w800,
           )),
     );

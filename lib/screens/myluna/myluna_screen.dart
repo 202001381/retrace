@@ -384,7 +384,7 @@ class _MetaHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -410,7 +410,7 @@ class _MetaHeader extends StatelessWidget {
                   ].join('  ·  '),
                   style: const TextStyle(
                     fontSize: 11,
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -424,8 +424,8 @@ class _MetaHeader extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              side: const BorderSide(color: AppColors.bgDeep),
-              foregroundColor: AppColors.textMuted,
+              side: const BorderSide(color: AppColors.bgSunken),
+              foregroundColor: AppColors.textSecondary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
               textStyle: const TextStyle(
@@ -458,12 +458,12 @@ class _HeroNextCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.amber, width: 2),
+        border: Border.all(color: AppColors.brandNavy, width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.amber.withValues(alpha: 0.08),
+            color: AppColors.brandNavy.withValues(alpha: 0.08),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -478,12 +478,12 @@ class _HeroNextCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.amber,
+                  color: AppColors.brandNavy,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text('다음 추천',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.bgSurface,
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.4,
@@ -524,7 +524,7 @@ class _HeroNextCard extends StatelessWidget {
                     Text('${spot.category} · ${spot.zone}',
                         style: const TextStyle(
                           fontSize: 12,
-                          color: AppColors.textMuted,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         )),
                   ],
@@ -572,7 +572,7 @@ class _HeroNextCard extends StatelessWidget {
                   icon: const Icon(Icons.navigation_rounded, size: 18),
                   label: const Text('길 안내'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.amber,
+                    backgroundColor: AppColors.brandNavy,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -588,8 +588,8 @@ class _HeroNextCard extends StatelessWidget {
                 icon: const Icon(Icons.skip_next_rounded, size: 18),
                 label: const Text('건너뛰기'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textMuted,
-                  side: const BorderSide(color: AppColors.bgDeep),
+                  foregroundColor: AppColors.textSecondary,
+                  side: const BorderSide(color: AppColors.bgSunken),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -627,7 +627,7 @@ class _StatCell extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                 fontSize: 10,
-                color: AppColors.textMuted,
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.4,
               )),
@@ -642,7 +642,7 @@ class _StatCell extends StatelessWidget {
                     fontSize: accent ? 17 : 14,
                     fontWeight: FontWeight.w900,
                     color:
-                        accent ? AppColors.coral : AppColors.textPrimary,
+                        accent ? AppColors.brandCoral : AppColors.textPrimary,
                   )),
             ],
           ),
@@ -658,7 +658,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       width: 1,
       height: 28,
-      color: AppColors.bgDeep,
+      color: AppColors.bgSunken,
     );
   }
 }
@@ -682,7 +682,7 @@ class _NextItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.bgSurface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -695,13 +695,13 @@ class _NextItemRow extends StatelessWidget {
                 Container(
                   width: 24, height: 24,
                   decoration: const BoxDecoration(
-                    color: AppColors.amber,
+                    color: AppColors.brandNavy,
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: Text('$order',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.bgSurface,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                       )),
@@ -748,7 +748,7 @@ class _NextItemRow extends StatelessWidget {
                       '🚶 $walkMin분 · ⏱ $waitMin분 · 총 ${walkMin + waitMin}분',
                       style: const TextStyle(
                         fontSize: 11,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -756,7 +756,7 @@ class _NextItemRow extends StatelessWidget {
                 ),
               ),
               const Icon(Icons.chevron_right_rounded,
-                  size: 18, color: AppColors.textMuted),
+                  size: 18, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -776,7 +776,7 @@ class _SectionTitle extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w800,
-            color: AppColors.textMuted,
+            color: AppColors.textSecondary,
             letterSpacing: 0.6,
           )),
     );
@@ -795,7 +795,7 @@ class _RefreshInlineButton extends StatelessWidget {
         icon: const Text('💫', style: TextStyle(fontSize: 14)),
         label: const Text('새 추천 보기'),
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.amber,
+          foregroundColor: AppColors.brandNavy,
           textStyle:
               const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
         ),
@@ -818,7 +818,7 @@ class _WindowFooter extends StatelessWidget {
         '🔒 이 추천은 $label 동안 그대로 유지돼요',
         style: const TextStyle(
           fontSize: 11,
-          color: AppColors.textMuted,
+          color: AppColors.textSecondary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -834,14 +834,14 @@ class _LoadingHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Center(
         child: loading
             ? const CircularProgressIndicator()
             : const Text('추천을 불러오는 중…',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
       ),
     );
   }
@@ -857,7 +857,7 @@ class _ErrorBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -866,7 +866,7 @@ class _ErrorBlock extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
+                color: AppColors.textSecondary,
               )),
           const SizedBox(height: 12),
           OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
@@ -888,7 +888,7 @@ class _DemoScenarioPicker extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8EA),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.yellow.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.game.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -947,12 +947,12 @@ class _DemoScenarioPicker extends StatelessWidget {
                         horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? AppColors.amber
+                          ? AppColors.brandNavy
                           : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isActive
-                            ? AppColors.amber
+                            ? AppColors.brandNavy
                             : const Color(0xFFEEDDB6),
                       ),
                     ),
@@ -984,7 +984,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: isActive
                                   ? Colors.white.withValues(alpha: 0.85)
-                                  : AppColors.textMuted,
+                                  : AppColors.textSecondary,
                             )),
                       ],
                     ),
@@ -1008,7 +1008,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -1028,7 +1028,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.textMuted,
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
               height: 1.5,
             ),
@@ -1039,7 +1039,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
             icon: const Icon(Icons.tune, size: 16),
             label: const Text('조건 변경'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.coral,
+              backgroundColor: AppColors.brandCoral,
               foregroundColor: Colors.white,
               padding:
                   const EdgeInsets.symmetric(horizontal: 22, vertical: 12),

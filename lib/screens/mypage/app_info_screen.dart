@@ -59,7 +59,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -68,7 +68,7 @@ class _InfoCard extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted,
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.6,
               )),
@@ -84,7 +84,7 @@ class _InfoCard extends StatelessWidget {
             Text(sub!,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: AppColors.textMuted,
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 )),
           ],
@@ -107,7 +107,7 @@ class _LinkCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.bgSurface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -119,7 +119,7 @@ class _LinkCard extends StatelessWidget {
                   color: AppColors.textPrimary,
                 )),
             const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
           ],
         ),
       ),

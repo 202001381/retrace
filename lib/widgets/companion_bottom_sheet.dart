@@ -57,7 +57,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
           Center(
             child: Container(
               width: 40, height: 5,
-              decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(99)),
+              decoration: BoxDecoration(color: AppColors.textSecondary, borderRadius: BorderRadius.circular(99)),
             ),
           ),
           const SizedBox(height: 18),
@@ -71,14 +71,14 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 32, height: 32,
-                  decoration: const BoxDecoration(color: AppColors.bgDeep, shape: BoxShape.circle),
-                  child: const Icon(Icons.close, size: 16, color: AppColors.textMuted),
+                  decoration: const BoxDecoration(color: AppColors.bgSunken, shape: BoxShape.circle),
+                  child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          const Text('구성원', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+          const Text('구성원', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           Row(
             children: _companions
@@ -89,7 +89,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                           label: c.$1,
                           emoji: c.$2,
                           selected: _companion == c.$1,
-                          activeColor: AppColors.amber,
+                          activeColor: AppColors.brandNavy,
                           onTap: () => setState(() => _companion = c.$1),
                         ),
                       ),
@@ -97,7 +97,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 .toList(),
           ),
           const SizedBox(height: 20),
-          const Text('선호 스타일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+          const Text('선호 스타일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           GridView.count(
             crossAxisCount: 2,
@@ -128,7 +128,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.coral,
+                backgroundColor: AppColors.brandCoral,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -164,7 +164,7 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = selected ? activeColor : Colors.white;
     final textColor = selected ? Colors.white : AppColors.textPrimary;
-    final borderColor = selected ? activeColor : AppColors.bgDeep;
+    final borderColor = selected ? activeColor : AppColors.bgSunken;
 
     return GestureDetector(
       onTap: onTap,

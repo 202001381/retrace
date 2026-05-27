@@ -108,7 +108,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.bgSurface,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
@@ -139,7 +139,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                                   '이스터에그 발견·동선 추천에 사용됩니다',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textMuted,
+                                    color: AppColors.textSecondary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -150,11 +150,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                             value: _state.locationTrackingEnabled &&
                                 _isPermGranted,
                             onChanged: _onToggle,
-                            activeColor: AppColors.amber,
+                            activeColor: AppColors.brandNavy,
                           ),
                         ],
                       ),
-                      const Divider(height: 24, color: AppColors.bgDeep),
+                      const Divider(height: 24, color: AppColors.bgSunken),
                       _PermStatusRow(
                         granted: _isPermGranted,
                         permanentlyDenied: _isPermPermDenied,
@@ -174,7 +174,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.bgSurface,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -187,7 +187,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                             )),
                         Spacer(),
                         Icon(Icons.chevron_right_rounded,
-                            color: AppColors.textMuted),
+                            color: AppColors.textSecondary),
                       ],
                     ),
                   ),
@@ -214,13 +214,13 @@ class _PermStatusRow extends StatelessWidget {
       return Row(
         children: const [
           Icon(Icons.check_circle_rounded,
-              size: 18, color: Color(0xFF4CAF50)),
+              size: 18, color: AppColors.statusClear),
           SizedBox(width: 6),
           Text('OS 권한 허용됨',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF4CAF50),
+                color: AppColors.statusClear,
               )),
         ],
       );
@@ -231,14 +231,14 @@ class _PermStatusRow extends StatelessWidget {
         Row(
           children: const [
             Icon(Icons.warning_amber_rounded,
-                size: 18, color: Color(0xFFFFB300)),
+                size: 18, color: AppColors.statusBusy),
             SizedBox(width: 6),
             Expanded(
               child: Text('OS 권한이 꺼져 있어요',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFFFFB300),
+                    color: AppColors.statusBusy,
                   )),
             ),
           ],
@@ -252,7 +252,7 @@ class _PermStatusRow extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              side: const BorderSide(color: AppColors.bgDeep),
+              side: const BorderSide(color: AppColors.bgSunken),
               foregroundColor: AppColors.textPrimary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),

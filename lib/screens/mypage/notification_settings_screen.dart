@@ -120,13 +120,13 @@ class _NotificationSettingsScreenState
                       _apply(s.copyWith(lowCrowdAlertEnabled: v)),
                 ),
                 if (s.lowCrowdAlertEnabled) ...[
-                  const Divider(height: 24, color: AppColors.bgDeep),
+                  const Divider(height: 24, color: AppColors.bgSunken),
                   const Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 8),
                     child: Text('발송 채널 (중복 선택)',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textMuted,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.4,
                         )),
@@ -159,7 +159,7 @@ class _NotificationSettingsScreenState
                         '※ 카카오·SMS 채널은 마케팅 정보 수신 동의 후 사용 가능합니다',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textMuted,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -192,7 +192,7 @@ class _NotificationSettingsScreenState
                     '마지막 동의: ${_fmtConsentAt(s.marketingConsentAt)}',
                     style: const TextStyle(
                       fontSize: 11,
-                      color: AppColors.textMuted,
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -293,7 +293,7 @@ class _ToggleRow extends StatelessWidget {
               Text(subtitle,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
                   )),
@@ -303,7 +303,7 @@ class _ToggleRow extends StatelessWidget {
         Switch.adaptive(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.amber,
+          activeColor: AppColors.brandNavy,
         ),
       ],
     );
@@ -372,12 +372,12 @@ class _LinkRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.amber,
+                  color: AppColors.brandNavy,
                   decoration: TextDecoration.underline,
                 )),
             const SizedBox(width: 2),
             const Icon(Icons.chevron_right_rounded,
-                size: 14, color: AppColors.amber),
+                size: 14, color: AppColors.brandNavy),
           ],
         ),
       ),

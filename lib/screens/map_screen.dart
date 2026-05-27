@@ -239,7 +239,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Color _categoryColor(String c) {
     switch (c) {
       case '어트랙션':
-        return AppColors.coral;
+        return AppColors.brandCoral;
       case '음식점':
         return const Color(0xFFFF6B00);
       case '카페':
@@ -247,7 +247,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       case '포토스팟':
         return const Color(0xFF6B21A8);
       default:
-        return AppColors.textMuted;
+        return AppColors.textSecondary;
     }
   }
 
@@ -314,7 +314,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             Text('지도에서 ✨ 표시된 곳을 방문해보세요',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.textMuted,
+                  color: AppColors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 )),
@@ -337,8 +337,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             onPressed: () =>
                 setState(() => _filter = PlaceFilterState.empty),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.amber,
-              side: const BorderSide(color: AppColors.bgDeep),
+              foregroundColor: AppColors.brandNavy,
+              side: const BorderSide(color: AppColors.bgSunken),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               padding:
@@ -427,7 +427,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           color: _getMarkerColor(a.category),
           shape: BoxShape.circle,
           border: Border.all(
-            color: a.hasEasterEgg ? AppColors.yellow : Colors.white,
+            color: a.hasEasterEgg ? AppColors.game : Colors.white,
             width: a.hasEasterEgg ? 3 : 2,
           ),
           boxShadow: [
@@ -462,7 +462,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: AppColors.amber,
+                            color: AppColors.brandNavy,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -493,12 +493,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         child: Center(
           child: Container(
             width: 18, height: 18,
-            decoration: BoxDecoration(color: AppColors.teal.withValues(alpha: 0.25), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.route.withValues(alpha: 0.25), shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Container(
               width: 12, height: 12,
               decoration: BoxDecoration(
-                color: AppColors.teal,
+                color: AppColors.route,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
@@ -515,7 +515,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: AppColors.bgSurface,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.amber, width: 2),
+            border: Border.all(color: AppColors.brandNavy, width: 2),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 1)),
             ],
@@ -542,7 +542,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       Polyline(
         points: points,
         strokeWidth: 3.0,
-        color: AppColors.coral,
+        color: AppColors.brandCoral,
         pattern: StrokePattern.dashed(segments: const [10, 5]),
       ),
     ];
@@ -550,11 +550,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   Color _getMarkerColor(String category) {
     switch (category) {
-      case '어트랙션': return AppColors.coral;
+      case '어트랙션': return AppColors.brandCoral;
       case '음식점':   return const Color(0xFFFF6B00);
       case '카페':     return const Color(0xFF6F4E37);
       case '포토스팟': return const Color(0xFF6B21A8);
-      default:         return AppColors.textMuted;
+      default:         return AppColors.textSecondary;
     }
   }
 
@@ -605,7 +605,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   PolylineLayer(polylines: [
                     Polyline(
                       points: [_currentOrigin, _navTarget!.position],
-                      color: AppColors.coral,
+                      color: AppColors.brandCoral,
                       strokeWidth: 4.5,
                     ),
                   ]),
@@ -628,11 +628,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_showRoute)
-                    _StatusBadge(color: AppColors.coral, text: '마이 루나 동선'),
+                    _StatusBadge(color: AppColors.brandCoral, text: '마이 루나 동선'),
                   if (_showRoute && _navTarget != null) const SizedBox(height: 8),
                   if (_navTarget != null)
                     _StatusBadge(
-                      color: AppColors.coral,
+                      color: AppColors.brandCoral,
                       text: '➜ ${_navTarget!.name} (도보 ${_navWalkMin ?? 0}분)',
                       onClose: () => setState(() {
                         _navTarget = null;
@@ -704,7 +704,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.amber,
+                                            color: AppColors.brandNavy,
                                           ),
                                         ),
                                       ),
@@ -713,7 +713,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                           padding: EdgeInsets.only(right: 6),
                                           child: SizedBox(
                                             width: 12, height: 12,
-                                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.amber),
+                                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.brandNavy),
                                           ),
                                         ),
                                       GestureDetector(
@@ -721,7 +721,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: AppColors.coral,
+                                            color: AppColors.brandCoral,
                                             borderRadius: BorderRadius.circular(99),
                                           ),
                                           child: const Text('다시 추천',
@@ -736,7 +736,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                       '총 ${_routeMeta.totalMin}분 · ${_routeMeta.rationale ?? ''}',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                                     ),
                                   ],
                                 ],
@@ -761,11 +761,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 _PulseDot(),
                                 const SizedBox(width: 4),
                                 const Text('실시간 연동 중',
-                                    style: TextStyle(fontSize: 11, color: AppColors.coral, fontWeight: FontWeight.w600)),
+                                    style: TextStyle(fontSize: 11, color: AppColors.brandCoral, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
-                          const Divider(height: 1, color: AppColors.bgDeep),
+                          const Divider(height: 1, color: AppColors.bgSunken),
                           // 카테고리 칩 — 둥근 pill, 단일 선택. "전체" 포함 5개.
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -789,9 +789,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: active ? AppColors.amber : Colors.white,
+                                        color: active ? AppColors.brandNavy : Colors.white,
                                         borderRadius: BorderRadius.circular(99),
-                                        border: Border.all(color: active ? AppColors.amber : AppColors.bgDeep),
+                                        border: Border.all(color: active ? AppColors.brandNavy : AppColors.bgSunken),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(label,
@@ -807,21 +807,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           ),
                           // 상태 필터 — 카테고리 칩과 다른 인터랙션 문법(스위치)으로 분리.
                           const SizedBox(height: 12),
-                          const Divider(height: 1, color: AppColors.bgDeep),
+                          const Divider(height: 1, color: AppColors.bgSunken),
                           _FilterToggleRow(
                             label: '운영중만 보기',
                             value: _filter.onlyOperating,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyOperating: v)),
                           ),
-                          const Divider(height: 1, color: AppColors.bgDeep, indent: 20, endIndent: 20),
+                          const Divider(height: 1, color: AppColors.bgSunken, indent: 20, endIndent: 20),
                           _FilterToggleRow(
                             label: '✨ 내 이스터에그',
                             value: _filter.onlyMyEasterEggs,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyMyEasterEggs: v)),
                           ),
-                          const Divider(height: 1, color: AppColors.bgDeep),
+                          const Divider(height: 1, color: AppColors.bgSunken),
                           const SizedBox(height: 8),
                           // 카드 리스트 — 이중 빈 상태 분기.
                           if (_visibleAttractions.isEmpty)
@@ -887,7 +887,7 @@ class _TopBar extends StatelessWidget {
                     decoration: BoxDecoration(color: AppColors.bgBase, borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
-                        const Icon(Icons.search, size: 16, color: AppColors.textMuted),
+                        const Icon(Icons.search, size: 16, color: AppColors.textSecondary),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
@@ -898,7 +898,7 @@ class _TopBar extends StatelessWidget {
                               isCollapsed: true,
                               border: InputBorder.none,
                               hintText: '어트랙션, 음식점',
-                              hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                              hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           ),
                         ),
@@ -908,7 +908,7 @@ class _TopBar extends StatelessWidget {
                               searchController.clear();
                               onSearchChanged('');
                             },
-                            child: const Icon(Icons.close, size: 16, color: AppColors.textMuted),
+                            child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                           ),
                       ],
                     ),
@@ -918,14 +918,14 @@ class _TopBar extends StatelessWidget {
                 _IconLabelButton(
                   label: '🗺️ 동선',
                   active: routeOn,
-                  activeColor: AppColors.amber,
+                  activeColor: AppColors.brandNavy,
                   onTap: onToggleRoute,
                 ),
                 const SizedBox(width: 6),
                 _IconLabelButton(
                   label: '📍 GPS',
                   active: false,
-                  activeColor: const Color(0xFF4CAF50),
+                  activeColor: AppColors.statusClear,
                   loading: gpsLoading,
                   onTap: onGps,
                 ),
@@ -962,13 +962,13 @@ class _IconLabelButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: active ? activeColor : Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: active ? activeColor : AppColors.bgDeep),
+          border: Border.all(color: active ? activeColor : AppColors.bgSunken),
         ),
         alignment: Alignment.center,
         child: loading
             ? const SizedBox(
                 width: 14, height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brandNavy),
               )
             : Text(label,
                 style: TextStyle(
@@ -1025,7 +1025,7 @@ class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixi
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: Tween(begin: 0.4, end: 1.0).animate(_c),
-      child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.coral, shape: BoxShape.circle)),
+      child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.brandCoral, shape: BoxShape.circle)),
     );
   }
 }
@@ -1059,7 +1059,7 @@ class _FilterToggleRow extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.amber,
+            activeColor: AppColors.brandNavy,
           ),
         ],
       ),
@@ -1091,7 +1091,7 @@ class _AttractionCard extends StatelessWidget {
             color: AppColors.bgSurface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: attraction.hasEasterEgg ? AppColors.yellow : AppColors.bgDeep,
+              color: attraction.hasEasterEgg ? AppColors.game : AppColors.bgSunken,
             ),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
           ),
@@ -1126,12 +1126,12 @@ class _AttractionCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${attraction.category} · ${attraction.zone}${attraction.category == '어트랙션' ? ' · 대기 ${attraction.waitMinutes}분' : ''}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+              const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
             ],
           ),
         ),

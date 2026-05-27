@@ -67,7 +67,7 @@ class MarketingConsentModal extends StatelessWidget {
                       '법적 근거: 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -75,7 +75,7 @@ class MarketingConsentModal extends StatelessWidget {
                 ),
               ),
             ),
-            const Divider(height: 1, color: AppColors.bgDeep),
+            const Divider(height: 1, color: AppColors.bgSunken),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
               child: Row(
@@ -85,8 +85,8 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.bgDeep),
-                        foregroundColor: AppColors.textMuted,
+                        side: const BorderSide(color: AppColors.bgSunken),
+                        foregroundColor: AppColors.textSecondary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
@@ -101,7 +101,7 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppColors.coral,
+                        backgroundColor: AppColors.brandCoral,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -145,7 +145,7 @@ class _Section extends StatelessWidget {
                 child: Text(l,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: AppColors.textMuted,
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
                     )),

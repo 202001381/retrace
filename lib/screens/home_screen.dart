@@ -230,10 +230,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static (String, Color) _crowdLabel(Attraction a) {
-    if (a.category != '어트랙션') return ('여유', const Color(0xFF4CAF50));
-    if (a.waitMinutes <= 10) return ('여유', const Color(0xFF4CAF50));
+    if (a.category != '어트랙션') return ('여유', AppColors.statusClear);
+    if (a.waitMinutes <= 10) return ('여유', AppColors.statusClear);
     if (a.waitMinutes <= 25) return ('보통', const Color(0xFFFFC107));
-    return ('혼잡', AppColors.coral);
+    return ('혼잡', AppColors.brandCoral);
   }
 
   void _onLogoTap() {
@@ -394,18 +394,18 @@ class _Header extends StatelessWidget {
               children: [
                 const Text(
                   '서울랜드',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.2),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.2),
                 ),
                 const SizedBox(height: 2),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text('RE-TRACE',
-                        style: TextStyle(color: AppColors.coral, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                        style: TextStyle(color: AppColors.brandCoral, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.coral, borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: AppColors.brandCoral, borderRadius: BorderRadius.circular(4)),
                       child: const Text('BETA',
                           style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
                     ),
@@ -496,7 +496,7 @@ class _VisitValueCard extends StatelessWidget {
                       _subline,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -506,11 +506,11 @@ class _VisitValueCard extends StatelessWidget {
               const Text('자세히',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w700,
                   )),
               const Icon(Icons.chevron_right_rounded,
-                  size: 18, color: AppColors.textMuted),
+                  size: 18, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -549,7 +549,7 @@ class _VisitDetailSheet extends StatelessWidget {
           Center(
             child: Container(
               width: 40, height: 5,
-              decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(99)),
+              decoration: BoxDecoration(color: AppColors.textSecondary, borderRadius: BorderRadius.circular(99)),
             ),
           ),
           const SizedBox(height: 18),
@@ -559,7 +559,7 @@ class _VisitDetailSheet extends StatelessWidget {
             title: '날씨',
             lines: [weatherDetail, weatherRain],
           ),
-          const Divider(height: 28, color: AppColors.bgDeep),
+          const Divider(height: 28, color: AppColors.bgSunken),
           // 혼잡도
           _SheetSection(
             icon: '🟡',
@@ -567,7 +567,7 @@ class _VisitDetailSheet extends StatelessWidget {
             lines: ['현재 혼잡도: 중간', crowdDetail],
           ),
           if (pricing != null) ...[
-            const Divider(height: 28, color: AppColors.bgDeep),
+            const Divider(height: 28, color: AppColors.bgSunken),
             // 할인 — PricingState 의 인과 라벨 + 가격 컴포넌트로 일관 표시.
             Row(
               children: [
@@ -593,7 +593,7 @@ class _VisitDetailSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onMoreDiscount,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.amber,
+                backgroundColor: AppColors.brandNavy,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -629,7 +629,7 @@ class _SheetSection extends StatelessWidget {
         const SizedBox(height: 8),
         ...lines.map((l) => Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text(l, style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5)),
+              child: Text(l, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5)),
             )),
       ],
     );
@@ -650,7 +650,7 @@ class _LunaPricingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.amber,
+      color: AppColors.brandNavy,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -664,12 +664,12 @@ class _LunaPricingCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.coral,
+                  color: AppColors.pricing,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text('💰 루나 프라이싱',
                     style: TextStyle(
-                      color: AppColors.bgSurface,
+                      color: AppColors.textOnDark,
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
                     )),
@@ -678,10 +678,10 @@ class _LunaPricingCard extends StatelessWidget {
               // 인과 라벨 ("🌥 흐려서 한산 → 15% 할인")
               DiscountCauseLabel(state: pricing, dark: true),
               const SizedBox(height: 10),
-              // 정가·할인가 표시 (PriceDisplay compact — 어두운 배경에 강조색 노랑)
+              // 정가·할인가 표시 (PriceDisplay compact — 네이비 배경에 pricing 강조).
               PriceDisplay(
                 state: pricing,
-                accentColor: AppColors.yellow,
+                accentColor: AppColors.pricing,
               ),
               const SizedBox(height: 14),
               // 카운트다운 + CTA
@@ -695,7 +695,7 @@ class _LunaPricingCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.coral,
+                      color: AppColors.brandCoral,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text('루나 티켓 받기 →',
@@ -770,7 +770,7 @@ class _LunaPricingSheet extends StatelessWidget {
               width: 40,
               height: 5,
               decoration: BoxDecoration(
-                color: AppColors.textMuted,
+                color: AppColors.textSecondary,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -795,10 +795,10 @@ class _LunaPricingSheet extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: const BoxDecoration(
-                    color: AppColors.bgDeep,
+                    color: AppColors.bgSunken,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.close, size: 16, color: AppColors.textMuted),
+                  child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                 ),
               ),
             ],
@@ -825,7 +825,7 @@ class _LunaPricingSheet extends StatelessWidget {
                       ),
                       Text(r.$3,
                           style: const TextStyle(
-                            color: AppColors.coral,
+                            color: AppColors.brandCoral,
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                           )),
@@ -833,17 +833,17 @@ class _LunaPricingSheet extends StatelessWidget {
                   ),
                 ),
               )),
-          const Divider(color: AppColors.bgDeep, height: 24),
+          const Divider(color: AppColors.bgSunken, height: 24),
           // 정가·할인가 hero 표시.
           PriceDisplay(state: pricing, size: PriceDisplaySize.hero),
           const SizedBox(height: 6),
           Text('오늘 ${_fmt(saved)}원 아끼는 중',
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 8),
           DiscountCountdown(
             validUntil: pricing.validUntil,
             onExpired: onExpired,
-            defaultColor: AppColors.textMuted,
+            defaultColor: AppColors.textSecondary,
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -855,7 +855,7 @@ class _LunaPricingSheet extends StatelessWidget {
                 onCheckout();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.coral,
+                backgroundColor: AppColors.brandCoral,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -929,7 +929,7 @@ class _MyLunaCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.amber, width: 1.5),
+            border: Border.all(color: AppColors.brandNavy, width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -940,16 +940,16 @@ class _MyLunaCard extends StatelessWidget {
               const Text('🌙', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 6),
               const Text('마이 루나',
-                  style: TextStyle(color: AppColors.amber, fontSize: 16, fontWeight: FontWeight.w900)),
+                  style: TextStyle(color: AppColors.brandNavy, fontSize: 16, fontWeight: FontWeight.w900)),
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.amber.withValues(alpha: 0.1),
+                  color: AppColors.brandNavy.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: const Text('AI 맞춤 동선',
-                    style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: AppColors.brandNavy, fontSize: 11, fontWeight: FontWeight.w700)),
               ),
               const Spacer(),
               InkWell(
@@ -960,9 +960,9 @@ class _MyLunaCard extends StatelessWidget {
                   child: loading
                       ? const SizedBox(
                           width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.amber),
+                          child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.brandNavy),
                         )
-                      : const Icon(Icons.refresh, size: 16, color: AppColors.textMuted),
+                      : const Icon(Icons.refresh, size: 16, color: AppColors.textSecondary),
                 ),
               ),
               InkWell(
@@ -971,16 +971,16 @@ class _MyLunaCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.bgDeep),
+                    border: Border.all(color: AppColors.bgSunken),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune, size: 14, color: AppColors.textMuted),
+                      Icon(Icons.tune, size: 14, color: AppColors.textSecondary),
                       SizedBox(width: 4),
                       Text('조건 변경',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
                     ],
                   ),
                 ),
@@ -992,12 +992,12 @@ class _MyLunaCard extends StatelessWidget {
             Row(
               children: [
                 const Text('온보딩 답변',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 0.6)),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.6)),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(surveyLabel!,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
                 ),
               ],
             ),
@@ -1018,7 +1018,7 @@ class _MyLunaCard extends StatelessWidget {
           if (totalMin != null) ...[
             const SizedBox(height: 4),
             Text('예상 소요 약 $totalMin분',
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
           const SizedBox(height: 16),
           if (items.isEmpty)
@@ -1026,7 +1026,7 @@ class _MyLunaCard extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
                 child: Text('동선을 불러오는 중…',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
               ),
             )
           else
@@ -1040,7 +1040,7 @@ class _MyLunaCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: Text('전체 동선 보기 →',
                 style: TextStyle(
-                  color: AppColors.amber,
+                  color: AppColors.brandNavy,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                 )),
@@ -1060,7 +1060,7 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(color: AppColors.amber, borderRadius: BorderRadius.circular(99)),
+      decoration: BoxDecoration(color: AppColors.brandNavy, borderRadius: BorderRadius.circular(99)),
       child: Text(text,
           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
     );
@@ -1079,7 +1079,7 @@ class _RouteRow extends StatelessWidget {
       children: [
         Container(
           width: 24, height: 24,
-          decoration: const BoxDecoration(color: AppColors.amber, shape: BoxShape.circle),
+          decoration: const BoxDecoration(color: AppColors.brandNavy, shape: BoxShape.circle),
           alignment: Alignment.center,
           child: Text('$index',
               style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
@@ -1106,9 +1106,9 @@ class _RouteRow extends StatelessWidget {
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.bgDeep, borderRadius: BorderRadius.circular(4)),
+                          decoration: BoxDecoration(color: AppColors.bgSunken, borderRadius: BorderRadius.circular(4)),
                           child: Text(item.type,
-                              style: const TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -1126,7 +1126,7 @@ class _RouteRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text('⏱ 예상 대기 ${item.waitMin}분',
-                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -1141,8 +1141,8 @@ class _TodayEventsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const events = [
-      (tag: '[D-DAY]', bg: AppColors.coral, name: '🎭 퍼레이드', time: '오후 2:00'),
-      (tag: '[인기]', bg: AppColors.amber, name: '🎪 서커스쇼', time: '오후 4:30'),
+      (tag: '[D-DAY]', bg: AppColors.brandCoral, name: '🎭 퍼레이드', time: '오후 2:00'),
+      (tag: '[인기]', bg: AppColors.brandNavy, name: '🎪 서커스쇼', time: '오후 4:30'),
       (tag: '[신규]', bg: Color(0xFF8E24AA), name: '✨ 불빛 쇼', time: '오후 8:00'),
     ];
     return Column(
@@ -1154,8 +1154,8 @@ class _TodayEventsSection extends StatelessWidget {
             Text('오늘의 이벤트',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
             Spacer(),
-            Text('전체보기', style: TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.w500)),
-            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textMuted),
+            Text('전체보기', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textSecondary),
           ],
         ),
         const SizedBox(height: 12),
@@ -1189,7 +1189,7 @@ class _TodayEventsSection extends StatelessWidget {
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                     const Spacer(),
                     Text('⏱ ${e.time}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
               );

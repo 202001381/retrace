@@ -86,12 +86,12 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-          backgroundColor: AppColors.amber,
+          backgroundColor: AppColors.brandNavy,
           duration: const Duration(seconds: 5),
           content: Text(
             '🎯 거의 다 왔어요! ${widget.target.name}',
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.bgSurface,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
@@ -180,7 +180,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                 PolylineLayer(polylines: [
                   Polyline(
                     points: [_origin, widget.target.position],
-                    color: AppColors.coral,
+                    color: AppColors.brandCoral,
                     strokeWidth: 5,
                   ),
                 ]),
@@ -191,7 +191,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                     height: 56,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.coral,
+                        color: AppColors.brandCoral,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
@@ -213,7 +213,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                       height: 28,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.teal,
+                          color: AppColors.route,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
@@ -270,14 +270,14 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.info_outline_rounded,
-                          size: 16, color: AppColors.textMuted),
+                          size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
                       const Expanded(
                         child: Text(
                           '폰을 보지 않으셔도 돼요 — 50m 안으로 들어가면 알려드릴게요.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textMuted,
+                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -315,7 +315,7 @@ class _DistanceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.bgSurface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -371,7 +371,7 @@ class _DistanceCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textMuted,
+                      color: AppColors.textSecondary,
                     )),
               ),
               const Spacer(),
@@ -381,7 +381,7 @@ class _DistanceCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textMuted,
+                      color: AppColors.textSecondary,
                     )),
               ),
             ],
