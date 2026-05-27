@@ -587,14 +587,7 @@ class _Header extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              const Spacer(),
-              const Text('📖', style: TextStyle(fontSize: 22)),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '하루 한 권. 그날의 탐험을 매거진처럼 펴서 보세요.',
-            style: _serif(size: 12, color: _Vintage.inkMid, height: 1.4),
           ),
           const SizedBox(height: 14),
           Container(
