@@ -232,7 +232,12 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isActive = _currentIndex == index;
-    final color = isActive ? AppColors.brandCoral : AppColors.textSecondary;
+    // 마이 루나 = 메인 기능. 다른 탭과 다른 브랜드 컬러(navy)로 항시 강조.
+    final isMyLuna = index == 2;
+    const myLunaColor = Color(0xFF1E3158);
+    final Color color = isMyLuna
+        ? (isActive ? myLunaColor : myLunaColor.withValues(alpha: 0.7))
+        : (isActive ? AppColors.brandCoral : AppColors.textSecondary);
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {
@@ -244,14 +249,16 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 22),
+            Icon(icon, color: color, size: isMyLuna ? 24 : 22),
             const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
                 color: color,
                 fontSize: 10,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: isMyLuna
+                    ? FontWeight.w800
+                    : (isActive ? FontWeight.w700 : FontWeight.w400),
               ),
             ),
           ],
