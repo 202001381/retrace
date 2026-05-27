@@ -407,7 +407,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   // ── 마커 ─────────────────────────────────────────────────
-  // 기본은 단순 1-원 마커. 동선 ON 일 때 해당 스팟엔 순번 배지 합성.
+  // 기본은 단순 1-원 마커. 동선 ON 일 때 경로 스팟만 + 순번 배지 노출.
   List<Marker> _buildMarkers() {
     final routeOrder = <String, int>{};
     if (_showRoute) {
@@ -417,7 +417,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       }
     }
 
-    final markers = _visibleAttractions.map((a) {
+    // 동선 ON: 경로 스팟만 노출 (필터/검색 무시 — 폴리라인과 정합).
+    // 동선 OFF: 필터/검색 결과 전체.
+    final Iterable<Attraction> source =
+        _showRoute ? _routeAttractions : _visibleAttractions;
+    final markers = source.map((a) {
       final order = routeOrder[a.id];
       final hasBadge = order != null;
       final dot = Container(
