@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 루나 프라이싱 입력값 (영속화 stub — 실제 함수 도입 전까지는 표시용).
   int? _lastVisitDaysAgo;
   int _missingEggCount = 0;
-  static const int _kTotalEggCount = 21; // kAttractions 중 hasEasterEgg=true 개수.
+  static const int _kTotalEggCount = 18; // kAttractions 중 hasEasterEgg=true 개수.
 
   // 루나 프라이싱 자동 팝업 쿨다운 24h.
   static const String _kPricingSeenAtKey = 'pricing_popup_last_seen_at';

@@ -14,17 +14,16 @@ enum DemoScenario {
     rationale: '아이가 즐길 수 있는 저스릴 어트랙션과 휴식·점심을 균형있게 배치했어요',
     stopIds: [
       'main_gate_arch',
-      'carousel',
-      'time_machine_5d',         // 가족형 indoor 어트랙션 (실재)
-      'family_coaster',          // TODO: 공식 목록 대조 필요
-      'mini_airplane',           // 깜부비행기 — 실재 확인
-      'korean_kitchen',          // 점심
+      'carousel',                // 빅회전목마
+      'time_machine_5d',         // 타임머신 5D 360 (실재)
+      'bumper_car',              // 카트라이더범퍼 (실재)
+      'mini_airplane',           // 깜부비행기 (실재)
+      'lotteria',                // 점심 — 롯데리아 (공식 음식점)
       'mini_viking',
-      'magic_studio',            // TODO: 공식 목록 대조 필요
-      'shooting_adventure',      // 사격장 — 실재 확인 (모험의 나라)
+      'ghost_cave',              // 미래의 골동품가게 (실재 indoor)
+      'shooting_adventure',      // 사격장 (실재)
       'flower_garden',
-      'spinning_cup',
-      'cafe_bene',               // 휴식
+      'cafe_bene',               // 휴식 — 카페베네 (공식)
       'center_clock_tower',
     ],
   ),
@@ -57,14 +56,14 @@ enum DemoScenario {
       'main_gate_arch',
       'blackhole_2000',
       'galaxy_888',
-      'viking',
+      'viking',                  // 킹바이킹
       'sky_x',
       'lava_twister',
-      'galbi_house',             // 점심
+      'cpk_restaurant',          // 점심 — 캘리포니아피자키친 (공식)
       'shot_drop',
-      'x_flyer',
-      'gyro_swing',              // 알포스윙 — 실재 확인 (캐릭터타운)
-      'tom_n_toms',              // TODO: 공식 목록 대조 필요
+      'x_flyer',                 // 엑스플라이어
+      'gyro_swing',              // 알포스윙 (실재)
+      'dunkin',                  // 카페 — 던킨도너츠 (공식)
       'night_view_deck',         // TODO: 공식 목록 대조 필요
     ],
   );
