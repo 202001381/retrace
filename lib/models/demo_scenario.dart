@@ -17,11 +17,11 @@ enum DemoScenario {
       'carousel',
       'time_machine_5d',         // 가족형 indoor 어트랙션 (실재)
       'family_coaster',          // TODO: 공식 목록 대조 필요
-      'mini_airplane',           // TODO: 공식 "깜부비행기" 와 동일 여부 확인
+      'mini_airplane',           // 깜부비행기 — 실재 확인
       'korean_kitchen',          // 점심
       'mini_viking',
       'magic_studio',            // TODO: 공식 목록 대조 필요
-      'shooting_adventure',      // TODO: 공식 목록 대조 필요
+      'shooting_adventure',      // 사격장 — 실재 확인 (모험의 나라)
       'flower_garden',
       'spinning_cup',
       'cafe_bene',               // 휴식
@@ -63,7 +63,7 @@ enum DemoScenario {
       'galbi_house',             // 점심
       'shot_drop',
       'x_flyer',
-      'gyro_swing',              // TODO: 공식 "알포스윙" 과 동일 여부 확인
+      'gyro_swing',              // 알포스윙 — 실재 확인 (캐릭터타운)
       'tom_n_toms',              // TODO: 공식 목록 대조 필요
       'night_view_deck',         // TODO: 공식 목록 대조 필요
     ],

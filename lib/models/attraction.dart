@@ -81,7 +81,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'flume_ride',
-    name: '후룸라이드',
+    name: '급류타기',
     category: '어트랙션',
     zone: '세계의 광장',
     lat: 37.434, lng: 127.0193,
@@ -92,7 +92,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'gyro_swing',
-    name: '자이로스윙',
+    name: '알포스윙',
     category: '어트랙션',
     zone: '모험의 나라',
     lat: 37.4336, lng: 127.0203,
@@ -103,7 +103,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'carousel',
-    name: '회전목마',
+    name: '빅회전목마',
     category: '어트랙션',
     zone: '캐릭터 타운',
     lat: 37.4333, lng: 127.0181,
@@ -125,7 +125,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'viking',
-    name: '바이킹',
+    name: '킹바이킹',
     category: '어트랙션',
     zone: '모험의 나라',
     lat: 37.4339, lng: 127.02,
@@ -192,7 +192,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'ghost_cave',
-    name: '귀신동굴',
+    name: '해적소굴',
     category: '어트랙션',
     zone: '캐릭터 타운',
     lat: 37.4340, lng: 127.0185,
@@ -438,7 +438,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'shooting_adventure',
-    name: '슈팅 어드벤처',
+    name: '사격장',
     category: '어트랙션',
     zone: '모험의 나라',
     lat: 37.4346, lng: 127.0205,
@@ -449,7 +449,7 @@ const List<Attraction> kAttractions = [
   ),
   Attraction(
     id: 'mini_airplane',
-    name: '회전비행기',
+    name: '깜부비행기',
     category: '어트랙션',
     zone: '캐릭터 타운',
     lat: 37.4331, lng: 127.0182,
