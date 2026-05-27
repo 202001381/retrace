@@ -170,22 +170,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               children: [
                 _Header(season: _season, configs: _configs, onChange: _changeSeason),
 
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  color: Colors.white.withOpacity(0.5),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: _Season.values.map((s) => Text(
-                      '${_configs[s]!.label} ${_allProgress[s]}/5',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: _season == s ? FontWeight.w900 : FontWeight.w700,
-                        color: _season == s ? const Color(0xFFE60012) : const Color(0xFF888888)
-                      )
-                    )).toList(),
-                  ),
-                ),
-
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),

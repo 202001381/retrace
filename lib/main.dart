@@ -8,7 +8,6 @@ import 'screens/map_screen.dart';
 import 'screens/myluna/myluna_screen.dart';
 import 'screens/mypage/mypage_screen.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/recommend_screen.dart';
 import 'services/onboarding_service.dart';
 
 void main() async {
@@ -121,7 +120,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  bool _mapMyLuna = false;
+  // '추천 지도' 탭은 기본으로 마이 루나 동선 표시.
+  bool _mapMyLuna = true;
   bool _openPricingOnStart = false;
 
   @override
@@ -140,29 +140,17 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  void _goToMap({bool myLuna = false}) {
-    setState(() {
-      _currentIndex = 1;
-      _mapMyLuna = myLuna;
-    });
-  }
-
   /// 마이 루나 = bottom nav 별도 탭(index 2). 홈 카드의 "전체 동선 보기" 도 여기로.
   void _goToMyLuna() {
     setState(() {
       _currentIndex = 2;
-      _mapMyLuna = false;
     });
   }
 
   void _openMyPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => MypageScreen(
-          onResetOnboarding: widget.onResetOnboarding,
-        ),
-      ),
-    );
+    setState(() {
+      _currentIndex = 4;
+    });
   }
 
   @override
@@ -176,8 +164,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
       MapScreen(showMyLunaInitially: _mapMyLuna),
       const MyLunaScreen(),
-      const RecommendScreen(),
       const ArchiveScreen(),
+      MypageScreen(onResetOnboarding: widget.onResetOnboarding),
     ];
 
     return Scaffold(
@@ -204,10 +192,10 @@ class _MainScreenState extends State<MainScreen> {
           child: Row(
             children: [
               _navItem(0, Icons.home_rounded, '홈'),
-              _navItem(1, Icons.map_rounded, 'MAP'),
+              _navItem(1, Icons.map_rounded, '추천 지도'),
               _navItem(2, Icons.nightlight_round, '마이 루나'),
-              _navItem(3, Icons.auto_awesome_rounded, '추천'),
-              _navItem(4, Icons.menu_book_rounded, 'Archive'),
+              _navItem(3, Icons.menu_book_rounded, 'Archive'),
+              _navItem(4, Icons.person_rounded, '마이페이지'),
             ],
           ),
         ),
@@ -222,7 +210,8 @@ class _MainScreenState extends State<MainScreen> {
       child: GestureDetector(
         onTap: () => setState(() {
           _currentIndex = index;
-          if (index != 1) _mapMyLuna = false;
+          // 추천 지도 탭 진입 시 동선 자동 표시.
+          if (index == 1) _mapMyLuna = true;
         }),
         behavior: HitTestBehavior.opaque,
         child: Column(
