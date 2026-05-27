@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -7,130 +8,175 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/attraction.dart';
 
-/// 아카이브 — '1일 1권' 디지털 책장.
-/// 책장에 꽂힌 책 한 권 = 하루의 추억. 책등에 날짜가 각인됨.
-/// 책 탭 → Dialog + PageView 3페이지 (사진/스토리/어트랙션).
+/// 아카이브 — '일일 탐험 매거진' 컨셉.
+///   · 방문 날짜 하나당 단 한 권의 책 (date = 고유키).
+///   · 사진은 옵션 — 없으면 빈티지 스탬프/일러스트, 있으면 폴라로이드 레이어.
+///   · 표지/탐험일지/추억의 장 3페이지 PageView.
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
   @override
   State<ArchiveScreen> createState() => _ArchiveScreenState();
 }
 
-// ─── 시즌 / 색상 팔레트 ──────────────────────────────────
+// ─── 시즌 ────────────────────────────────────────────────
 enum _Season { spring, summer, autumn, winter }
 
-/// 빈티지 종이·가죽 톤 — 전체 화면 공통.
+// ─── 빈티지 팔레트 ───────────────────────────────────────
 class _Vintage {
-  static const creamBg = Color(0xFFF5EFE0);
-  static const paper = Color(0xFFEDE3CC);
-  static const paperLight = Color(0xFFF8F1DD);
-  static const inkDark = Color(0xFF3D2817);
+  static const parchmentLight = Color(0xFFF8F1DD);
+  static const parchment = Color(0xFFF1E6CC);
+  static const parchmentDark = Color(0xFFE6D5B0);
+  static const inkDark = Color(0xFF2E1F12);
+  static const inkBody = Color(0xFF4A3826);
   static const inkMid = Color(0xFF7A5C42);
+  static const inkFaded = Color(0xFFA08866);
   static const leather = Color(0xFF6B4423);
-  static const leatherDark = Color(0xFF4A2E18);
+  static const leatherDark = Color(0xFF3E2616);
   static const shelfWood = Color(0xFF8B5A2B);
   static const shelfShadow = Color(0xFF5C3A21);
   static const gold = Color(0xFFB8860B);
-  static const fadedRed = Color(0xFFA8485A);
+  static const stampRed = Color(0xFFA4321E);
+  static const stampInk = Color(0xFF3D2817);
 }
 
+/// 가독성 좋은 세리프 패밀리 — 시스템 폰트 폴백.
+const String _kSerif = 'Georgia';
+const List<String> _kSerifFallback = ['Times New Roman', 'Times', 'serif'];
+
+TextStyle _serif({
+  double size = 14,
+  FontWeight weight = FontWeight.w500,
+  Color color = _Vintage.inkBody,
+  double height = 1.5,
+  double letterSpacing = 0,
+  FontStyle? style,
+}) =>
+    TextStyle(
+      fontFamily: _kSerif,
+      fontFamilyFallback: _kSerifFallback,
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+      fontStyle: style,
+    );
+
 class _SeasonConfig {
-  final String label, emoji, tagline;
+  final String label, tagline;
   final Color titleColor;
   final IconData icon;
-  final List<Color> bookSpineColors;
+  final List<Color> spines;
   const _SeasonConfig({
     required this.label,
-    required this.emoji,
     required this.tagline,
     required this.titleColor,
     required this.icon,
-    required this.bookSpineColors,
+    required this.spines,
   });
 }
 
 const Map<_Season, _SeasonConfig> _kConfigs = {
   _Season.spring: _SeasonConfig(
     label: '봄',
-    emoji: '🌸',
     tagline: '벚꽃 흩날리는 봄날의 기억',
-    titleColor: Color(0xFFA8485A),
+    titleColor: Color(0xFFA4321E),
     icon: Icons.local_florist_rounded,
-    // 빈티지 로즈 톤
-    bookSpineColors: [
-      Color(0xFFA8485A),
-      Color(0xFF8B3A4A),
-      Color(0xFFB85C6E),
-      Color(0xFF9A4054),
-      Color(0xFFC97B89),
+    spines: [
+      Color(0xFFA8485A), Color(0xFF8B3A4A), Color(0xFFB85C6E),
+      Color(0xFF9A4054), Color(0xFFC97B89),
     ],
   ),
   _Season.summer: _SeasonConfig(
     label: '여름',
-    emoji: '🌊',
     tagline: '눈부신 태양 아래 여름날',
-    titleColor: Color(0xFF3A6A8C),
+    titleColor: Color(0xFF2E5470),
     icon: Icons.wb_sunny_rounded,
-    bookSpineColors: [
-      Color(0xFF3A6A8C),
-      Color(0xFF2E5470),
-      Color(0xFF4682B4),
-      Color(0xFF1D4E5F),
-      Color(0xFF5B8FA8),
+    spines: [
+      Color(0xFF3A6A8C), Color(0xFF2E5470), Color(0xFF4682B4),
+      Color(0xFF1D4E5F), Color(0xFF5B8FA8),
     ],
   ),
   _Season.autumn: _SeasonConfig(
     label: '가을',
-    emoji: '🍁',
     tagline: '단풍 물든 가을의 낭만',
-    titleColor: Color(0xFFB8651E),
+    titleColor: Color(0xFF8B4513),
     icon: Icons.eco_rounded,
-    bookSpineColors: [
-      Color(0xFFB8651E),
-      Color(0xFF8B4513),
-      Color(0xFF9A6324),
-      Color(0xFFA0522D),
-      Color(0xFFCD7F32),
+    spines: [
+      Color(0xFFB8651E), Color(0xFF8B4513), Color(0xFF9A6324),
+      Color(0xFFA0522D), Color(0xFFCD7F32),
     ],
   ),
   _Season.winter: _SeasonConfig(
     label: '겨울',
-    emoji: '❄️',
     tagline: '눈 내리는 겨울밤의 동화',
-    titleColor: Color(0xFF4A5A6A),
+    titleColor: Color(0xFF3D4A56),
     icon: Icons.ac_unit_rounded,
-    bookSpineColors: [
-      Color(0xFF4A5A6A),
-      Color(0xFF6B7A8C),
-      Color(0xFF5F7080),
-      Color(0xFF3D4A56),
-      Color(0xFF829AAD),
+    spines: [
+      Color(0xFF4A5A6A), Color(0xFF6B7A8C), Color(0xFF5F7080),
+      Color(0xFF3D4A56), Color(0xFF829AAD),
     ],
   ),
 };
 
 // ─── 데이터 모델 ─────────────────────────────────────────
-/// 하루 한 권의 일기. 백엔드 붙으면 GET /api/diary/books 로 교체.
+/// 방문 날짜 = 고유키. 같은 날짜에 두 권이 생기지 않도록 데이터 단에서 보장.
 class _DiaryBook {
   final String id;
   final DateTime date;
-  final String title;
-  final String story;
+  final _Weather weather;
+  final String headline;
   final List<String> attractionIds;
-  final String fallbackEmoji; // 사진 업로드 전 placeholder.
+  final List<_Mission> missions;
+  final List<_BadgeSpec> badges;
+  final String story;
+  /// 사진 placeholder (그라데이션 + 이모지). null = 사진 없음 → 빈티지 스탬프 표시.
+  final _SampleIllustration? sampleIllustration;
   const _DiaryBook({
     required this.id,
     required this.date,
-    required this.title,
-    required this.story,
+    required this.weather,
+    required this.headline,
     required this.attractionIds,
-    required this.fallbackEmoji,
+    required this.missions,
+    required this.badges,
+    required this.story,
+    this.sampleIllustration,
   });
+
+  /// 방문 날짜 키 (YYYY-MM-DD) — '1일 1권' 보장 시 사용.
+  String get dateKey =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
+
+class _Weather {
+  final String icon; // ☀️ ⛅ 🌧️ ❄️ ⛈️
+  final String label; // '맑음 22°C'
+  final Color stampColor;
+  const _Weather(
+      {required this.icon, required this.label, required this.stampColor});
+}
+
+class _Mission {
+  final String label;
+  final bool completed;
+  final IconData icon;
+  const _Mission({required this.label, required this.completed, required this.icon});
+}
+
+class _BadgeSpec {
+  final String emoji;
+  final String label;
+  const _BadgeSpec({required this.emoji, required this.label});
+}
+
+class _SampleIllustration {
+  final List<Color> gradient;
+  final String emoji;
+  const _SampleIllustration({required this.gradient, required this.emoji});
 }
 
 // ─── 사진 영속 저장소 ────────────────────────────────────
-/// 책 id → 로컬 사진 경로. SharedPreferences 에 책 ID 별로 저장.
-/// 웹에서는 path 가 blob URL — 새로고침 시 무효화될 수 있음 (프로토타입 한정).
 class _PhotoStore {
   static const _kPrefix = 'diary_photo_';
   static final Map<String, String> _cache = {};
@@ -183,10 +229,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   void _openDiary(int index) {
     showGeneralDialog<void>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.6),
+      barrierColor: Colors.black.withOpacity(0.65),
       barrierDismissible: true,
       barrierLabel: '닫기',
-      transitionDuration: const Duration(milliseconds: 320),
+      transitionDuration: const Duration(milliseconds: 360),
       pageBuilder: (ctx, anim, secAnim) {
         return _DiaryDialog(
           config: _kConfigs[_season]!,
@@ -196,12 +242,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         );
       },
       transitionBuilder: (ctx, anim, secAnim, child) {
-        // 스케일 + 페이드로 책이 열리는 듯한 트랜지션.
         final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
         return FadeTransition(
           opacity: curve,
           child: ScaleTransition(
-            scale: Tween(begin: 0.92, end: 1.0).animate(curve),
+            scale: Tween(begin: 0.9, end: 1.0).animate(curve),
             child: child,
           ),
         );
@@ -215,14 +260,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final books = _diaries[_season]!;
     if (!_ready) {
       return const ColoredBox(
-        color: _Vintage.creamBg,
-        child: Center(
-          child: CircularProgressIndicator(color: _Vintage.leather),
-        ),
+        color: _Vintage.parchmentLight,
+        child: Center(child: CircularProgressIndicator(color: _Vintage.leather)),
       );
     }
-    return ColoredBox(
-      color: _Vintage.creamBg,
+    return _ParchmentBackground(
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -235,13 +277,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   _SeasonBanner(config: config),
                   const SizedBox(height: 24),
                   _Bookshelf(
-                    config: config,
-                    books: books,
-                    onBookTap: _openDiary,
-                  ),
+                      config: config, books: books, onBookTap: _openDiary),
                   const SizedBox(height: 24),
                   _DiaryStats(books: books, config: config),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   _PaperHint(),
                 ],
               ),
@@ -253,202 +292,263 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   // ── 목업 데이터 ────────────────────────────────────────
+  // 1일 1권 — 각 책 date 가 시즌 내에서 유일.
+  // 사진 있는 책 vs 사진 없는 책 — sampleIllustration 으로 시뮬레이션.
   static Map<_Season, List<_DiaryBook>> _buildMockDiaries() {
     return {
       _Season.spring: [
         _DiaryBook(
-          id: 'spring_001',
+          id: 'd_2026_04_14',
           date: DateTime(2026, 4, 14, 14, 30),
-          title: '벚꽃 흩날리던 첫 봄나들이',
+          weather: const _Weather(icon: '☀️', label: '맑음 22°C', stampColor: _Vintage.stampRed),
+          headline: '벚꽃 흩날리는 첫 봄나들이',
+          attractionIds: const ['cherry_blossom_path', 'carousel'],
+          missions: const [
+            _Mission(label: '회전목마 50m 진입', completed: true, icon: Icons.celebration_rounded),
+            _Mission(label: '벚꽃길 산책 완주', completed: true, icon: Icons.directions_walk_rounded),
+            _Mission(label: '오후 야외 어트랙션 3회', completed: false, icon: Icons.sunny),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🌸', label: '봄의 시작'),
+            _BadgeSpec(emoji: '📷', label: '첫 방문 기록자'),
+          ],
           story:
               '벚꽃이 만개한 4월의 오후, 친구들과 손을 잡고 걸었던 그 길. 바람이 불 때마다 머리 위로 꽃잎이 쏟아져 내렸어요. '
-              '카메라를 꺼낼 새도 없이 그 순간이 너무 빠르게 지나가서, 결국엔 눈에 담는 것으로 만족했답니다.',
-          attractionIds: const ['cherry_blossom_path', 'carousel'],
-          fallbackEmoji: '🌸',
+              '카메라를 꺼낼 새도 없이 그 순간이 너무 빠르게 지나가서, 결국엔 눈에 담는 것으로 만족했답니다. '
+              '점심엔 회전목마 옆 카페에서 봄 한정 음료를 마셨고, 해가 기울 무렵에야 천천히 정문을 나왔습니다.',
+          sampleIllustration: const _SampleIllustration(
+            gradient: [Color(0xFFFCE4EC), Color(0xFFF8BBD0), Color(0xFFE91E63)],
+            emoji: '🌸',
+          ),
         ),
         _DiaryBook(
-          id: 'spring_002',
+          id: 'd_2026_04_21',
           date: DateTime(2026, 4, 21, 11, 15),
-          title: '회전목마 위의 동심',
+          weather: const _Weather(icon: '⛅', label: '구름 많음 18°C', stampColor: _Vintage.stampInk),
+          headline: '어른의 회전목마, 다시 동심',
+          attractionIds: const ['carousel'],
+          missions: const [
+            _Mission(label: '회전목마 탑승', completed: true, icon: Icons.attractions_rounded),
+            _Mission(label: '캐릭터 타운 전체 산책', completed: true, icon: Icons.map_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🎠', label: '동심 회복'),
+          ],
           story:
               '어릴 적 엄마 손을 잡고 처음 탔던 회전목마. 어른이 되어 다시 올라타니 그 시절의 설렘이 그대로 떠올랐어요. '
               '음악도, 조명도, 거울에 비친 풍경도 모두 그대로였답니다.',
-          attractionIds: const ['carousel'],
-          fallbackEmoji: '🎠',
+          // sampleIllustration 없음 → 빈티지 스탬프 표시
         ),
         _DiaryBook(
-          id: 'spring_003',
-          date: DateTime(2026, 4, 28, 13, 0),
-          title: '비 오는 날의 실내 어드벤처',
-          story:
-              '오전부터 부슬비가 내렸어요. 야외 어트랙션은 포기하고 실내 위주로 즐긴 날. '
-              '오히려 사람이 적어서 여유롭게 다닐 수 있었어요.',
-          attractionIds: const ['bumper_car', 'time_machine_5d'],
-          fallbackEmoji: '☔',
-        ),
-        _DiaryBook(
-          id: 'spring_004',
+          id: 'd_2026_05_05',
           date: DateTime(2026, 5, 5, 12, 0),
-          title: '어린이날, 가족 총출동',
+          weather: const _Weather(icon: '☀️', label: '맑음 24°C', stampColor: _Vintage.stampRed),
+          headline: '어린이날, 가족 총출동',
+          attractionIds: const ['mini_viking', 'carousel', 'bumper_car'],
+          missions: const [
+            _Mission(label: '가족 단체 사진 촬영', completed: true, icon: Icons.groups_rounded),
+            _Mission(label: '미니바이킹 첫 탑승', completed: true, icon: Icons.sailing_rounded),
+            _Mission(label: '범퍼카 5회 이상', completed: false, icon: Icons.directions_car_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '👨‍👩‍👧‍👦', label: '패밀리 데이'),
+            _BadgeSpec(emoji: '🎈', label: '어린이날 마스터'),
+          ],
           story:
-              '온 가족이 다 모인 어린이날. 조카들이 처음 타본 미니바이킹에서 환하게 웃던 그 표정, 평생 기억에 남을 것 같아요.',
-          attractionIds: const ['mini_viking', 'carousel'],
-          fallbackEmoji: '👨‍👩‍👧‍👦',
-        ),
-        _DiaryBook(
-          id: 'spring_005',
-          date: DateTime(2026, 5, 18, 15, 20),
-          title: '봄의 마지막 킹바이킹',
-          story:
-              '이제 곧 여름이 온다는 게 실감 나는 5월 중순. 마지막 봄나들이로 친구들과 킹바이킹을 탔어요. '
-              '비명소리가 너무 컸는지 옆 사람들이 다 웃었어요.',
-          attractionIds: const ['viking'],
-          fallbackEmoji: '🏴‍☠️',
+              '온 가족이 다 모인 어린이날. 조카들이 처음 타본 미니바이킹에서 환하게 웃던 그 표정, 평생 기억에 남을 것 같아요. '
+              '점심엔 다 같이 모여 사진을 찍었는데 아빠가 셀카봉을 처음 써보셨답니다.',
+          sampleIllustration: const _SampleIllustration(
+            gradient: [Color(0xFFFFF3E0), Color(0xFFFFCC80), Color(0xFFFF7043)],
+            emoji: '👨‍👩‍👧‍👦',
+          ),
         ),
       ],
       _Season.summer: [
         _DiaryBook(
-          id: 'summer_001',
-          date: DateTime(2025, 6, 10, 14, 0),
-          title: '급류타기의 시원함',
-          story:
-              '6월 초인데 벌써 무더웠어요. 첫 라이드로 고른 급류타기. 물벼락에 옷이 다 젖었지만 그 시원함은 잊을 수 없어요.',
-          attractionIds: const ['flume_ride'],
-          fallbackEmoji: '🌊',
-        ),
-        _DiaryBook(
-          id: 'summer_002',
+          id: 'd_2025_07_04',
           date: DateTime(2025, 7, 4, 19, 30),
-          title: '한여름 야간 개장의 매력',
-          story:
-              '해가 진 후의 서울랜드는 완전 다른 분위기예요. 낮엔 봐도 그냥 지나치던 조명들이 모두 살아 움직였어요.',
+          weather: const _Weather(icon: '☀️', label: '맑음 31°C', stampColor: _Vintage.stampRed),
+          headline: '한여름 야간개장의 매력',
           attractionIds: const ['galaxy_888', 'carousel'],
-          fallbackEmoji: '🌃',
+          missions: const [
+            _Mission(label: '야간 어트랙션 3종', completed: true, icon: Icons.nightlight_round),
+            _Mission(label: '21시 이후 분수쇼 관람', completed: true, icon: Icons.celebration_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🌃', label: '야경 헌터'),
+          ],
+          story:
+              '해가 진 후의 서울랜드는 완전 다른 분위기예요. 낮엔 봐도 그냥 지나치던 조명들이 모두 살아 움직였어요. '
+              '은하열차의 야간 라이드는 그 어떤 어트랙션보다도 짜릿했답니다.',
+          // 사진 없음 → 빈티지 스탬프
         ),
         _DiaryBook(
-          id: 'summer_003',
+          id: 'd_2025_07_20',
           date: DateTime(2025, 7, 20, 13, 30),
-          title: '스카이엑스에서 본 여름 하늘',
-          story:
-              '70m 상공에서 떨어지던 그 순간, 시간이 멈춘 듯했어요. 떨어지는 동안 본 푸른 여름 하늘이 잊혀지지 않아요.',
+          weather: const _Weather(icon: '☀️', label: '폭염 33°C', stampColor: _Vintage.stampRed),
+          headline: '스카이엑스에서 본 여름 하늘',
           attractionIds: const ['sky_x'],
-          fallbackEmoji: '🪂',
+          missions: const [
+            _Mission(label: '스카이엑스 첫 도전', completed: true, icon: Icons.paragliding_rounded),
+            _Mission(label: '익스트림 라이드 2회', completed: true, icon: Icons.bolt_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🪂', label: '스릴 마스터'),
+            _BadgeSpec(emoji: '☀️', label: '여름의 정점'),
+          ],
+          story:
+              '70m 상공에서 떨어지던 그 순간, 시간이 멈춘 듯했어요. 떨어지는 동안 본 푸른 여름 하늘이 잊혀지지 않아요. '
+              '내려와서 다시 줄을 섰더니 친구가 어이없어했답니다.',
+          sampleIllustration: const _SampleIllustration(
+            gradient: [Color(0xFFE3F2FD), Color(0xFF64B5F6), Color(0xFF1976D2)],
+            emoji: '🪂',
+          ),
         ),
         _DiaryBook(
-          id: 'summer_004',
+          id: 'd_2025_08_05',
           date: DateTime(2025, 8, 5, 15, 10),
-          title: '에어컨 빵빵 실내 범퍼카',
+          weather: const _Weather(icon: '⛈️', label: '뇌우 28°C', stampColor: _Vintage.stampInk),
+          headline: '뇌우 피해 실내 어트랙션 종일',
+          attractionIds: const ['bumper_car', 'time_machine_5d'],
+          missions: const [
+            _Mission(label: '실내 어트랙션 3종 클리어', completed: true, icon: Icons.house_rounded),
+            _Mission(label: '범퍼카 단체전', completed: true, icon: Icons.directions_car_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '☂️', label: '비 오는 날 탐험가'),
+          ],
           story:
-              '38도 폭염을 피해 실내 범퍼카로 도망. 한 시간 동안 5번이나 다시 줄을 섰답니다.',
-          attractionIds: const ['bumper_car'],
-          fallbackEmoji: '🚗',
-        ),
-        _DiaryBook(
-          id: 'summer_005',
-          date: DateTime(2025, 8, 20, 16, 0),
-          title: '여름의 끝, 샷드롭',
-          story:
-              '발사되는 순간의 그 무중력감. 옆 사람이 비명을 지르고, 나도 모르게 따라 질렀어요. 다리가 후들거리는 채로 카메라를 보며 웃었어요.',
-          attractionIds: const ['shot_drop'],
-          fallbackEmoji: '🚀',
+              '오후부터 비가 쏟아져서 실내 위주로 다녔어요. 오히려 사람이 적어서 여유로웠고, '
+              '범퍼카는 같은 자리에서 30분 동안 연속으로 탔답니다.',
         ),
       ],
       _Season.autumn: [
         _DiaryBook(
-          id: 'autumn_001',
-          date: DateTime(2025, 9, 15, 14, 20),
-          title: '가을의 시작, 은하열차',
+          id: 'd_2025_10_18',
+          date: DateTime(2025, 10, 18, 14, 20),
+          weather: const _Weather(icon: '☀️', label: '맑음 19°C', stampColor: _Vintage.stampRed),
+          headline: '단풍 사이로 달린 은하열차',
+          attractionIds: const ['galaxy_888', 'gyro_swing'],
+          missions: const [
+            _Mission(label: '단풍 명소 3곳 방문', completed: true, icon: Icons.park_rounded),
+            _Mission(label: '은하열차 야간 라이드', completed: false, icon: Icons.train_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🍁', label: '단풍 헌터'),
+          ],
           story:
-              '아직 단풍은 들지 않았지만 바람이 선선해진 9월 중순. 은하열차의 바람을 가르는 속도감이 가을과 잘 어울렸어요.',
-          attractionIds: const ['galaxy_888'],
-          fallbackEmoji: '🎢',
+              '단풍이 물든 풍경 사이로 질주하는 은하열차. 바람에 실려오는 가을 향기와 함께 달렸던 그 코스가 최고였어요.',
+          sampleIllustration: const _SampleIllustration(
+            gradient: [Color(0xFFFFF3E0), Color(0xFFFFB74D), Color(0xFFE65100)],
+            emoji: '🍁',
+          ),
         ),
         _DiaryBook(
-          id: 'autumn_002',
-          date: DateTime(2025, 10, 5, 13, 0),
-          title: '블랙홀 2000의 어둠',
-          story:
-              '어둠 속에서 회전하던 그 순간, 방향감을 완전히 잃었어요. 출구로 나와 친구와 마주보며 웃었던 그 표정.',
-          attractionIds: const ['blackhole_2000'],
-          fallbackEmoji: '🌀',
-        ),
-        _DiaryBook(
-          id: 'autumn_003',
-          date: DateTime(2025, 10, 18, 15, 30),
-          title: '단풍 사이의 알포스윙',
-          story:
-              '360도 회전하며 거꾸로 본 가을 하늘과 단풍. 무섭다고 했지만 다시 타고 싶다고 했던 그 모순.',
-          attractionIds: const ['gyro_swing'],
-          fallbackEmoji: '🎡',
-        ),
-        _DiaryBook(
-          id: 'autumn_004',
+          id: 'd_2025_10_25',
           date: DateTime(2025, 10, 25, 16, 10),
-          title: '가을 야경 데이트',
-          story:
-              '단풍이 절정이던 날, 둘이서 천천히 걸으며 본 풍경. 시간이 멈췄으면 좋겠다 싶었어요.',
+          weather: const _Weather(icon: '⛅', label: '구름 16°C', stampColor: _Vintage.stampInk),
+          headline: '가을 야경 둘만의 데이트',
           attractionIds: const ['shot_drop', 'galaxy_888'],
-          fallbackEmoji: '🍁',
-        ),
-        _DiaryBook(
-          id: 'autumn_005',
-          date: DateTime(2025, 11, 2, 17, 0),
-          title: '가을의 마지막 바이킹',
+          missions: const [
+            _Mission(label: '저녁 야경 어트랙션', completed: true, icon: Icons.nightlight_round),
+            _Mission(label: '단풍 포토스팟 통과', completed: true, icon: Icons.camera_alt_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '💕', label: '데이트 마스터'),
+          ],
           story:
-              '시즌이 끝나기 전 마지막 바이킹. 흩날리는 낙엽 사이로 흔들렸던 그 순간이 올 가을의 마침표였어요.',
-          attractionIds: const ['viking'],
-          fallbackEmoji: '⚓',
+              '단풍이 절정이던 날, 둘이서 천천히 걸으며 본 풍경. 시간이 멈췄으면 좋겠다 싶었어요. '
+              '저녁엔 야경 명소에서 잠시 쉬며 그날의 모든 것을 마음에 담았습니다.',
         ),
       ],
       _Season.winter: [
         _DiaryBook(
-          id: 'winter_001',
+          id: 'd_2024_12_24',
           date: DateTime(2024, 12, 24, 18, 30),
-          title: '눈 내리는 회전목마',
+          weather: const _Weather(icon: '❄️', label: '눈 -2°C', stampColor: _Vintage.stampInk),
+          headline: '눈 내리는 회전목마, 동화의 밤',
+          attractionIds: const ['carousel', 'santa_restaurant'],
+          missions: const [
+            _Mission(label: '눈 오는 날 야간 방문', completed: true, icon: Icons.ac_unit_rounded),
+            _Mission(label: '산타레스토랑 식사', completed: true, icon: Icons.restaurant_rounded),
+            _Mission(label: '눈 인증샷 5장', completed: false, icon: Icons.camera_alt_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🎄', label: '크리스마스 이브'),
+            _BadgeSpec(emoji: '❄️', label: '겨울 동화'),
+          ],
           story:
-              '함박눈이 내리던 12월 24일 저녁, 조명이 켜진 회전목마. 한 폭의 동화 같았던 그 풍경을 잊을 수 없어요.',
-          attractionIds: const ['carousel'],
-          fallbackEmoji: '🎄',
+              '함박눈이 내리던 12월 24일 저녁, 조명이 켜진 회전목마. 한 폭의 동화 같았던 그 풍경을 잊을 수 없어요. '
+              '추워서 손이 곱아도 카메라 셔터를 멈출 수 없었답니다.',
+          sampleIllustration: const _SampleIllustration(
+            gradient: [Color(0xFFE1F5FE), Color(0xFFB3E5FC), Color(0xFF0288D1)],
+            emoji: '🎄',
+          ),
         ),
         _DiaryBook(
-          id: 'winter_002',
+          id: 'd_2025_01_01',
           date: DateTime(2025, 1, 1, 13, 0),
-          title: '새해 첫날, 타임머신 5D',
+          weather: const _Weather(icon: '☀️', label: '맑음 1°C', stampColor: _Vintage.stampRed),
+          headline: '새해 첫 방문, 타임머신 5D',
+          attractionIds: const ['time_machine_5d'],
+          missions: const [
+            _Mission(label: '새해 첫 어트랙션', completed: true, icon: Icons.celebration_rounded),
+            _Mission(label: '5D 영상 관람', completed: true, icon: Icons.movie_rounded),
+          ],
+          badges: const [
+            _BadgeSpec(emoji: '🎊', label: '새해 첫 도전'),
+          ],
           story:
               '새해 첫날 가족과 함께 본 5D 영상. 미래의 한 장면 같았던 그 경험이 새해의 시작을 특별하게 만들어줬어요.',
-          attractionIds: const ['time_machine_5d'],
-          fallbackEmoji: '🎬',
-        ),
-        _DiaryBook(
-          id: 'winter_003',
-          date: DateTime(2025, 1, 18, 14, 30),
-          title: '눈 오는 날의 실내 범퍼카',
-          story:
-              '바깥은 영하인데 실내는 따뜻하고 신났어요. 친구 5명이서 단체로 부딪치며 깔깔 웃었던 시간.',
-          attractionIds: const ['bumper_car'],
-          fallbackEmoji: '🚗',
-        ),
-        _DiaryBook(
-          id: 'winter_004',
-          date: DateTime(2025, 1, 25, 19, 0),
-          title: '산타레스토랑의 따뜻함',
-          story:
-              '추운 날 산타레스토랑에서 먹었던 따뜻한 한 끼. 창밖에 눈이 내리고, 안에서는 캐롤이 흘러나오던 그 순간.',
-          attractionIds: const ['santa_restaurant'],
-          fallbackEmoji: '🎅',
-        ),
-        _DiaryBook(
-          id: 'winter_005',
-          date: DateTime(2025, 2, 14, 16, 0),
-          title: '발렌타인 블랙홀 챌린지',
-          story:
-              '함께 견뎌낸 블랙홀의 어둠. 끝나고 나니 마음이 더 가까워진 느낌.',
-          attractionIds: const ['blackhole_2000'],
-          fallbackEmoji: '💝',
         ),
       ],
     };
   }
+}
+
+// ─── Parchment 배경 (질감 시뮬레이션) ─────────────────────
+class _ParchmentBackground extends StatelessWidget {
+  final Widget child;
+  const _ParchmentBackground({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment(0, -0.3),
+          radius: 1.4,
+          colors: [_Vintage.parchmentLight, _Vintage.parchmentDark],
+          stops: [0.0, 1.0],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // 미세 격자 노이즈 — 종이 결.
+          Positioned.fill(
+            child: CustomPaint(painter: _PaperGrainPainter()),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _PaperGrainPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rng = math.Random(42);
+    final paint = Paint()..color = _Vintage.inkFaded.withOpacity(0.05);
+    for (var i = 0; i < 80; i++) {
+      final x = rng.nextDouble() * size.width;
+      final y = rng.nextDouble() * size.height;
+      canvas.drawCircle(Offset(x, y), rng.nextDouble() * 0.8 + 0.2, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
 }
 
 // ─── 헤더 (시즌 탭) ──────────────────────────────────────
@@ -460,42 +560,47 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _Vintage.paperLight,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
+      decoration: BoxDecoration(
+        color: _Vintage.parchmentLight.withOpacity(0.8),
+        border: Border(
+          bottom: BorderSide(
+            color: _Vintage.leather.withOpacity(0.15),
+            width: 1,
+          ),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.auto_stories_rounded, color: _Vintage.leather, size: 26),
-              SizedBox(width: 8),
+            children: [
+              const Icon(Icons.auto_stories_rounded,
+                  color: _Vintage.leather, size: 26),
+              const SizedBox(width: 8),
               Text(
                 'Retrace Archive',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+                style: _serif(
+                  size: 22,
+                  weight: FontWeight.w900,
                   color: _Vintage.inkDark,
                   letterSpacing: 0.5,
                 ),
               ),
-              Spacer(),
-              Text('📖', style: TextStyle(fontSize: 22)),
+              const Spacer(),
+              const Text('📖', style: TextStyle(fontSize: 22)),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
-            '하루 한 권. 그날의 추억을 책에 담아 책장에 꽂아두세요.',
-            style: TextStyle(
-              fontSize: 12,
-              color: _Vintage.inkMid,
-              fontWeight: FontWeight.w600,
-            ),
+          Text(
+            '하루 한 권. 그날의 탐험을 매거진처럼 펴서 보세요.',
+            style: _serif(size: 12, color: _Vintage.inkMid, height: 1.4),
           ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: _Vintage.paper,
+              color: _Vintage.parchment,
               borderRadius: BorderRadius.circular(99),
               border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
             ),
@@ -505,21 +610,25 @@ class _Header extends StatelessWidget {
                         child: GestureDetector(
                           onTap: () => onChange(s),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
+                            duration: const Duration(milliseconds: 240),
                             curve: Curves.easeOut,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: season == s ? _Vintage.leather : Colors.transparent,
+                              color: season == s
+                                  ? _Vintage.leather
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(99),
                             ),
                             alignment: Alignment.center,
                             child: Text(
                               _kConfigs[s]!.label,
-                              style: TextStyle(
-                                color: season == s ? _Vintage.creamBg : _Vintage.inkMid,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1,
+                              style: _serif(
+                                size: 13,
+                                weight: FontWeight.w900,
+                                color: season == s
+                                    ? _Vintage.parchmentLight
+                                    : _Vintage.inkMid,
+                                letterSpacing: 1.5,
                               ),
                             ),
                           ),
@@ -534,7 +643,6 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── 시즌 배너 ───────────────────────────────────────────
 class _SeasonBanner extends StatelessWidget {
   final _SeasonConfig config;
   const _SeasonBanner({required this.config});
@@ -544,16 +652,9 @@ class _SeasonBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _Vintage.paperLight,
+        color: _Vintage.parchmentLight,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
-        boxShadow: [
-          BoxShadow(
-            color: _Vintage.leatherDark.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -573,20 +674,16 @@ class _SeasonBanner extends StatelessWidget {
               children: [
                 Text(
                   '${config.label} 챕터',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                  style: _serif(
+                    size: 18,
+                    weight: FontWeight.w900,
                     color: config.titleColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   config.tagline,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _Vintage.inkMid,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: _serif(size: 12, color: _Vintage.inkMid),
                 ),
               ],
             ),
@@ -597,7 +694,7 @@ class _SeasonBanner extends StatelessWidget {
   }
 }
 
-// ─── 책장 (가죽 + 나무 선반) ─────────────────────────────
+// ─── 책장 ────────────────────────────────────────────────
 class _Bookshelf extends StatelessWidget {
   final _SeasonConfig config;
   final List<_DiaryBook> books;
@@ -620,11 +717,11 @@ class _Bookshelf extends StatelessWidget {
               const Icon(Icons.menu_book_rounded,
                   size: 16, color: _Vintage.leather),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 '기억의 책장',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
+                style: _serif(
+                  size: 14,
+                  weight: FontWeight.w900,
                   color: _Vintage.inkDark,
                   letterSpacing: 0.5,
                 ),
@@ -633,15 +730,15 @@ class _Bookshelf extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _Vintage.paperLight,
+                  color: _Vintage.parchmentLight,
                   borderRadius: BorderRadius.circular(99),
                   border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
                 ),
                 child: Text(
                   '${books.length} 권',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
+                  style: _serif(
+                    size: 11,
+                    weight: FontWeight.w900,
                     color: _Vintage.leather,
                   ),
                 ),
@@ -650,7 +747,6 @@ class _Bookshelf extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        // 책장 본체 — 가죽 등판 + 나무 선반
         Container(
           decoration: BoxDecoration(
             color: _Vintage.shelfWood,
@@ -672,7 +768,7 @@ class _Bookshelf extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: List.generate(books.length, (i) {
-                    final color = config.bookSpineColors[i % config.bookSpineColors.length];
+                    final color = config.spines[i % config.spines.length];
                     return _BookSpine(
                       book: books[i],
                       color: color,
@@ -682,7 +778,6 @@ class _Bookshelf extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              // 선반 바닥 (어두운 나무 결)
               Container(
                 height: 12,
                 decoration: const BoxDecoration(
@@ -698,16 +793,12 @@ class _Bookshelf extends StatelessWidget {
   }
 }
 
-// ─── 책등 ────────────────────────────────────────────────
 class _BookSpine extends StatelessWidget {
   final _DiaryBook book;
   final Color color;
   final VoidCallback onTap;
-  const _BookSpine({
-    required this.book,
-    required this.color,
-    required this.onTap,
-  });
+  const _BookSpine(
+      {required this.book, required this.color, required this.onTap});
 
   String get _spineDate {
     final y = book.date.year.toString();
@@ -718,7 +809,9 @@ class _BookSpine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = _PhotoStore.photoOf(book.id) != null;
+    final hasUserPhoto = _PhotoStore.photoOf(book.id) != null;
+    final hasSample = book.sampleIllustration != null;
+    final hasPhoto = hasUserPhoto || hasSample;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -761,7 +854,6 @@ class _BookSpine extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // 책등 상하단 금박 라인
               Positioned(
                 top: 8,
                 child: Container(
@@ -776,12 +868,13 @@ class _BookSpine extends StatelessWidget {
                   color: _Vintage.gold.withOpacity(0.7),
                 ),
               ),
-              // 세로 날짜 각인
               RotatedBox(
                 quarterTurns: 3,
                 child: Text(
                   _spineDate,
                   style: TextStyle(
+                    fontFamily: _kSerif,
+                    fontFamilyFallback: _kSerifFallback,
                     color: _Vintage.gold.withOpacity(0.95),
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -789,7 +882,6 @@ class _BookSpine extends StatelessWidget {
                   ),
                 ),
               ),
-              // 사진 업로드 표시 (책등 하단 작은 점)
               if (hasPhoto)
                 Positioned(
                   bottom: 10,
@@ -809,7 +901,7 @@ class _BookSpine extends StatelessWidget {
   }
 }
 
-// ─── 다이어리 다이얼로그 (PageView 3 페이지) ──────────────
+// ─── 다이어리 다이얼로그 ──────────────────────────────────
 class _DiaryDialog extends StatefulWidget {
   final _SeasonConfig config;
   final List<_DiaryBook> books;
@@ -867,6 +959,13 @@ class _DiaryDialogState extends State<_DiaryDialog> {
     }
   }
 
+  Future<void> _removePhoto() async {
+    await _PhotoStore.remove(_book.id);
+    if (!mounted) return;
+    setState(() {});
+    widget.onPhotoChanged();
+  }
+
   void _goPrevBook() {
     if (_bookIndex == 0) return;
     setState(() {
@@ -890,67 +989,85 @@ class _DiaryDialogState extends State<_DiaryDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // 책 한 권 비율 — 모바일에선 세로형, 작은 화면도 잘 맞춤.
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 280),
-            switchInCurve: Curves.easeOutCubic,
-            child: Container(
-              key: ValueKey(_book.id),
-              decoration: BoxDecoration(
-                color: _Vintage.paperLight,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _Vintage.leather.withOpacity(0.3), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 320),
+        switchInCurve: Curves.easeOutCubic,
+        child: Container(
+          key: ValueKey(_book.id),
+          decoration: BoxDecoration(
+            color: _Vintage.parchment,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+                color: _Vintage.leather.withOpacity(0.4), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(11),
-                child: Column(
-                  children: [
-                    _DialogTopBar(
-                      config: widget.config,
-                      bookIndex: _bookIndex + 1,
-                      totalBooks: widget.books.length,
-                      onPrev: _bookIndex > 0 ? _goPrevBook : null,
-                      onNext: _bookIndex < widget.books.length - 1 ? _goNextBook : null,
-                      onClose: () => Navigator.of(context).pop(),
-                    ),
-                    Expanded(
-                      child: PageView(
-                        controller: _pageCtrl,
-                        onPageChanged: (i) => setState(() => _pageIndex = i),
-                        children: [
-                          _PagePhoto(
-                            book: _book,
-                            config: widget.config,
-                            onPickGallery: () => _pickPhoto(ImageSource.gallery),
-                            onPickCamera: () => _pickPhoto(ImageSource.camera),
-                            onRemovePhoto: () async {
-                              await _PhotoStore.remove(_book.id);
-                              if (!mounted) return;
-                              setState(() {});
-                              widget.onPhotoChanged();
-                            },
-                          ),
-                          _PageStory(book: _book, config: widget.config),
-                          _PageAttraction(book: _book, config: widget.config),
-                        ],
-                      ),
-                    ),
-                    _PageIndicator(current: _pageIndex, total: 3),
-                  ],
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(13),
+            child: Column(
+              children: [
+                _DialogTopBar(
+                  config: widget.config,
+                  bookIndex: _bookIndex + 1,
+                  totalBooks: widget.books.length,
+                  onPrev: _bookIndex > 0 ? _goPrevBook : null,
+                  onNext: _bookIndex < widget.books.length - 1
+                      ? _goNextBook
+                      : null,
+                  onClose: () => Navigator.of(context).pop(),
                 ),
-              ),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageCtrl,
+                    onPageChanged: (i) => setState(() => _pageIndex = i),
+                    itemCount: 3,
+                    itemBuilder: (ctx, i) {
+                      final pages = [
+                        _PageCover(book: _book, config: widget.config),
+                        _PageJournal(book: _book, config: widget.config),
+                        _PageMemory(
+                          book: _book,
+                          config: widget.config,
+                          onPickGallery: () => _pickPhoto(ImageSource.gallery),
+                          onPickCamera: () => _pickPhoto(ImageSource.camera),
+                          onRemovePhoto: _removePhoto,
+                        ),
+                      ];
+                      // 책장 넘김 트랜스폼 — 좌우 perspective rotateY.
+                      return AnimatedBuilder(
+                        animation: _pageCtrl,
+                        child: pages[i],
+                        builder: (_, child) {
+                          double delta = 0;
+                          if (_pageCtrl.position.hasContentDimensions) {
+                            delta = (_pageCtrl.page ?? 0) - i;
+                          }
+                          final clamped = delta.clamp(-1.0, 1.0);
+                          final m = Matrix4.identity()
+                            ..setEntry(3, 2, 0.0015)
+                            ..rotateY(clamped * 0.55);
+                          return Transform(
+                            transform: m,
+                            alignment: delta < 0
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: child,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                _PageIndicator(current: _pageIndex, total: 3),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -958,10 +1075,8 @@ class _DiaryDialogState extends State<_DiaryDialog> {
 
 class _DialogTopBar extends StatelessWidget {
   final _SeasonConfig config;
-  final int bookIndex;
-  final int totalBooks;
-  final VoidCallback? onPrev;
-  final VoidCallback? onNext;
+  final int bookIndex, totalBooks;
+  final VoidCallback? onPrev, onNext;
   final VoidCallback onClose;
   const _DialogTopBar({
     required this.config,
@@ -975,20 +1090,20 @@ class _DialogTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
         color: _Vintage.leather,
         border: Border(
-          bottom: BorderSide(color: _Vintage.gold.withOpacity(0.4), width: 1),
+          bottom:
+              BorderSide(color: _Vintage.gold.withOpacity(0.4), width: 1),
         ),
       ),
       child: Row(
         children: [
           _IconBtn(
-            icon: Icons.chevron_left_rounded,
-            onTap: onPrev,
-            enabled: onPrev != null,
-          ),
+              icon: Icons.chevron_left_rounded,
+              onTap: onPrev,
+              enabled: onPrev != null),
           Expanded(
             child: Center(
               child: Column(
@@ -996,19 +1111,19 @@ class _DialogTopBar extends StatelessWidget {
                 children: [
                   Text(
                     '${config.label} CHAPTER',
-                    style: TextStyle(
+                    style: _serif(
+                      size: 9,
+                      weight: FontWeight.w900,
                       color: _Vintage.gold.withOpacity(0.9),
-                      fontSize: 9,
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
                     ),
                   ),
                   Text(
                     '$bookIndex / $totalBooks',
-                    style: const TextStyle(
-                      color: _Vintage.creamBg,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
+                    style: _serif(
+                      size: 13,
+                      weight: FontWeight.w900,
+                      color: _Vintage.parchmentLight,
                     ),
                   ),
                 ],
@@ -1016,16 +1131,12 @@ class _DialogTopBar extends StatelessWidget {
             ),
           ),
           _IconBtn(
-            icon: Icons.chevron_right_rounded,
-            onTap: onNext,
-            enabled: onNext != null,
-          ),
+              icon: Icons.chevron_right_rounded,
+              onTap: onNext,
+              enabled: onNext != null),
           const SizedBox(width: 4),
           _IconBtn(
-            icon: Icons.close_rounded,
-            onTap: onClose,
-            enabled: true,
-          ),
+              icon: Icons.close_rounded, onTap: onClose, enabled: true),
         ],
       ),
     );
@@ -1036,7 +1147,8 @@ class _IconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final bool enabled;
-  const _IconBtn({required this.icon, required this.onTap, required this.enabled});
+  const _IconBtn(
+      {required this.icon, required this.onTap, required this.enabled});
 
   @override
   Widget build(BuildContext context) {
@@ -1047,21 +1159,416 @@ class _IconBtn extends StatelessWidget {
         radius: 20,
         child: Padding(
           padding: const EdgeInsets.all(6),
-          child: Icon(icon, color: _Vintage.creamBg, size: 22),
+          child: Icon(icon, color: _Vintage.parchmentLight, size: 22),
         ),
       ),
     );
   }
 }
 
-// ─── 페이지 1: 사진 + 날짜 (폴라로이드) ─────────────────────
-class _PagePhoto extends StatelessWidget {
+// ─── 페이지 1: 표지 / 개요 ───────────────────────────────
+class _PageCover extends StatelessWidget {
+  final _DiaryBook book;
+  final _SeasonConfig config;
+  const _PageCover({required this.book, required this.config});
+
+  String _formatDate(DateTime d) {
+    final wd = const ['일', '월', '화', '수', '목', '금', '토'][d.weekday % 7];
+    return '${d.year}년 ${d.month}월 ${d.day}일 · $wd요일';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _ParchmentBackground(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+        child: Column(
+          children: [
+            // 상단: 날씨 스탬프
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                        color: book.weather.stampColor.withOpacity(0.75),
+                        width: 2),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(book.weather.icon,
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 6),
+                      Text(
+                        book.weather.label,
+                        style: _serif(
+                          size: 11,
+                          weight: FontWeight.w900,
+                          color: book.weather.stampColor,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Transform.rotate(
+                  angle: 0.06,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _Vintage.stampRed.withOpacity(0.08),
+                      border: Border.all(
+                          color: _Vintage.stampRed.withOpacity(0.7), width: 1.5),
+                    ),
+                    child: Text(
+                      'VOL. ${book.date.year}',
+                      style: _serif(
+                        size: 9,
+                        weight: FontWeight.w900,
+                        color: _Vintage.stampRed,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            // 가운데: 시즌 아이콘 + 큰 헤드라인
+            Icon(config.icon, color: config.titleColor, size: 36),
+            const SizedBox(height: 18),
+            Text(
+              book.headline,
+              textAlign: TextAlign.center,
+              style: _serif(
+                size: 26,
+                weight: FontWeight.w900,
+                color: _Vintage.inkDark,
+                height: 1.4,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // 장식 구분선 (왼쪽 라인 — 가운데 다이아 — 오른쪽 라인)
+            Row(
+              children: [
+                Expanded(
+                    child: Container(
+                        height: 1, color: _Vintage.leather.withOpacity(0.3))),
+                const SizedBox(width: 8),
+                const Icon(Icons.diamond_outlined,
+                    color: _Vintage.leather, size: 12),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Container(
+                        height: 1, color: _Vintage.leather.withOpacity(0.3))),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Text(
+              _formatDate(book.date),
+              style: _serif(
+                size: 14,
+                weight: FontWeight.w700,
+                color: _Vintage.inkBody,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const Spacer(),
+            // 하단 시리즈 표기
+            Text(
+              '— Daily Exploration Magazine —',
+              style: _serif(
+                size: 10,
+                weight: FontWeight.w700,
+                color: _Vintage.inkFaded,
+                style: FontStyle.italic,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 페이지 2: 탐험 일지 ──────────────────────────────────
+class _PageJournal extends StatelessWidget {
+  final _DiaryBook book;
+  final _SeasonConfig config;
+  const _PageJournal({required this.book, required this.config});
+
+  List<Attraction> get _attractions {
+    final byId = {for (final a in kAttractions) a.id: a};
+    return book.attractionIds
+        .map((id) => byId[id])
+        .whereType<Attraction>()
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final attrs = _attractions;
+    return _ParchmentBackground(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        children: [
+          _SectionTitle(
+              icon: Icons.explore_rounded,
+              text: '탐험 일지',
+              color: config.titleColor),
+          const SizedBox(height: 14),
+          // 방문 어트랙션
+          _JournalGroup(
+            label: '방문한 어트랙션',
+            child: Column(
+              children: attrs.isEmpty
+                  ? [
+                      Text(
+                        '기록된 어트랙션이 없어요.',
+                        style: _serif(size: 12, color: _Vintage.inkFaded),
+                      ),
+                    ]
+                  : attrs
+                      .map((a) => _AttractionRow(attraction: a, accent: config.titleColor))
+                      .toList(),
+            ),
+          ),
+          const SizedBox(height: 18),
+          // 미션
+          _JournalGroup(
+            label: '오늘의 미션',
+            child: Column(
+              children: book.missions
+                  .map((m) => _MissionRow(mission: m, accent: config.titleColor))
+                  .toList(),
+            ),
+          ),
+          const SizedBox(height: 18),
+          // 뱃지
+          _JournalGroup(
+            label: '획득한 뱃지',
+            child: book.badges.isEmpty
+                ? Text(
+                    '획득한 뱃지가 아직 없어요.',
+                    style: _serif(size: 12, color: _Vintage.inkFaded),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children:
+                        book.badges.map((b) => _BadgeChip(spec: b)).toList(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+  const _SectionTitle(
+      {required this.icon, required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: _serif(
+            size: 18,
+            weight: FontWeight.w900,
+            color: color,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _JournalGroup extends StatelessWidget {
+  final String label;
+  final Widget child;
+  const _JournalGroup({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: _serif(
+            size: 11,
+            weight: FontWeight.w900,
+            color: _Vintage.inkMid,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _Vintage.parchmentLight,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+class _AttractionRow extends StatelessWidget {
+  final Attraction attraction;
+  final Color accent;
+  const _AttractionRow({required this.attraction, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(attraction.icon, style: const TextStyle(fontSize: 18)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  attraction.name,
+                  style: _serif(
+                      size: 13,
+                      weight: FontWeight.w800,
+                      color: _Vintage.inkDark),
+                ),
+                Text(
+                  '${attraction.category} · ${attraction.zone}',
+                  style: _serif(size: 10, color: _Vintage.inkFaded),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionRow extends StatelessWidget {
+  final _Mission mission;
+  final Color accent;
+  const _MissionRow({required this.mission, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final done = mission.completed;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Container(
+            width: 22, height: 22,
+            decoration: BoxDecoration(
+              color: done ? accent : _Vintage.parchment,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                  color:
+                      done ? accent : _Vintage.leather.withOpacity(0.3)),
+            ),
+            alignment: Alignment.center,
+            child: done
+                ? const Icon(Icons.check_rounded,
+                    size: 14, color: Colors.white)
+                : Icon(mission.icon,
+                    size: 12, color: _Vintage.inkFaded),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              mission.label,
+              style: _serif(
+                size: 12,
+                weight: done ? FontWeight.w700 : FontWeight.w500,
+                color: done ? _Vintage.inkDark : _Vintage.inkFaded,
+                style: done ? null : FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  final _BadgeSpec spec;
+  const _BadgeChip({required this.spec});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_Vintage.parchmentLight, _Vintage.parchmentDark],
+        ),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: _Vintage.gold.withOpacity(0.6), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(spec.emoji, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Text(
+            spec.label,
+            style: _serif(
+              size: 11,
+              weight: FontWeight.w800,
+              color: _Vintage.inkDark,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── 페이지 3: 추억의 장 (스토리 + 사진 옵션) ─────────────
+class _PageMemory extends StatelessWidget {
   final _DiaryBook book;
   final _SeasonConfig config;
   final VoidCallback onPickGallery;
   final VoidCallback onPickCamera;
   final VoidCallback onRemovePhoto;
-  const _PagePhoto({
+  const _PageMemory({
     required this.book,
     required this.config,
     required this.onPickGallery,
@@ -1069,86 +1576,81 @@ class _PagePhoto extends StatelessWidget {
     required this.onRemovePhoto,
   });
 
-  String _formatDate(DateTime d) {
-    final wd = const ['일', '월', '화', '수', '목', '금', '토'][d.weekday % 7];
-    return '${d.year}년 ${d.month}월 ${d.day}일 ($wd요일)';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final photoPath = _PhotoStore.photoOf(book.id);
-    return Container(
-      color: _Vintage.paperLight,
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 16),
-      child: Column(
+    final userPhoto = _PhotoStore.photoOf(book.id);
+    final hasPhoto = userPhoto != null || book.sampleIllustration != null;
+    return _ParchmentBackground(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
         children: [
-          Text(
-            _formatDate(book.date),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: config.titleColor,
-              letterSpacing: 0.5,
-            ),
+          _SectionTitle(
+            icon: Icons.history_edu_rounded,
+            text: '추억의 장',
+            color: config.titleColor,
           ),
-          const SizedBox(height: 6),
-          Text(
-            book.title,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: _Vintage.inkDark,
-              height: 1.3,
+          const SizedBox(height: 16),
+          // 스토리 (필기체 느낌 — 세리프 + 줄 라인)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _Vintage.parchmentLight,
+              borderRadius: BorderRadius.circular(8),
+              border: Border(
+                left:
+                    BorderSide(color: _Vintage.stampRed.withOpacity(0.6), width: 3),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          // 폴라로이드
-          Expanded(
-            child: Center(
-              child: _Polaroid(
-                photoPath: photoPath,
-                fallbackEmoji: book.fallbackEmoji,
-                caption: '${book.date.month}.${book.date.day}',
+            child: Text(
+              book.story,
+              style: _serif(
+                size: 14,
+                color: _Vintage.inkBody,
+                height: 1.9,
+                letterSpacing: 0.2,
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          // 업로드 / 변경 버튼
-          if (photoPath == null)
-            Row(
-              children: [
-                Expanded(
-                  child: _PhotoActionBtn(
-                    icon: Icons.photo_library_rounded,
-                    label: '갤러리에서 선택',
-                    onTap: onPickGallery,
-                    primary: true,
+          const SizedBox(height: 24),
+          // 사진 영역 (옵션)
+          Center(
+            child: hasPhoto
+                ? _Polaroid(
+                    userPhotoPath: userPhoto,
+                    sample: book.sampleIllustration,
+                    caption: '${book.date.month}.${book.date.day}',
+                  )
+                : _VintageStamp(
+                    main: '오늘의 탐험 성공',
+                    sub: 'MISSION COMPLETE',
+                    color: _Vintage.stampRed,
                   ),
+          ),
+          const SizedBox(height: 18),
+          // 사진 액션 — 단순한 텍스트 버튼들
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (userPhoto == null) ...[
+                _PhotoActionBtn(
+                  icon: Icons.photo_library_rounded,
+                  label: '갤러리',
+                  onTap: onPickGallery,
+                  primary: true,
                 ),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: _PhotoActionBtn(
-                    icon: Icons.camera_alt_rounded,
-                    label: '직접 촬영',
-                    onTap: onPickCamera,
-                    primary: false,
-                  ),
+                _PhotoActionBtn(
+                  icon: Icons.camera_alt_rounded,
+                  label: '촬영',
+                  onTap: onPickCamera,
+                  primary: false,
                 ),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: _PhotoActionBtn(
-                    icon: Icons.edit_rounded,
-                    label: '사진 변경',
-                    onTap: onPickGallery,
-                    primary: true,
-                  ),
+              ] else ...[
+                _PhotoActionBtn(
+                  icon: Icons.edit_rounded,
+                  label: '사진 변경',
+                  onTap: onPickGallery,
+                  primary: true,
                 ),
                 const SizedBox(width: 10),
                 _PhotoActionBtn(
@@ -1158,27 +1660,29 @@ class _PagePhoto extends StatelessWidget {
                   primary: false,
                 ),
               ],
-            ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
+// ─── 폴라로이드 (사진 있을 때 레이어) ─────────────────────
 class _Polaroid extends StatelessWidget {
-  final String? photoPath;
-  final String fallbackEmoji;
+  final String? userPhotoPath;
+  final _SampleIllustration? sample;
   final String caption;
   const _Polaroid({
-    required this.photoPath,
-    required this.fallbackEmoji,
+    required this.userPhotoPath,
+    required this.sample,
     required this.caption,
   });
 
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: -0.035, // 약 -2도 비스듬히
+      angle: -0.045,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
         decoration: BoxDecoration(
@@ -1190,47 +1694,32 @@ class _Polaroid extends StatelessWidget {
               blurRadius: 14,
               offset: const Offset(4, 8),
             ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
-            ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 사진 영역
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: photoPath == null
-                    ? Container(
-                        color: _Vintage.paper,
-                        alignment: Alignment.center,
-                        child: Text(
-                          fallbackEmoji,
-                          style: const TextStyle(fontSize: 72),
-                        ),
-                      )
-                    : SizedBox.expand(
-                        child: _NetworkOrFileImage(path: photoPath!),
-                      ),
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: userPhotoPath != null
+                    ? _NetworkOrFileImage(path: userPhotoPath!)
+                    : _IllustrationFill(sample: sample!),
               ),
             ),
             const SizedBox(height: 14),
-            // 캡션 (손글씨 느낌)
             SizedBox(
               height: 32,
               child: Center(
                 child: Text(
                   caption,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                  style: _serif(
+                    size: 14,
+                    weight: FontWeight.w700,
                     color: _Vintage.inkMid,
-                    fontStyle: FontStyle.italic,
+                    style: FontStyle.italic,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -1243,35 +1732,125 @@ class _Polaroid extends StatelessWidget {
   }
 }
 
-/// 웹/모바일 분기. 웹은 blob URL → Image.network, 모바일은 Image.file.
+class _IllustrationFill extends StatelessWidget {
+  final _SampleIllustration sample;
+  const _IllustrationFill({required this.sample});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: sample.gradient,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        sample.emoji,
+        style: const TextStyle(fontSize: 80),
+      ),
+    );
+  }
+}
+
 class _NetworkOrFileImage extends StatelessWidget {
   final String path;
   const _NetworkOrFileImage({required this.path});
 
-  @override
-  Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return Image.network(
-        path,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _broken(),
-      );
-    }
-    return Image.file(
-      io.File(path),
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _broken(),
-    );
-  }
-
   Widget _broken() => Container(
-        color: _Vintage.paper,
+        color: _Vintage.parchment,
         alignment: Alignment.center,
         child: const Icon(Icons.broken_image_rounded,
             color: _Vintage.inkMid, size: 32),
       );
+
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Image.network(path,
+          fit: BoxFit.cover, errorBuilder: (_, __, ___) => _broken());
+    }
+    return Image.file(io.File(path),
+        fit: BoxFit.cover, errorBuilder: (_, __, ___) => _broken());
+  }
 }
 
+// ─── 빈티지 도장 (사진 없을 때) ──────────────────────────
+class _VintageStamp extends StatelessWidget {
+  final String main;
+  final String sub;
+  final Color color;
+  const _VintageStamp(
+      {required this.main, required this.sub, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: -0.09,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+        decoration: BoxDecoration(
+          border: Border.all(color: color, width: 3),
+          borderRadius: BorderRadius.circular(10),
+          // 도장 잉크 번짐 느낌 — 안쪽 라인
+          gradient: RadialGradient(
+            colors: [color.withOpacity(0.05), color.withOpacity(0.0)],
+            radius: 1.0,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                border: Border.all(color: color.withOpacity(0.6), width: 1),
+              ),
+              child: Text(
+                sub,
+                style: _serif(
+                  size: 9,
+                  weight: FontWeight.w900,
+                  color: color.withOpacity(0.85),
+                  letterSpacing: 3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              main,
+              style: _serif(
+                size: 22,
+                weight: FontWeight.w900,
+                color: color,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: 80, height: 1,
+              color: color.withOpacity(0.6),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'RETRACE · SEOULLAND',
+              style: _serif(
+                size: 8,
+                weight: FontWeight.w900,
+                color: color.withOpacity(0.7),
+                letterSpacing: 2.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 사진 액션 버튼 ──────────────────────────────────────
 class _PhotoActionBtn extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1287,288 +1866,31 @@ class _PhotoActionBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: 40,
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, size: 16),
+        icon: Icon(icon, size: 14),
         label: Text(
           label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+          style: _serif(
+              size: 12,
+              weight: FontWeight.w800,
+              color: primary ? _Vintage.parchmentLight : _Vintage.inkDark),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary ? _Vintage.leather : _Vintage.paper,
-          foregroundColor: primary ? _Vintage.creamBg : _Vintage.inkDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor:
+              primary ? _Vintage.leather : _Vintage.parchmentLight,
+          foregroundColor:
+              primary ? _Vintage.parchmentLight : _Vintage.inkDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
           side: BorderSide(
-            color: primary ? Colors.transparent : _Vintage.leather.withOpacity(0.3),
+            color: primary
+                ? Colors.transparent
+                : _Vintage.leather.withOpacity(0.3),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
         ),
-      ),
-    );
-  }
-}
-
-// ─── 페이지 2: 스토리 + 기록 시간 ────────────────────────
-class _PageStory extends StatelessWidget {
-  final _DiaryBook book;
-  final _SeasonConfig config;
-  const _PageStory({required this.book, required this.config});
-
-  String _formatDateTime(DateTime d) {
-    final hh = d.hour.toString().padLeft(2, '0');
-    final mm = d.minute.toString().padLeft(2, '0');
-    return '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')} · $hh:$mm';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: _Vintage.paperLight,
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.edit_note_rounded, size: 18, color: config.titleColor),
-              const SizedBox(width: 6),
-              Text(
-                '그날의 이야기',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: config.titleColor,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _Vintage.paper,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  _formatDateTime(book.date),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: _Vintage.inkMid,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text(
-            book.title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: _Vintage.inkDark,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 14),
-          // 종이 줄 라인 효과
-          Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _Vintage.paper.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border(
-                    left: BorderSide(color: _Vintage.fadedRed, width: 2),
-                  ),
-                ),
-                child: Text(
-                  book.story,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: _Vintage.inkDark,
-                    height: 1.8,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 페이지 3: 어트랙션 + 위치 ───────────────────────────
-class _PageAttraction extends StatelessWidget {
-  final _DiaryBook book;
-  final _SeasonConfig config;
-  const _PageAttraction({required this.book, required this.config});
-
-  List<Attraction> get _attractions {
-    final byId = {for (final a in kAttractions) a.id: a};
-    return book.attractionIds
-        .map((id) => byId[id])
-        .whereType<Attraction>()
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final attrs = _attractions;
-    return Container(
-      color: _Vintage.paperLight,
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.place_rounded, size: 18, color: config.titleColor),
-              const SizedBox(width: 6),
-              Text(
-                '그날 방문한 곳',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: config.titleColor,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${attrs.length} 곳',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: _Vintage.inkMid,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: attrs.isEmpty
-                ? const Center(
-                    child: Text(
-                      '기록된 어트랙션이 없어요',
-                      style: TextStyle(color: _Vintage.inkMid, fontSize: 12),
-                    ),
-                  )
-                : ListView.separated(
-                    itemCount: attrs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => _AttractionCard(
-                      attraction: attrs[i],
-                      accent: config.titleColor,
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AttractionCard extends StatelessWidget {
-  final Attraction attraction;
-  final Color accent;
-  const _AttractionCard({required this.attraction, required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                alignment: Alignment.center,
-                child: Text(attraction.icon, style: const TextStyle(fontSize: 22)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      attraction.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: _Vintage.inkDark,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${attraction.category} · ${attraction.zone}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: _Vintage.inkMid,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: _Vintage.paper.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.my_location_rounded,
-                    size: 12, color: _Vintage.inkMid),
-                const SizedBox(width: 6),
-                Text(
-                  '${attraction.lat.toStringAsFixed(4)}, ${attraction.lng.toStringAsFixed(4)}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _Vintage.inkMid,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (attraction.description.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              attraction.description,
-              style: const TextStyle(
-                fontSize: 12,
-                color: _Vintage.inkMid,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -1580,19 +1902,19 @@ class _PageIndicator extends StatelessWidget {
   final int total;
   const _PageIndicator({required this.current, required this.total});
 
-  static const _kLabels = ['사진', '이야기', '장소'];
+  static const _kLabels = ['표지', '탐험 일지', '추억의 장'];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _Vintage.paper,
+      color: _Vintage.parchmentDark,
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(total, (i) {
           final active = i == current;
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1601,16 +1923,18 @@ class _PageIndicator extends StatelessWidget {
                   width: active ? 20 : 8,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: active ? _Vintage.leather : _Vintage.leather.withOpacity(0.25),
+                    color: active
+                        ? _Vintage.leather
+                        : _Vintage.leather.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _kLabels[i],
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
+                  style: _serif(
+                    size: 9,
+                    weight: FontWeight.w800,
                     color: active ? _Vintage.leather : _Vintage.inkMid,
                   ),
                 ),
@@ -1631,53 +1955,52 @@ class _DiaryStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final withPhotos = books.where((b) => _PhotoStore.photoOf(b.id) != null).length;
+    final withPhoto = books.where((b) {
+      return _PhotoStore.photoOf(b.id) != null ||
+          b.sampleIllustration != null;
+    }).length;
     final firstDate = books.isEmpty ? null : books.first.date;
     final lastDate = books.isEmpty ? null : books.last.date;
 
-    String fmt(DateTime? d) {
-      if (d == null) return '-';
-      return '${d.month}.${d.day}';
-    }
+    String fmt(DateTime? d) =>
+        d == null ? '-' : '${d.month}.${d.day}';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _Vintage.paperLight,
+        color: _Vintage.parchmentLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
       ),
       child: Row(
         children: [
           Expanded(
-            child: _StatItem(
-              label: '수집한 추억',
-              value: '${books.length}',
-              unit: '권',
-              color: config.titleColor,
-            ),
-          ),
+              child: _StatItem(
+                  label: '수집한 추억',
+                  value: '${books.length}',
+                  unit: '권',
+                  color: config.titleColor)),
           Container(
-              width: 1, height: 36, color: _Vintage.leather.withOpacity(0.15)),
+              width: 1,
+              height: 36,
+              color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
-            child: _StatItem(
-              label: '사진 첨부',
-              value: '$withPhotos',
-              unit: '권',
-              color: config.titleColor,
-            ),
-          ),
+              child: _StatItem(
+                  label: '사진 첨부',
+                  value: '$withPhoto',
+                  unit: '권',
+                  color: config.titleColor)),
           Container(
-              width: 1, height: 36, color: _Vintage.leather.withOpacity(0.15)),
+              width: 1,
+              height: 36,
+              color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
-            child: _StatItem(
-              label: '기록 기간',
-              value: '${fmt(firstDate)}~${fmt(lastDate)}',
-              unit: '',
-              color: config.titleColor,
-              compact: true,
-            ),
-          ),
+              child: _StatItem(
+                  label: '기록 기간',
+                  value: '${fmt(firstDate)}~${fmt(lastDate)}',
+                  unit: '',
+                  color: config.titleColor,
+                  compact: true)),
         ],
       ),
     );
@@ -1705,40 +2028,33 @@ class _StatItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: compact ? 13 : 20,
-                fontWeight: FontWeight.w900,
-                color: color,
-                letterSpacing: -0.2,
-              ),
-            ),
+            Text(value,
+                style: _serif(
+                  size: compact ? 13 : 20,
+                  weight: FontWeight.w900,
+                  color: color,
+                )),
             if (unit.isNotEmpty) ...[
               const SizedBox(width: 2),
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  unit,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: _Vintage.inkMid,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: Text(unit,
+                    style: _serif(
+                      size: 10,
+                      weight: FontWeight.w700,
+                      color: _Vintage.inkMid,
+                    )),
               ),
             ],
           ],
         ),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            color: _Vintage.inkMid,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        Text(label,
+            style: _serif(
+              size: 10,
+              weight: FontWeight.w700,
+              color: _Vintage.inkMid,
+            )),
       ],
     );
   }
@@ -1751,25 +2067,23 @@ class _PaperHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _Vintage.paper.withOpacity(0.6),
+        color: _Vintage.parchment.withOpacity(0.6),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: _Vintage.leather.withOpacity(0.2),
-            style: BorderStyle.solid),
+        border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
       ),
       child: Row(
-        children: const [
-          Icon(Icons.tips_and_updates_rounded,
+        children: [
+          const Icon(Icons.tips_and_updates_rounded,
               color: _Vintage.gold, size: 18),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '책을 터치해 그날의 일기를 펼쳐보세요. 사진을 추가하면 책등에 금빛 점이 빛나요 ✨',
-              style: TextStyle(
-                fontSize: 11,
+              '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요. 사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.',
+              style: _serif(
+                size: 11,
                 color: _Vintage.inkMid,
-                fontWeight: FontWeight.w600,
                 height: 1.5,
+                weight: FontWeight.w600,
               ),
             ),
           ),
