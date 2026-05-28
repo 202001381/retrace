@@ -38,30 +38,30 @@ class SeoulLandApp extends StatelessWidget {
         fontFamily: 'Pretendard',
         useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: AppColors.bgBase,
-        canvasColor: AppColors.bgBase,
-        dialogBackgroundColor: AppColors.bgSurface,
+        scaffoldBackgroundColor: AppColors.cream,
+        canvasColor: AppColors.cream,
+        dialogBackgroundColor: AppColors.cardWhite,
         colorScheme: const ColorScheme.light(
-          primary: AppColors.brandCoral,
+          primary: AppColors.sunsetCoral,
           onPrimary: AppColors.textOnDark,
-          secondary: AppColors.brandNavy,
+          secondary: AppColors.lunaNavy,
           onSecondary: AppColors.textOnDark,
-          tertiary: AppColors.pricing,
+          tertiary: AppColors.moonlightGold,
           onTertiary: AppColors.textPrimary,
-          surface: AppColors.bgSurface,
+          surface: AppColors.cardWhite,
           onSurface: AppColors.textPrimary,
-          surfaceContainerHighest: AppColors.bgSunken,
-          error: AppColors.statusBusy,
+          surfaceContainerHighest: AppColors.cardElevated,
+          error: AppColors.danger,
           onError: AppColors.textOnDark,
           outline: AppColors.textSecondary,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.bgSurface,
+          backgroundColor: AppColors.cardWhite,
           foregroundColor: AppColors.textPrimary,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
-        dividerColor: AppColors.bgSunken,
+        dividerColor: AppColors.border,
         textTheme: const TextTheme().apply(
           bodyColor: AppColors.textPrimary,
           displayColor: AppColors.textPrimary,
@@ -112,9 +112,9 @@ class _AppGateState extends State<_AppGate> {
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Scaffold(
-            backgroundColor: AppColors.bgBase,
+            backgroundColor: AppColors.cream,
             body: Center(
-                child: CircularProgressIndicator(color: AppColors.brandCoral)),
+                child: CircularProgressIndicator(color: AppColors.sunsetCoral)),
           );
         }
         if (snap.data == true) {
@@ -204,7 +204,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
+        color: AppColors.cardWhite,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -232,12 +232,13 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isActive = _currentIndex == index;
-    // 마이 루나 = 메인 기능. 다른 탭과 다른 브랜드 컬러(navy)로 항시 강조.
+    // 마이 루나 = 메인 기능. 다른 탭과 다른 브랜드 컬러(lunaNavy)로 항시 강조.
     final isMyLuna = index == 2;
-    const myLunaColor = Color(0xFF1E3158);
     final Color color = isMyLuna
-        ? (isActive ? myLunaColor : myLunaColor.withValues(alpha: 0.7))
-        : (isActive ? AppColors.brandCoral : AppColors.textSecondary);
+        ? (isActive
+            ? AppColors.lunaNavy
+            : AppColors.lunaNavy.withValues(alpha: 0.7))
+        : (isActive ? AppColors.sunsetCoral : AppColors.textSecondary);
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {

@@ -20,7 +20,7 @@ class DiscountCountdown extends StatefulWidget {
     required this.validUntil,
     this.onExpired,
     this.defaultColor = AppColors.textSecondary,
-    this.urgentColor = AppColors.brandCoral,
+    this.urgentColor = AppColors.sunsetCoral,
     this.fontSize = 12,
     this.fontWeight = FontWeight.w700,
     this.showIcon = true,

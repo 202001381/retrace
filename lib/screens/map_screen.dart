@@ -239,13 +239,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Color _categoryColor(String c) {
     switch (c) {
       case '어트랙션':
-        return AppColors.brandCoral;
+        return AppColors.sunsetCoral;
       case '음식점':
-        return const Color(0xFFFF6B00);
+        return AppColors.markerFood;
       case '카페':
-        return const Color(0xFF6F4E37);
+        return AppColors.markerCafe;
       case '포토스팟':
-        return const Color(0xFF6B21A8);
+        return AppColors.markerPhoto;
       default:
         return AppColors.textSecondary;
     }
@@ -337,8 +337,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             onPressed: () =>
                 setState(() => _filter = PlaceFilterState.empty),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.brandNavy,
-              side: const BorderSide(color: AppColors.bgSunken),
+              foregroundColor: AppColors.lunaNavy,
+              side: const BorderSide(color: AppColors.border),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               padding:
@@ -431,7 +431,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           color: _getMarkerColor(a.category),
           shape: BoxShape.circle,
           border: Border.all(
-            color: a.hasEasterEgg ? AppColors.game : Colors.white,
+            color: a.hasEasterEgg ? AppColors.discoveryPurple : Colors.white,
             width: a.hasEasterEgg ? 3 : 2,
           ),
           boxShadow: [
@@ -466,7 +466,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: AppColors.brandNavy,
+                            color: AppColors.lunaNavy,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -474,7 +474,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           child: Text(
                             '$order',
                             style: const TextStyle(
-                              color: AppColors.bgSurface,
+                              color: AppColors.cardWhite,
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
                               height: 1,
@@ -497,12 +497,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         child: Center(
           child: Container(
             width: 18, height: 18,
-            decoration: BoxDecoration(color: AppColors.route.withValues(alpha: 0.25), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.info.withValues(alpha: 0.25), shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Container(
               width: 12, height: 12,
               decoration: BoxDecoration(
-                color: AppColors.route,
+                color: AppColors.info,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
@@ -517,9 +517,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         width: 32, height: 32,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.bgSurface,
+            color: AppColors.cardWhite,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.brandNavy, width: 2),
+            border: Border.all(color: AppColors.lunaNavy, width: 2),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 1)),
             ],
@@ -546,7 +546,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       Polyline(
         points: points,
         strokeWidth: 3.0,
-        color: AppColors.brandCoral,
+        color: AppColors.sunsetCoral,
         pattern: StrokePattern.dashed(segments: const [10, 5]),
       ),
     ];
@@ -554,10 +554,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   Color _getMarkerColor(String category) {
     switch (category) {
-      case '어트랙션': return AppColors.brandCoral;
-      case '음식점':   return const Color(0xFFFF6B00);
-      case '카페':     return const Color(0xFF6F4E37);
-      case '포토스팟': return const Color(0xFF6B21A8);
+      case '어트랙션': return AppColors.sunsetCoral;
+      case '음식점':   return AppColors.markerFood;
+      case '카페':     return AppColors.markerCafe;
+      case '포토스팟': return AppColors.markerPhoto;
       default:         return AppColors.textSecondary;
     }
   }
@@ -567,7 +567,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.bgBase,
+      color: AppColors.cream,
       child: Stack(
         children: [
           Positioned.fill(
@@ -609,7 +609,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   PolylineLayer(polylines: [
                     Polyline(
                       points: [_currentOrigin, _navTarget!.position],
-                      color: AppColors.brandCoral,
+                      color: AppColors.sunsetCoral,
                       strokeWidth: 4.5,
                     ),
                   ]),
@@ -632,11 +632,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_showRoute)
-                    _StatusBadge(color: AppColors.brandCoral, text: '마이 루나 동선'),
+                    _StatusBadge(color: AppColors.sunsetCoral, text: '마이 루나 동선'),
                   if (_showRoute && _navTarget != null) const SizedBox(height: 8),
                   if (_navTarget != null)
                     _StatusBadge(
-                      color: AppColors.brandCoral,
+                      color: AppColors.sunsetCoral,
                       text: '➜ ${_navTarget!.name} (도보 ${_navWalkMin ?? 0}분)',
                       onClose: () => setState(() {
                         _navTarget = null;
@@ -658,7 +658,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
-                  color: AppColors.bgSurface,
+                  color: AppColors.cardWhite,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                   boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black12)],
                 ),
@@ -708,7 +708,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.brandNavy,
+                                            color: AppColors.lunaNavy,
                                           ),
                                         ),
                                       ),
@@ -717,7 +717,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                           padding: EdgeInsets.only(right: 6),
                                           child: SizedBox(
                                             width: 12, height: 12,
-                                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.brandNavy),
+                                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.lunaNavy),
                                           ),
                                         ),
                                       GestureDetector(
@@ -725,7 +725,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: AppColors.brandCoral,
+                                            color: AppColors.sunsetCoral,
                                             borderRadius: BorderRadius.circular(99),
                                           ),
                                           child: const Text('다시 추천',
@@ -765,11 +765,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 _PulseDot(),
                                 const SizedBox(width: 4),
                                 const Text('실시간 연동 중',
-                                    style: TextStyle(fontSize: 11, color: AppColors.brandCoral, fontWeight: FontWeight.w600)),
+                                    style: TextStyle(fontSize: 11, color: AppColors.sunsetCoral, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
-                          const Divider(height: 1, color: AppColors.bgSunken),
+                          const Divider(height: 1, color: AppColors.border),
                           // 카테고리 칩 — 둥근 pill, 단일 선택. "전체" 포함 5개.
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -793,9 +793,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: active ? AppColors.brandNavy : Colors.white,
+                                        color: active ? AppColors.lunaNavy : Colors.white,
                                         borderRadius: BorderRadius.circular(99),
-                                        border: Border.all(color: active ? AppColors.brandNavy : AppColors.bgSunken),
+                                        border: Border.all(color: active ? AppColors.lunaNavy : AppColors.border),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(label,
@@ -811,21 +811,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           ),
                           // 상태 필터 — 카테고리 칩과 다른 인터랙션 문법(스위치)으로 분리.
                           const SizedBox(height: 12),
-                          const Divider(height: 1, color: AppColors.bgSunken),
+                          const Divider(height: 1, color: AppColors.border),
                           _FilterToggleRow(
                             label: '운영중만 보기',
                             value: _filter.onlyOperating,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyOperating: v)),
                           ),
-                          const Divider(height: 1, color: AppColors.bgSunken, indent: 20, endIndent: 20),
+                          const Divider(height: 1, color: AppColors.border, indent: 20, endIndent: 20),
                           _FilterToggleRow(
                             label: '✨ 내 이스터에그',
                             value: _filter.onlyMyEasterEggs,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyMyEasterEggs: v)),
                           ),
-                          const Divider(height: 1, color: AppColors.bgSunken),
+                          const Divider(height: 1, color: AppColors.border),
                           const SizedBox(height: 8),
                           // 카드 리스트 — 이중 빈 상태 분기.
                           if (_visibleAttractions.isEmpty)
@@ -876,7 +876,7 @@ class _TopBar extends StatelessWidget {
     return Positioned(
       top: 0, left: 0, right: 0,
       child: Material(
-        color: AppColors.bgSurface,
+        color: AppColors.cardWhite,
         elevation: 2,
         child: SafeArea(
           bottom: false,
@@ -888,7 +888,7 @@ class _TopBar extends StatelessWidget {
                   child: Container(
                     height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(color: AppColors.bgBase, borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: AppColors.cream, borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
                         const Icon(Icons.search, size: 16, color: AppColors.textSecondary),
@@ -922,14 +922,14 @@ class _TopBar extends StatelessWidget {
                 _IconLabelButton(
                   label: '🗺️ 동선',
                   active: routeOn,
-                  activeColor: AppColors.brandNavy,
+                  activeColor: AppColors.lunaNavy,
                   onTap: onToggleRoute,
                 ),
                 const SizedBox(width: 6),
                 _IconLabelButton(
                   label: '📍 GPS',
                   active: false,
-                  activeColor: AppColors.statusClear,
+                  activeColor: AppColors.success,
                   loading: gpsLoading,
                   onTap: onGps,
                 ),
@@ -966,13 +966,13 @@ class _IconLabelButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: active ? activeColor : Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: active ? activeColor : AppColors.bgSunken),
+          border: Border.all(color: active ? activeColor : AppColors.border),
         ),
         alignment: Alignment.center,
         child: loading
             ? const SizedBox(
                 width: 14, height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.brandNavy),
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.lunaNavy),
               )
             : Text(label,
                 style: TextStyle(
@@ -1029,7 +1029,7 @@ class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixi
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: Tween(begin: 0.4, end: 1.0).animate(_c),
-      child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.brandCoral, shape: BoxShape.circle)),
+      child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.sunsetCoral, shape: BoxShape.circle)),
     );
   }
 }
@@ -1063,7 +1063,7 @@ class _FilterToggleRow extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.brandNavy,
+            activeColor: AppColors.lunaNavy,
           ),
         ],
       ),
@@ -1092,10 +1092,10 @@ class _AttractionCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.bgSurface,
+            color: AppColors.cardWhite,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: attraction.hasEasterEgg ? AppColors.game : AppColors.bgSunken,
+              color: attraction.hasEasterEgg ? AppColors.discoveryPurple : AppColors.border,
             ),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
           ),

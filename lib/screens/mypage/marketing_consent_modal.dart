@@ -13,11 +13,11 @@ class MarketingConsentModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgSurface,
+      backgroundColor: AppColors.cardWhite,
       appBar: AppBar(
         title: const Text('마케팅 정보 수신 동의',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
         foregroundColor: AppColors.textPrimary,
         leading: IconButton(
@@ -75,7 +75,7 @@ class MarketingConsentModal extends StatelessWidget {
                 ),
               ),
             ),
-            const Divider(height: 1, color: AppColors.bgSunken),
+            const Divider(height: 1, color: AppColors.border),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
               child: Row(
@@ -85,7 +85,7 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.bgSunken),
+                        side: const BorderSide(color: AppColors.border),
                         foregroundColor: AppColors.textSecondary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -101,7 +101,7 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppColors.brandCoral,
+                        backgroundColor: AppColors.sunsetCoral,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),

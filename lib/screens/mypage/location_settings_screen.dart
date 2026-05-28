@@ -92,11 +92,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgBase,
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text('위치 정보',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
         foregroundColor: AppColors.textPrimary,
       ),
@@ -108,7 +108,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.bgSurface,
+                    color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
@@ -150,11 +150,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                             value: _state.locationTrackingEnabled &&
                                 _isPermGranted,
                             onChanged: _onToggle,
-                            activeColor: AppColors.brandNavy,
+                            activeColor: AppColors.lunaNavy,
                           ),
                         ],
                       ),
-                      const Divider(height: 24, color: AppColors.bgSunken),
+                      const Divider(height: 24, color: AppColors.border),
                       _PermStatusRow(
                         granted: _isPermGranted,
                         permanentlyDenied: _isPermPermDenied,
@@ -174,7 +174,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.bgSurface,
+                      color: AppColors.cardWhite,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -214,13 +214,13 @@ class _PermStatusRow extends StatelessWidget {
       return Row(
         children: const [
           Icon(Icons.check_circle_rounded,
-              size: 18, color: AppColors.statusClear),
+              size: 18, color: AppColors.success),
           SizedBox(width: 6),
           Text('OS 권한 허용됨',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.statusClear,
+                color: AppColors.success,
               )),
         ],
       );
@@ -231,14 +231,14 @@ class _PermStatusRow extends StatelessWidget {
         Row(
           children: const [
             Icon(Icons.warning_amber_rounded,
-                size: 18, color: AppColors.statusBusy),
+                size: 18, color: AppColors.danger),
             SizedBox(width: 6),
             Expanded(
               child: Text('OS 권한이 꺼져 있어요',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.statusBusy,
+                    color: AppColors.danger,
                   )),
             ),
           ],
@@ -252,7 +252,7 @@ class _PermStatusRow extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              side: const BorderSide(color: AppColors.bgSunken),
+              side: const BorderSide(color: AppColors.border),
               foregroundColor: AppColors.textPrimary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),

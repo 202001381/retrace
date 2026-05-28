@@ -63,11 +63,11 @@ class _MypageScreenState extends State<MypageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgBase,
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text('마이페이지',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
         foregroundColor: AppColors.textPrimary,
       ),
@@ -76,7 +76,7 @@ class _MypageScreenState extends State<MypageScreen> {
         children: [
           // 프로필 row
           Container(
-            color: AppColors.bgSurface,
+            color: AppColors.cardWhite,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +87,7 @@ class _MypageScreenState extends State<MypageScreen> {
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        color: AppColors.bgSunken,
+                        color: AppColors.border,
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -129,8 +129,8 @@ class _MypageScreenState extends State<MypageScreen> {
                   icon: const Icon(Icons.refresh_rounded, size: 16),
                   label: const Text('온보딩 다시하기'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.brandNavy,
-                    side: const BorderSide(color: AppColors.bgSunken),
+                    foregroundColor: AppColors.lunaNavy,
+                    side: const BorderSide(color: AppColors.border),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 8),
                     shape: RoundedRectangleBorder(
@@ -169,7 +169,7 @@ class _MypageScreenState extends State<MypageScreen> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.game,
+                  color: AppColors.discoveryPurple,
                 ),
               ),
               onTap: () => _snack('Archive 탭에서 확인하세요'),
@@ -196,7 +196,7 @@ class _MypageScreenState extends State<MypageScreen> {
               onPressed: () => _snack('건의·피드백 수집 채널 (준비 중)'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.textSecondary,
-                side: const BorderSide(color: AppColors.bgSunken),
+                side: const BorderSide(color: AppColors.border),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -219,7 +219,7 @@ class _MenuGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.bgSurface,
+      color: AppColors.cardWhite,
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
@@ -227,7 +227,7 @@ class _MenuGroup extends StatelessWidget {
             if (i != items.length - 1)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Divider(height: 1, color: AppColors.bgSunken),
+                child: Divider(height: 1, color: AppColors.border),
               ),
           ],
         ],
@@ -287,9 +287,9 @@ class _PlaceholderTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.bgBase,
+        color: AppColors.cream,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.bgSunken),
+        border: Border.all(color: AppColors.border),
       ),
       child: const Text('준비 중',
           style: TextStyle(

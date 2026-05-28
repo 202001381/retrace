@@ -2,27 +2,53 @@
 
 import 'package:flutter/material.dart';
 
+/// RE-TRACE 컬러 팔레트 — "달밤의 놀이공원".
+/// Luna 모티프(달·밤하늘) + Re-trace 모티프(기억·복원).
+/// Deep Navy + Sunset Coral + Cream 의 빈티지 놀이공원 포스터 무드.
+///
+/// 비율 원칙
+/// - 60% Cream surfaces
+/// - 30% Luna Navy (브랜드·헤딩·텍스트)
+/// - 10% Sunset Coral (CTA·강조)
+///
+/// 규칙: 같은 hex 라도 *사용 의도*가 다르면 다른 토큰. hex 직접 사용 금지.
+/// alpha 변형은 별도 토큰 X — `.withValues(alpha: ...)` 로 wrap.
 class AppColors {
-  // Backgrounds
-  static const Color bgBase    = Color(0xFFFAFAF7);
-  static const Color bgSurface = Color(0xFFFFFFFF);
-  static const Color bgSunken  = Color(0xFFF0EDE8);
+  AppColors._();
 
   // Brand
-  static const Color brandCoral = Color(0xFFD94F2A); // CTA, 주 강조
-  static const Color brandNavy  = Color(0xFF1E3A5F); // 헤더, 바텀 네비
+  static const lunaNavy      = Color(0xFF1B2A4E);
+  static const lunaNavyLight = Color(0xFF2D3F6A);
+  static const lunaNavyDeep  = Color(0xFF0E1A36);
 
-  // Feature
-  static const Color pricing = Color(0xFFF5A623); // 루나 프라이싱
-  static const Color route   = Color(0xFF0EA5A0); // GPS, 동선
-  static const Color game    = Color(0xFFF0B429); // 이스터에그 전용
+  // Accent
+  static const sunsetCoral     = Color(0xFFFF6B4A);
+  static const moonlightGold   = Color(0xFFF4B942);
+  static const discoveryPurple = Color(0xFF7B5FC4);
+  static const memoryPink      = Color(0xFFFFB4B4);
 
   // Status
-  static const Color statusClear = Color(0xFF22C55E);
-  static const Color statusBusy  = Color(0xFFEF4444);
+  static const success = Color(0xFF3DAE7B);
+  static const warning = Color(0xFFE89B2C);
+  static const danger  = Color(0xFFD63A3A);
+  static const info    = Color(0xFF4A7BC8);
+
+  // Surface
+  static const cream        = Color(0xFFFAF6EE);
+  static const cardWhite    = Color(0xFFFFFFFF);
+  static const cardElevated = Color(0xFFF2EBDA);
+  static const border       = Color(0xFFE8E2D2);
 
   // Text
-  static const Color textPrimary   = Color(0xFF1C1917);
-  static const Color textSecondary = Color(0xFF78716C);
-  static const Color textOnDark    = Color(0xFFFAFAF7);
+  static const textPrimary   = lunaNavy;
+  static const textSecondary = Color(0xFF5A6478);
+  static const textTertiary  = Color(0xFF9AA1B0);
+  static const textOnDark    = cream;
+
+  // Map markers
+  static const markerAttraction = sunsetCoral;
+  static const markerEasterEgg  = discoveryPurple;
+  static const markerFood       = moonlightGold;
+  static const markerCafe       = Color(0xFF8B5E3C);
+  static const markerPhoto      = memoryPink;
 }

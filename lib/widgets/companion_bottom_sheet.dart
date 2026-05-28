@@ -46,7 +46,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.bgSurface,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).viewInsets.bottom + 28),
@@ -71,7 +71,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 32, height: 32,
-                  decoration: const BoxDecoration(color: AppColors.bgSunken, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(color: AppColors.border, shape: BoxShape.circle),
                   child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                 ),
               ),
@@ -89,7 +89,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                           label: c.$1,
                           emoji: c.$2,
                           selected: _companion == c.$1,
-                          activeColor: AppColors.brandNavy,
+                          activeColor: AppColors.lunaNavy,
                           onTap: () => setState(() => _companion = c.$1),
                         ),
                       ),
@@ -111,7 +111,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                       label: s.$1,
                       emoji: s.$2,
                       selected: _style == s.$1,
-                      activeColor: const Color(0xFFE6A817),
+                      activeColor: AppColors.moonlightGold,
                       compact: false,
                       inline: true,
                       onTap: () => setState(() => _style = s.$1),
@@ -128,7 +128,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brandCoral,
+                backgroundColor: AppColors.sunsetCoral,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -164,7 +164,7 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = selected ? activeColor : Colors.white;
     final textColor = selected ? Colors.white : AppColors.textPrimary;
-    final borderColor = selected ? activeColor : AppColors.bgSunken;
+    final borderColor = selected ? activeColor : AppColors.border;
 
     return GestureDetector(
       onTap: onTap,

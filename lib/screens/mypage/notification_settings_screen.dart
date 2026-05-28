@@ -82,11 +82,11 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     final s = _state;
     return Scaffold(
-      backgroundColor: AppColors.bgBase,
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text('알림 설정',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgSurface,
+        backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
         foregroundColor: AppColors.textPrimary,
       ),
@@ -120,7 +120,7 @@ class _NotificationSettingsScreenState
                       _apply(s.copyWith(lowCrowdAlertEnabled: v)),
                 ),
                 if (s.lowCrowdAlertEnabled) ...[
-                  const Divider(height: 24, color: AppColors.bgSunken),
+                  const Divider(height: 24, color: AppColors.border),
                   const Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 8),
                     child: Text('발송 채널 (중복 선택)',
@@ -225,7 +225,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -303,7 +303,7 @@ class _ToggleRow extends StatelessWidget {
         Switch.adaptive(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.brandNavy,
+          activeColor: AppColors.lunaNavy,
         ),
       ],
     );
@@ -372,12 +372,12 @@ class _LinkRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.brandNavy,
+                  color: AppColors.lunaNavy,
                   decoration: TextDecoration.underline,
                 )),
             const SizedBox(width: 2),
             const Icon(Icons.chevron_right_rounded,
-                size: 14, color: AppColors.brandNavy),
+                size: 14, color: AppColors.lunaNavy),
           ],
         ),
       ),
