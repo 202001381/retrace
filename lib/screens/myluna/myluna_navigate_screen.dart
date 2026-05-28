@@ -86,12 +86,12 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-          backgroundColor: AppColors.lunaNavy,
+          backgroundColor: AppColors.ink900,
           duration: const Duration(seconds: 5),
           content: Text(
             '🎯 거의 다 왔어요! ${widget.target.name}',
             style: const TextStyle(
-              color: AppColors.cardWhite,
+              color: AppColors.bgCard,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
@@ -180,7 +180,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                 PolylineLayer(polylines: [
                   Polyline(
                     points: [_origin, widget.target.position],
-                    color: AppColors.sunsetCoral,
+                    color: AppColors.red,
                     strokeWidth: 5,
                   ),
                 ]),
@@ -191,7 +191,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                     height: 56,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.sunsetCoral,
+                        color: AppColors.red,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
@@ -213,7 +213,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                       height: 28,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.info,
+                          color: AppColors.blue,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
@@ -315,7 +315,7 @@ class _DistanceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 14, 14),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

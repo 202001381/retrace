@@ -38,30 +38,30 @@ class SeoulLandApp extends StatelessWidget {
         fontFamily: 'Pretendard',
         useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: AppColors.cream,
-        canvasColor: AppColors.cream,
-        dialogBackgroundColor: AppColors.cardWhite,
+        scaffoldBackgroundColor: AppColors.bgPage,
+        canvasColor: AppColors.bgPage,
+        dialogBackgroundColor: AppColors.bgCard,
         colorScheme: const ColorScheme.light(
-          primary: AppColors.sunsetCoral,
+          primary: AppColors.red,
           onPrimary: AppColors.textOnDark,
-          secondary: AppColors.lunaNavy,
+          secondary: AppColors.ink900,
           onSecondary: AppColors.textOnDark,
-          tertiary: AppColors.moonlightGold,
+          tertiary: AppColors.yellow,
           onTertiary: AppColors.textPrimary,
-          surface: AppColors.cardWhite,
+          surface: AppColors.bgCard,
           onSurface: AppColors.textPrimary,
-          surfaceContainerHighest: AppColors.cardElevated,
-          error: AppColors.danger,
+          surfaceContainerHighest: AppColors.bgCardWarm,
+          error: AppColors.red,
           onError: AppColors.textOnDark,
           outline: AppColors.textSecondary,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.cardWhite,
+          backgroundColor: AppColors.bgCard,
           foregroundColor: AppColors.textPrimary,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
-        dividerColor: AppColors.border,
+        dividerColor: AppColors.line,
         textTheme: const TextTheme().apply(
           bodyColor: AppColors.textPrimary,
           displayColor: AppColors.textPrimary,
@@ -112,9 +112,9 @@ class _AppGateState extends State<_AppGate> {
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Scaffold(
-            backgroundColor: AppColors.cream,
+            backgroundColor: AppColors.bgPage,
             body: Center(
-                child: CircularProgressIndicator(color: AppColors.sunsetCoral)),
+                child: CircularProgressIndicator(color: AppColors.red)),
           );
         }
         if (snap.data == true) {
@@ -204,7 +204,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.bgCard,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -236,9 +236,9 @@ class _MainScreenState extends State<MainScreen> {
     final isMyLuna = index == 2;
     final Color color = isMyLuna
         ? (isActive
-            ? AppColors.lunaNavy
-            : AppColors.lunaNavy.withValues(alpha: 0.7))
-        : (isActive ? AppColors.sunsetCoral : AppColors.textSecondary);
+            ? AppColors.ink900
+            : AppColors.ink900.withValues(alpha: 0.7))
+        : (isActive ? AppColors.red : AppColors.textSecondary);
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {

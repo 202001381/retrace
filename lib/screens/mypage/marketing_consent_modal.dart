@@ -13,11 +13,11 @@ class MarketingConsentModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cardWhite,
+      backgroundColor: AppColors.bgCard,
       appBar: AppBar(
         title: const Text('마케팅 정보 수신 동의',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.cardWhite,
+        backgroundColor: AppColors.bgCard,
         elevation: 0.5,
         centerTitle: false,
         foregroundColor: AppColors.textPrimary,
@@ -76,7 +76,7 @@ class MarketingConsentModal extends StatelessWidget {
                 ),
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
+            const Divider(height: 1, color: AppColors.line),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
               child: Row(
@@ -86,7 +86,7 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.border),
+                        side: const BorderSide(color: AppColors.line),
                         foregroundColor: AppColors.textSecondary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -102,7 +102,7 @@ class MarketingConsentModal extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppColors.sunsetCoral,
+                        backgroundColor: AppColors.red,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),

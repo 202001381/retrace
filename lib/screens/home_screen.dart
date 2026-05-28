@@ -230,10 +230,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static (String, Color) _crowdLabel(Attraction a) {
-    if (a.category != '어트랙션') return ('여유', AppColors.success);
-    if (a.waitMinutes <= 10) return ('여유', AppColors.success);
-    if (a.waitMinutes <= 25) return ('보통', AppColors.warning);
-    return ('혼잡', AppColors.sunsetCoral);
+    if (a.category != '어트랙션') return ('여유', AppColors.mint);
+    if (a.waitMinutes <= 10) return ('여유', AppColors.mint);
+    if (a.waitMinutes <= 25) return ('보통', AppColors.yellowDeep);
+    return ('혼잡', AppColors.red);
   }
 
   void _onLogoTap() {
@@ -315,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.cream,
+      color: AppColors.bgPage,
       child: SafeArea(
         bottom: false,
         child: NotificationListener<ScrollNotification>(
@@ -401,11 +401,11 @@ class _Header extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text('RE-TRACE',
-                        style: TextStyle(color: AppColors.sunsetCoral, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                        style: TextStyle(color: AppColors.red, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.sunsetCoral, borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: AppColors.red, borderRadius: BorderRadius.circular(4)),
                       child: const Text('BETA',
                           style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
                     ),
@@ -469,7 +469,7 @@ class _VisitValueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.cardWhite,
+      color: AppColors.bgCard,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -538,7 +538,7 @@ class _VisitDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.bgCard,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
@@ -559,7 +559,7 @@ class _VisitDetailSheet extends StatelessWidget {
             title: '날씨',
             lines: [weatherDetail, weatherRain],
           ),
-          const Divider(height: 28, color: AppColors.border),
+          const Divider(height: 28, color: AppColors.line),
           // 혼잡도
           _SheetSection(
             icon: '🟡',
@@ -567,7 +567,7 @@ class _VisitDetailSheet extends StatelessWidget {
             lines: ['현재 혼잡도: 중간', crowdDetail],
           ),
           if (pricing != null) ...[
-            const Divider(height: 28, color: AppColors.border),
+            const Divider(height: 28, color: AppColors.line),
             // 할인 — PricingState 의 인과 라벨 + 가격 컴포넌트로 일관 표시.
             Row(
               children: [
@@ -593,7 +593,7 @@ class _VisitDetailSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onMoreDiscount,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.lunaNavy,
+                backgroundColor: AppColors.ink900,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -650,7 +650,7 @@ class _LunaPricingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.lunaNavy,
+      color: AppColors.ink900,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -664,7 +664,7 @@ class _LunaPricingCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.moonlightGold,
+                  color: AppColors.yellow,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text('💰 루나 프라이싱',
@@ -681,7 +681,7 @@ class _LunaPricingCard extends StatelessWidget {
               // 정가·할인가 표시 (PriceDisplay compact — 네이비 배경에 pricing 강조).
               PriceDisplay(
                 state: pricing,
-                accentColor: AppColors.moonlightGold,
+                accentColor: AppColors.yellow,
               ),
               const SizedBox(height: 14),
               // 카운트다운 + CTA
@@ -695,12 +695,12 @@ class _LunaPricingCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.sunsetCoral,
+                      color: AppColors.red,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text('루나 티켓 받기 →',
                         style: TextStyle(
-                          color: AppColors.cardWhite,
+                          color: AppColors.bgCard,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         )),
@@ -757,7 +757,7 @@ class _LunaPricingSheet extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.bgCard,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -795,7 +795,7 @@ class _LunaPricingSheet extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: const BoxDecoration(
-                    color: AppColors.border,
+                    color: AppColors.line,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
@@ -809,7 +809,7 @@ class _LunaPricingSheet extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.cream,
+                    color: AppColors.bgPage,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -825,7 +825,7 @@ class _LunaPricingSheet extends StatelessWidget {
                       ),
                       Text(r.$3,
                           style: const TextStyle(
-                            color: AppColors.sunsetCoral,
+                            color: AppColors.red,
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                           )),
@@ -833,7 +833,7 @@ class _LunaPricingSheet extends StatelessWidget {
                   ),
                 ),
               )),
-          const Divider(color: AppColors.border, height: 24),
+          const Divider(color: AppColors.line, height: 24),
           // 정가·할인가 hero 표시.
           PriceDisplay(state: pricing, size: PriceDisplaySize.hero),
           const SizedBox(height: 6),
@@ -855,7 +855,7 @@ class _LunaPricingSheet extends StatelessWidget {
                 onCheckout();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.sunsetCoral,
+                backgroundColor: AppColors.red,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -919,7 +919,7 @@ class _MyLunaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.cardWhite,
+      color: AppColors.bgCard,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         // 카드 전체가 탭 영역 — 마이 루나 화면으로 진입.
@@ -929,7 +929,7 @@ class _MyLunaCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.lunaNavy, width: 1.5),
+            border: Border.all(color: AppColors.ink900, width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -940,16 +940,16 @@ class _MyLunaCard extends StatelessWidget {
               const Text('🌙', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 6),
               const Text('마이 루나',
-                  style: TextStyle(color: AppColors.lunaNavy, fontSize: 16, fontWeight: FontWeight.w900)),
+                  style: TextStyle(color: AppColors.ink900, fontSize: 16, fontWeight: FontWeight.w900)),
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.lunaNavy.withValues(alpha: 0.1),
+                  color: AppColors.ink900.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: const Text('AI 맞춤 동선',
-                    style: TextStyle(color: AppColors.lunaNavy, fontSize: 11, fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: AppColors.ink900, fontSize: 11, fontWeight: FontWeight.w700)),
               ),
               const Spacer(),
               InkWell(
@@ -960,7 +960,7 @@ class _MyLunaCard extends StatelessWidget {
                   child: loading
                       ? const SizedBox(
                           width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.lunaNavy),
+                          child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.ink900),
                         )
                       : const Icon(Icons.refresh, size: 16, color: AppColors.textSecondary),
                 ),
@@ -971,7 +971,7 @@ class _MyLunaCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppColors.line),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
@@ -1040,7 +1040,7 @@ class _MyLunaCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: Text('전체 동선 보기 →',
                 style: TextStyle(
-                  color: AppColors.lunaNavy,
+                  color: AppColors.ink900,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                 )),
@@ -1060,7 +1060,7 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(color: AppColors.lunaNavy, borderRadius: BorderRadius.circular(99)),
+      decoration: BoxDecoration(color: AppColors.ink900, borderRadius: BorderRadius.circular(99)),
       child: Text(text,
           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
     );
@@ -1079,7 +1079,7 @@ class _RouteRow extends StatelessWidget {
       children: [
         Container(
           width: 24, height: 24,
-          decoration: const BoxDecoration(color: AppColors.lunaNavy, shape: BoxShape.circle),
+          decoration: const BoxDecoration(color: AppColors.ink900, shape: BoxShape.circle),
           alignment: Alignment.center,
           child: Text('$index',
               style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
@@ -1106,7 +1106,7 @@ class _RouteRow extends StatelessWidget {
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(4)),
+                          decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(4)),
                           child: Text(item.type,
                               style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                         ),
@@ -1141,9 +1141,9 @@ class _TodayEventsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const events = [
-      (tag: '[D-DAY]', bg: AppColors.sunsetCoral, name: '🎭 퍼레이드', time: '오후 2:00'),
-      (tag: '[인기]', bg: AppColors.lunaNavy, name: '🎪 서커스쇼', time: '오후 4:30'),
-      (tag: '[신규]', bg: AppColors.discoveryPurple, name: '✨ 불빛 쇼', time: '오후 8:00'),
+      (tag: '[D-DAY]', bg: AppColors.red, name: '🎭 퍼레이드', time: '오후 2:00'),
+      (tag: '[인기]', bg: AppColors.ink900, name: '🎪 서커스쇼', time: '오후 4:30'),
+      (tag: '[신규]', bg: AppColors.grape, name: '✨ 불빛 쇼', time: '오후 8:00'),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1171,7 +1171,7 @@ class _TodayEventsSection extends StatelessWidget {
                 width: 150,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.cardWhite,
+                  color: AppColors.bgCard,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
                 ),

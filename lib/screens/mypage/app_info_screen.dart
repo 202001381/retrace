@@ -12,11 +12,11 @@ class AppInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: AppColors.bgPage,
       appBar: AppBar(
         title: const Text('앱 정보',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.cardWhite,
+        backgroundColor: AppColors.bgCard,
         elevation: 0.5,
         centerTitle: false,
         foregroundColor: AppColors.textPrimary,
@@ -60,7 +60,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardWhite,
+        color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -108,7 +108,7 @@ class _LinkCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.cardWhite,
+          color: AppColors.bgCard,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

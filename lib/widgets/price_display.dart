@@ -16,7 +16,7 @@ class PriceDisplay extends StatelessWidget {
     super.key,
     required this.state,
     this.size = PriceDisplaySize.compact,
-    this.accentColor = AppColors.sunsetCoral,
+    this.accentColor = AppColors.red,
   });
 
   static String _fmt(int n) => n.toString().replaceAllMapped(

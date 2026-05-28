@@ -21,7 +21,7 @@ class DiscountCauseLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final labelColor = dark ? AppColors.textOnDark : AppColors.textPrimary;
-    final accentColor = dark ? AppColors.moonlightGold : AppColors.sunsetCoral;
+    final accentColor = dark ? AppColors.yellow : AppColors.red;
     final arrowColor = AppColors.textSecondary;
     return Row(
       mainAxisSize: MainAxisSize.min,

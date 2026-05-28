@@ -83,11 +83,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final p = widget.pricing;
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: AppColors.bgPage,
       appBar: AppBar(
         title: const Text('결제 확인',
             style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.cardWhite,
+        backgroundColor: AppColors.bgCard,
         elevation: 0.5,
         foregroundColor: AppColors.textPrimary,
       ),
@@ -100,9 +100,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.cardWhite,
+                  color: AppColors.bgCard,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.line),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,10 +120,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     _row(
                       '루나 할인 (${p.discountPercent}%)',
                       '-₩${_fmt(p.discountAmount)}',
-                      color: AppColors.sunsetCoral,
+                      color: AppColors.red,
                     ),
                     const SizedBox(height: 12),
-                    const Divider(height: 1, color: AppColors.border),
+                    const Divider(height: 1, color: AppColors.line),
                     const SizedBox(height: 12),
                     _row(
                       '최종 결제액',
@@ -155,7 +155,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: ElevatedButton(
                   onPressed: (_expired || _processing) ? null : _onPay,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.sunsetCoral,
+                    backgroundColor: AppColors.red,
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: AppColors.textSecondary,
                     shape: RoundedRectangleBorder(
