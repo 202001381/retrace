@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:seoul_land_app/screens/archive_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('Archive 시즌 4개 탭이 모두 동일 너비로 렌더된다', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844)); // iPhone 14
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    // ArchiveScreen 은 SharedPreferences 기반 _PhotoStore.load() 후 _ready=true
+    // 로 전환된다. 테스트 환경에선 default mock 으로 SharedPreferences 초기값을
+    // 주입해야 즉시 settle 한다.
+    SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(body: ArchiveScreen()),
       ),
     );
+    // 비동기 await(_PhotoStore.load) → setState 까지 끌어옴.
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     // 4개 시즌 라벨이 같은 Row 안의 4개 Expanded 자식에 들어있어야 함.
     final labels = ['봄', '여름', '가을', '겨울'];
