@@ -55,6 +55,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _onPay() async {
     if (_expired || _processing) return;
+    // STEP 2 — 결제수단 선택 시트.
+    final method = await showModalBottomSheet<_PayMethod>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PaymentMethodSheet(
+        baseTotal: widget.pricing.basePrice * _qty,
+        discount: widget.pricing.discountAmount * _qty,
+        finalTotal: widget.pricing.finalPrice * _qty,
+      ),
+    );
+    if (method == null || !mounted) return;
+
     setState(() => _processing = true);
     await Future.delayed(const Duration(milliseconds: 700));
     await VisitHistoryService.markVisitedNow();
@@ -633,4 +646,222 @@ class _MockQrPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MockQrPainter o) => false;
+}
+
+// ─── STEP 2 결제수단 선택 시트 ────────────────────────────────
+enum _PayMethod { kakao, card, naver, bank }
+
+class _PaymentMethodSheet extends StatefulWidget {
+  final int baseTotal;
+  final int discount;
+  final int finalTotal;
+  const _PaymentMethodSheet({
+    required this.baseTotal,
+    required this.discount,
+    required this.finalTotal,
+  });
+
+  @override
+  State<_PaymentMethodSheet> createState() => _PaymentMethodSheetState();
+}
+
+class _PaymentMethodSheetState extends State<_PaymentMethodSheet> {
+  _PayMethod _selected = _PayMethod.kakao;
+
+  static String _fmt(int n) => n.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},',
+      );
+
+  static const _methods = <(_PayMethod, String, Color, String)>[
+    (_PayMethod.kakao, '카카오페이', Color(0xFFFAE100), 'K'),
+    (_PayMethod.card, '신용·체크카드', Color(0xFF1F1F1F), 'CARD'),
+    (_PayMethod.naver, '네이버페이', Color(0xFF03C75A), 'N'),
+    (_PayMethod.bank, '계좌이체', Color(0xFF0084E0), '₩'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      decoration: const BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.ink300,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Eyebrow('STEP 02 · PAYMENT', color: AppColors.red),
+          const SizedBox(height: 6),
+          const Text(
+            '어떻게 결제할까요?',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: AppColors.ink900,
+              letterSpacing: -0.6,
+            ),
+          ),
+          const SizedBox(height: 18),
+          ..._methods.map((m) {
+            final selected = _selected == m.$1;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _selected = m.$1),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.redTint : AppColors.bgPage,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: selected ? AppColors.red : AppColors.line,
+                      width: selected ? 1.6 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: m.$3,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          m.$4,
+                          style: TextStyle(
+                            color: m.$3 == const Color(0xFFFAE100)
+                                ? AppColors.ink900
+                                : Colors.white,
+                            fontSize: m.$4.length > 1 ? 10 : 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          m.$2,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink900,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 22,
+                        height: 22,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: selected ? AppColors.red : Colors.transparent,
+                          border: Border.all(
+                              color: selected
+                                  ? AppColors.red
+                                  : AppColors.ink300),
+                        ),
+                        child: selected
+                            ? const Icon(Icons.check_rounded,
+                                size: 14, color: Colors.white)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 12),
+          // 요약
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.bgPage,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: [
+                _summaryRow('소계', '₩${_fmt(widget.baseTotal)}'),
+                const SizedBox(height: 6),
+                _summaryRow(
+                  '루나 할인',
+                  '-₩${_fmt(widget.discount)}',
+                  valueColor: AppColors.red,
+                ),
+                const Divider(height: 18, color: AppColors.line),
+                _summaryRow(
+                  '총 결제',
+                  '₩${_fmt(widget.finalTotal)}',
+                  bold: true,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(_selected),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.red,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(99)),
+              ),
+              child: Text(
+                '₩${_fmt(widget.finalTotal)} 결제하기',
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value,
+      {Color? valueColor, bool bold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: bold ? 14 : 13,
+            color: bold ? AppColors.ink900 : AppColors.ink500,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: bold ? 18 : 13,
+            color: valueColor ?? AppColors.ink900,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.w800,
+            letterSpacing: bold ? -0.4 : 0,
+          ),
+        ),
+      ],
+    );
+  }
 }
