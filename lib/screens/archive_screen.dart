@@ -597,37 +597,45 @@ class _Header extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
               border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
             ),
-            child: Row(
-              children: _Season.values
-                  .map((s) => Expanded(
-                        child: GestureDetector(
-                          onTap: () => onChange(s),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 240),
-                            curve: Curves.easeOut,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: season == s
-                                  ? _Vintage.leather
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _kConfigs[s]!.label,
-                              style: _serif(
-                                size: 13,
-                                weight: FontWeight.w900,
+            // 모든 세그먼트가 균등 너비·높이 — Apple HIG segmented control 정합.
+            // Expanded + 명시 height 36 + maxLines 1 로 글자수 차이(봄 vs 여름)에
+            // 따른 시각 변형을 차단.
+            child: SizedBox(
+              height: 36,
+              child: Row(
+                children: _Season.values
+                    .map((s) => Expanded(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onChange(s),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 240),
+                              curve: Curves.easeOut,
+                              decoration: BoxDecoration(
                                 color: season == s
-                                    ? _Vintage.parchmentLight
-                                    : _Vintage.inkMid,
-                                letterSpacing: 1.5,
+                                    ? _Vintage.leather
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                _kConfigs[s]!.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                style: _serif(
+                                  size: 13,
+                                  weight: FontWeight.w900,
+                                  color: season == s
+                                      ? _Vintage.parchmentLight
+                                      : _Vintage.inkMid,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ))
-                  .toList(),
+                        ))
+                    .toList(),
+              ),
             ),
           ),
         ],

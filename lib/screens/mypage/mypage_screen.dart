@@ -69,6 +69,7 @@ class _MypageScreenState extends State<MypageScreen> {
             style: TextStyle(fontWeight: FontWeight.w900)),
         backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
+        centerTitle: false,
         foregroundColor: AppColors.textPrimary,
       ),
       body: ListView(

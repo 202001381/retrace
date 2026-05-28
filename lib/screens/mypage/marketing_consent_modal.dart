@@ -19,6 +19,7 @@ class MarketingConsentModal extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.w900)),
         backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
+        centerTitle: false,
         foregroundColor: AppColors.textPrimary,
         leading: IconButton(
           icon: const Icon(Icons.close),

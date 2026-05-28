@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -58,13 +59,31 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   // 데모 시나리오 (백엔드 연동 전 한정) — null = 기본 추천 로직.
   DemoScenario? _activeScenario;
 
+  // 데모 picker 영구 dismiss 상태. 한 번 닫으면 다시 안 보임.
+  static const String _kDemoDismissedKey = 'demo_picker_dismissed';
+  bool _demoDismissed = false;
+
   @override
   void initState() {
     super.initState();
     _bootstrap();
+    _loadDemoDismissed();
     _windowTicker = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) setState(() {}); // 만료 시점 UI 갱신용
     });
+  }
+
+  Future<void> _loadDemoDismissed() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _demoDismissed = prefs.getBool(_kDemoDismissedKey) ?? false);
+  }
+
+  Future<void> _dismissDemo() async {
+    HapticFeedback.selectionClick();
+    setState(() => _demoDismissed = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kDemoDismissedKey, true);
   }
 
   @override
@@ -290,12 +309,15 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
-                    // 백엔드 연동 전 — 손수 큐레이션한 4시간 코스 데모.
-                    _DemoScenarioPicker(
-                      active: _activeScenario,
-                      onSelect: _selectScenario,
-                    ),
-                    const SizedBox(height: 12),
+                    // 백엔드 연동 전 — 사용자가 미리 보는 샘플 코스.
+                    if (!_demoDismissed) ...[
+                      _DemoScenarioPicker(
+                        active: _activeScenario,
+                        onSelect: _selectScenario,
+                        onDismiss: _dismissDemo,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     _MetaHeader(
                       surveyLabel: _surveyLabel,
                       missingEggs: _missingEggCount,
@@ -879,56 +901,91 @@ class _ErrorBlock extends StatelessWidget {
 class _DemoScenarioPicker extends StatelessWidget {
   final DemoScenario? active;
   final ValueChanged<DemoScenario?> onSelect;
-  const _DemoScenarioPicker({required this.active, required this.onSelect});
+  final VoidCallback onDismiss;
+  const _DemoScenarioPicker({
+    required this.active,
+    required this.onSelect,
+    required this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8EA),
+        color: AppColors.cardElevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.discoveryPurple.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.lunaNavy.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('📺',
-                  style: TextStyle(fontSize: 13)),
-              const SizedBox(width: 6),
-              const Text('데모 시나리오',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF8A6A1F),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.4,
-                  )),
-              const SizedBox(width: 6),
-              const Text('백엔드 연동 전',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFFAA8A4F),
-                    fontWeight: FontWeight.w700,
-                  )),
-              const Spacer(),
-              if (active != null)
-                GestureDetector(
-                  onTap: () => onSelect(null),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                    child: Text('기본으로',
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('🌙', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        const Text(
+                          '샘플 코스 미리 보기',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: Text(
+                        '결제하면 맞춤 코스가 시작돼요',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF8A6A1F),
-                          fontWeight: FontWeight.w800,
-                          decoration: TextDecoration.underline,
-                        )),
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: onDismiss,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: AppColors.textSecondary,
                   ),
                 ),
+              ),
             ],
           ),
+          if (active != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 20, top: 4, right: 6),
+              child: GestureDetector(
+                onTap: () => onSelect(null),
+                child: const Text(
+                  '샘플 그만 보기',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.lunaNavy,
+                    fontWeight: FontWeight.w800,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 10),
           SizedBox(
             height: 70,
@@ -948,12 +1005,12 @@ class _DemoScenarioPicker extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.lunaNavy
-                          : Colors.white,
+                          : AppColors.cardWhite,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isActive
                             ? AppColors.lunaNavy
-                            : const Color(0xFFEEDDB6),
+                            : AppColors.border,
                       ),
                     ),
                     child: Column(
@@ -970,7 +1027,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
                                   color: isActive
-                                      ? Colors.white
+                                      ? AppColors.textOnDark
                                       : AppColors.textPrimary,
                                 )),
                           ],
@@ -983,7 +1040,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: isActive
-                                  ? Colors.white.withValues(alpha: 0.85)
+                                  ? AppColors.textOnDark.withValues(alpha: 0.85)
                                   : AppColors.textSecondary,
                             )),
                       ],

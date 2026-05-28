@@ -98,6 +98,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
             style: TextStyle(fontWeight: FontWeight.w900)),
         backgroundColor: AppColors.cardWhite,
         elevation: 0.5,
+        centerTitle: false,
         foregroundColor: AppColors.textPrimary,
       ),
       body: _loading
