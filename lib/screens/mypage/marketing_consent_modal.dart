@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../widgets/design/condition_pip.dart';
 
 /// 마케팅 정보 수신 동의 풀스크린 모달 (정통법 §50 명시적 동의).
 /// 호출 측은 [showMarketingConsentModal] 사용 → bool 반환 (true = 동의).
@@ -13,22 +14,46 @@ class MarketingConsentModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgCard,
-      appBar: AppBar(
-        title: const Text('마케팅 정보 수신 동의',
-            style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgCard,
-        elevation: 0.5,
-        centerTitle: false,
-        foregroundColor: AppColors.textPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-      ),
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 22, 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    icon: const Icon(Icons.close_rounded,
+                        size: 22, color: AppColors.ink900),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Eyebrow('LEGAL · MARKETING'),
+                          SizedBox(height: 6),
+                          Text(
+                            '마케팅 정보\n수신 동의',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.ink900,
+                              letterSpacing: -0.8,
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -85,11 +110,11 @@ class MarketingConsentModal extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         side: const BorderSide(color: AppColors.line),
                         foregroundColor: AppColors.textSecondary,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(99)),
                       ),
                       child: const Text('동의하지 않음',
                           style: TextStyle(
@@ -101,11 +126,12 @@ class MarketingConsentModal extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: AppColors.red,
                         foregroundColor: Colors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(99)),
                       ),
                       child: const Text('동의하기',
                           style: TextStyle(
