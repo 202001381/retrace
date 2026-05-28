@@ -892,9 +892,13 @@ class _TopBar extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    height: 40,
+                    height: 42,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(color: AppColors.bgPage, borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgPage,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: AppColors.line),
+                    ),
                     child: Row(
                       children: [
                         const Icon(Icons.search, size: 16, color: AppColors.textSecondary),
@@ -967,11 +971,11 @@ class _IconLabelButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: active ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(99),
           border: Border.all(color: active ? activeColor : AppColors.line),
         ),
         alignment: Alignment.center,
