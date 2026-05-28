@@ -239,21 +239,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     if (_showRoute) _shrinkSheet();
   }
 
-  Color _categoryColor(String c) {
-    switch (c) {
-      case '어트랙션':
-        return AppColors.red;
-      case '음식점':
-        return AppColors.yellow;
-      case '카페':
-        return AppColors.ink700;
-      case '포토스팟':
-        return AppColors.blush;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
   bool _matchesSearch(Attraction a) {
     if (_searchQuery.isEmpty) return true;
     return a.name.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -556,16 +541,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         pattern: StrokePattern.dashed(segments: const [10, 5]),
       ),
     ];
-  }
-
-  Color _getMarkerColor(String category) {
-    switch (category) {
-      case '어트랙션': return AppColors.red;
-      case '음식점':   return AppColors.yellow;
-      case '카페':     return AppColors.ink700;
-      case '포토스팟': return AppColors.blush;
-      default:         return AppColors.textSecondary;
-    }
   }
 
   void _onMarkerTap(Attraction a) => _openDetail(a);

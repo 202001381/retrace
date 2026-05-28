@@ -433,46 +433,6 @@ class _StarFieldPainter extends CustomPainter {
   bool shouldRepaint(_StarFieldPainter o) => false;
 }
 
-class _RetraceLogo extends StatelessWidget {
-  final bool darkMode;
-  const _RetraceLogo({required this.darkMode});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('서울랜드',
-            style: TextStyle(
-              color: darkMode ? Colors.white.withValues(alpha: 0.6) : _kMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2.4,
-            )),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('RE-TRACE',
-                style: TextStyle(
-                  color: _kAccent,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                )),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: _kAccent, borderRadius: BorderRadius.circular(4)),
-              child: const Text('BETA',
-                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 class _BranchButton extends StatelessWidget {
   final String label;
   final Color bg;
