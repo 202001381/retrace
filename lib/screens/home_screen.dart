@@ -14,7 +14,6 @@ import '../services/visit_history_service.dart';
 import '../widgets/companion_bottom_sheet.dart';
 import '../widgets/design/condition_pip.dart';
 import '../widgets/design/logo.dart';
-import '../widgets/design/stamp.dart';
 import '../widgets/discount_cause_label.dart';
 import '../widgets/discount_countdown.dart';
 import '../widgets/price_display.dart';
@@ -1370,12 +1369,29 @@ class _TodayEventsSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: const [
-            Text('오늘의 이벤트',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Eyebrow('TODAY · EVENTS'),
+                SizedBox(height: 4),
+                Text(
+                  '오늘의 이벤트',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.ink900,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+              ],
+            ),
             Spacer(),
-            Text('전체보기', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
-            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textSecondary),
+            Text('전체보기',
+                style: TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
+            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
           ],
         ),
         const SizedBox(height: 12),

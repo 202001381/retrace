@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../widgets/design/v3_sub_header.dart';
 
 /// 정적 앱 정보 — 버전·라이선스·문의처 placeholder.
 class AppInfoScreen extends StatelessWidget {
@@ -12,38 +13,35 @@ class AppInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgPage,
-      appBar: AppBar(
-        title: const Text('앱 정보',
-            style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgCard,
-        elevation: 0.5,
-        centerTitle: false,
-        foregroundColor: AppColors.textPrimary,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const _InfoCard(
-            label: '서비스',
-            value: 'RE-TRACE',
-            sub: '서울랜드 AI 다이나믹 프라이싱 & 동선 추천',
-          ),
-          const SizedBox(height: 12),
-          const _InfoCard(label: '버전', value: _version),
-          const SizedBox(height: 12),
-          const _InfoCard(
-            label: '개발',
-            value: '한국외국어대학교 캡스톤 1팀',
-          ),
-          const SizedBox(height: 12),
-          _LinkCard(
-            label: '오픈소스 라이선스',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('라이선스 페이지 (준비 중)')),
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            const V3SubHeader(eyebrow: 'SETTINGS · ABOUT', title: '앱 정보'),
+            const SizedBox(height: 8),
+            const _InfoCard(
+              label: '서비스',
+              value: 'Re·Trace',
+              sub: '서울랜드 AI 다이나믹 프라이싱 & 동선 추천',
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const _InfoCard(label: '버전', value: _version),
+            const SizedBox(height: 12),
+            const _InfoCard(
+              label: '개발',
+              value: '한국외국어대학교 캡스톤 1팀',
+            ),
+            const SizedBox(height: 12),
+            _LinkCard(
+              label: '오픈소스 라이선스',
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('라이선스 페이지 (준비 중)')),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
