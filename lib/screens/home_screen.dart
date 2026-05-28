@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -149,8 +150,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_routeLoading) return;
     setState(() => _routeLoading = true);
     try {
-      final survey = _survey ??
-          (await OnboardingService.read()) ??
+      // survey 읽기 자체가 실패해도(예: macOS dev 환경의 prefs init 지연)
+      // mock route 는 빈 survey 로도 동작하므로 fallback 진행.
+      SurveyAnswers? survey = _survey;
+      if (survey == null) {
+        try {
+          survey = await OnboardingService.read();
+        } catch (_) {
+          // prefs 미가용 → 빈 survey 로 mock 호출 (홈 카드가 영영 안 뜨는 것 방지).
+        }
+      }
+      survey ??=
           const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
       // 홈 화면은 GPS 없이 정문 기준
       const gateLat = 37.4332, gateLng = 127.0174;
@@ -167,8 +177,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final resp = await RouteService.instance.fetchRoute(req);
       if (!mounted) return;
       setState(() => _route = resp);
-    } catch (_) {
-      // 캐시 유지
+    } catch (e, st) {
+      // mock RouteService 가 throw 하는 건 사실상 백엔드 전환 후 시나리오지만,
+      // 디버깅을 위해 analytics 에는 남기고 카드는 placeholder 로.
+      AnalyticsService.instance
+          .logScreenView('home_route_error: ${e.runtimeType}');
+      assert(() {
+        debugPrint('[home _loadRoute] $e\n$st');
+        return true;
+      }());
     } finally {
       if (mounted) setState(() => _routeLoading = false);
     }
@@ -1241,11 +1258,45 @@ class _MyLunaCard extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
-                child: Text('동선을 불러오는 중…',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+                child: loading
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 1.5, color: AppColors.blue)),
+                          SizedBox(width: 8),
+                          Text('동선을 그리고 있어요…',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          const Text('동선을 불러오지 못했어요',
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: onRefresh,
+                            behavior: HitTestBehavior.opaque,
+                            child: const Text('다시 시도 ↻',
+                                style: TextStyle(
+                                    color: AppColors.red,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800)),
+                          ),
+                        ],
+                      ),
               ),
             )
           else
