@@ -10,8 +10,22 @@ const _kSelectedBg = Color(0xFFFFF5F5);
 const _kBorderIdle = Color(0xFFE0E0E0);
 const _kText = Color(0xFF1F1F1F);
 const _kMuted = Color(0xFF888888);
-const _kDarkBg = Color(0xFF1E2B4A);
+/// Welcome / 결과 화면 등 dark-bg 의 *대표 단색* — 단독 색 필요 시.
+/// v3 에서 컬러 통일을 위해 navy → red-deep 으로 변경.
+const _kDarkBg = Color(0xFFB8001C);
 const _kCardBg = Color(0xFFF7F7F7);
+
+/// Seoul Land 레드 그라디언트 — Welcome / IntroDarkCenter / Result 공통.
+const _kRedGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [
+    Color(0xFFE60023), // brand red
+    Color(0xFFB8001C), // red-deep
+    Color(0xFF7A0014), // deep maroon
+  ],
+  stops: [0.0, 0.55, 1.0],
+);
 
 // 페이지 인덱스
 //   0: intro 어서오세요 (네/아니요 분기)
@@ -266,19 +280,7 @@ class _IntroWelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        // Seoul Land 레드 팔레트 — 뒤따르는 설문 화면(빨강 액센트)과 연속성.
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFE60023), // brand red
-            Color(0xFFB8001C), // red-deep
-            Color(0xFF7A0014), // deep maroon
-          ],
-          stops: [0.0, 0.55, 1.0],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: _kRedGradient),
       child: Stack(
         children: [
           // 오른쪽 위 yellow→amber glow (mock crescent)
@@ -619,33 +621,79 @@ class _IntroDarkCenterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _kDarkBg,
-      child: Column(
+    return DecoratedBox(
+      decoration: const BoxDecoration(gradient: _kRedGradient),
+      child: Stack(
         children: [
-          _OnboardingTopBar(
-            showBack: showBack,
-            onBack: onBack,
-            onSkip: showSkip ? onSkip : null,
-            darkMode: true,
+          // 오른쪽 위 노란 글로우 (Welcome 페이지와 연속성).
+          Positioned(
+            top: -60,
+            right: -50,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  center: Alignment(-0.2, -0.2),
+                  colors: [
+                    Color(0xFFFFF5C7),
+                    Color(0xFFFFCC2A),
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.45, 0.85],
+                ),
+              ),
+            ),
           ),
-          const Spacer(),
-          Text(icon, style: const TextStyle(fontSize: 64)),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, height: 1.4)),
-          ),
-          const SizedBox(height: 12),
-          Text(subtitle,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 16, fontWeight: FontWeight.w600)),
-          const Spacer(flex: 2),
-          if (showSkip) const _DotIndicator(current: 3, total: 4),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
-            child: _PrimaryCta(label: ctaLabel, onTap: onNext, color: Colors.white, fg: _kDarkBg),
+          SafeArea(
+            child: Column(
+              children: [
+                _OnboardingTopBar(
+                  showBack: showBack,
+                  onBack: onBack,
+                  onSkip: showSkip ? onSkip : null,
+                  darkMode: true,
+                ),
+                const Spacer(),
+                Text(icon, style: const TextStyle(fontSize: 64)),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      height: 1.35,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.78),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(flex: 2),
+                if (showSkip) const _DotIndicator(current: 3, total: 4),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+                  child: _PrimaryCta(
+                    label: ctaLabel,
+                    onTap: onNext,
+                    color: Colors.white,
+                    fg: _kDarkBg,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -670,84 +718,125 @@ class _ResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _kDarkBg,
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            const Spacer(),
-            // ── 상단: 마이 루나 완성 메시지 ──
-            const Text('🌙', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 20),
-            const Text('마이 루나가 준비됐어요!',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                summaryText,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
+    return DecoratedBox(
+      decoration: const BoxDecoration(gradient: _kRedGradient),
+      child: Stack(
+        children: [
+          // 우상단 노란 글로우 — Welcome 페이지와 연속성.
+          Positioned(
+            top: -60,
+            right: -50,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  center: Alignment(-0.2, -0.2),
+                  colors: [
+                    Color(0xFFFFF5C7),
+                    Color(0xFFFFCC2A),
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.45, 0.85],
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            // ── 중간: 루나 프라이싱 카드 (조건부) ──
-            if (hasDiscount)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _PricingCard(discountPct: discountPct),
-              ),
-            const Spacer(flex: 2),
-            // ── 하단: CTA 버튼 ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: onSeeRoute,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: _kDarkBg,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('🗺️  오늘의 동선 보러가기',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+          ),
+          SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                const Spacer(),
+                // ── 상단: 마이 루나 완성 메시지 ──
+                const Text('🌙', style: TextStyle(fontSize: 56)),
+                const SizedBox(height: 20),
+                const Text(
+                  '마이 루나가 준비됐어요!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    summaryText,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
                     ),
                   ),
-                  if (hasDiscount) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: onGetTicket,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.18),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                const SizedBox(height: 28),
+                // ── 중간: 루나 프라이싱 카드 (조건부) ──
+                if (hasDiscount)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _PricingCard(discountPct: discountPct),
+                  ),
+                const Spacer(flex: 2),
+                // ── 하단: CTA 버튼 ──
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: onSeeRoute,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: _kDarkBg,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(99)),
+                          ),
+                          child: const Text(
+                            '🗺️  오늘의 동선 보러가기',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w900),
+                          ),
                         ),
-                        child: const Text('💰  할인 티켓 먼저 받기',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      if (hasDiscount) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: onGetTicket,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.18),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(99)),
+                            ),
+                            child: const Text(
+                              '💰  할인 티켓 먼저 받기',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
