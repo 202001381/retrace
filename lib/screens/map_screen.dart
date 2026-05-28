@@ -10,6 +10,7 @@ import '../core/theme/app_colors.dart';
 import '../models/attraction.dart';
 import '../models/place_filter.dart';
 import '../models/route_response.dart';
+import '../widgets/design/stamp.dart';
 import '../services/easter_egg_service.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
@@ -424,25 +425,28 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final markers = source.map((a) {
       final order = routeOrder[a.id];
       final hasBadge = order != null;
+      // v3 디자인 — Stamp(2~3 글자 코드 + 톤) + 흰 테두리 ring.
+      final code = Stamp.codeFromName(a.name);
+      final tone = Stamp.toneFromHints(
+        category: a.category,
+        thrillLevel: a.thrillLevel,
+        hasEasterEgg: a.hasEasterEgg,
+      );
       final dot = Container(
-        width: 44,
-        height: 44,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
-          color: _getMarkerColor(a.category),
           shape: BoxShape.circle,
-          border: Border.all(
-            color: a.hasEasterEgg ? AppColors.grape : Colors.white,
-            width: a.hasEasterEgg ? 3 : 2,
-          ),
+          border: Border.all(color: Colors.white, width: 2.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.22),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Center(child: Text(a.icon, style: const TextStyle(fontSize: 20))),
+        child: Stamp(code: code, tone: tone, size: 33),
       );
 
       return Marker(

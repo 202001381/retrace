@@ -812,21 +812,37 @@ class _MembersSurveyPage extends StatelessWidget {
       children: [
         _OnboardingTopBar(showBack: true, onBack: onBack, onSkip: null, darkMode: false),
         _SurveyProgress(current: 1, total: 3),
-        const SizedBox(height: 16),
+        const SizedBox(height: 22),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('오늘 함께 오신 분들을\n알려주세요',
-                  style: TextStyle(color: _kText, fontSize: 20, fontWeight: FontWeight.w900, height: 1.3)),
+              Eyebrow('STEP 01 · WHO', color: AppColors.red),
+              SizedBox(height: 8),
+              Text.rich(
+                TextSpan(
+                  style: TextStyle(
+                    color: AppColors.ink900,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    height: 1.25,
+                    letterSpacing: -0.8,
+                  ),
+                  children: [
+                    TextSpan(text: '오늘은 '),
+                    TextSpan(text: '몇 명', style: TextStyle(color: AppColors.red)),
+                    TextSpan(text: '이서\n오셨나요?'),
+                  ],
+                ),
+              ),
               SizedBox(height: 6),
-              Text('해당하는 인원을 추가해주세요',
-                  style: TextStyle(color: _kMuted, fontSize: 14)),
+              Text('인원에 맞게 동선을 짤게요',
+                  style: TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -993,16 +1009,37 @@ class _SingleChoiceSurveyPage extends StatelessWidget {
       children: [
         _OnboardingTopBar(showBack: true, onBack: onBack, onSkip: null, darkMode: false),
         _SurveyProgress(current: progress, total: 3),
-        const SizedBox(height: 16),
+        const SizedBox(height: 22),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SizedBox(
-            width: double.infinity,
-            child: Text(title,
-                style: const TextStyle(color: _kText, fontSize: 20, fontWeight: FontWeight.w900, height: 1.3)),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Eyebrow(
+                progress == 2 ? 'STEP 02 · MOOD' : 'STEP 03 · PURPOSE',
+                color: AppColors.red,
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.ink900,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    height: 1.25,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text('최대한 정확히 골라주세요',
+                  style: TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1103,6 +1140,7 @@ class _OnboardingTopBar extends StatelessWidget {
   }
 }
 
+/// v3 progress bar — N개 segment, 채워진 건 빨강·미완은 옅은 라인.
 class _SurveyProgress extends StatelessWidget {
   final int current;
   final int total;
@@ -1111,27 +1149,23 @@ class _SurveyProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       child: Row(
-        children: [
-          Text('$current / $total',
-              style: const TextStyle(color: _kAccent, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
-          const SizedBox(width: 10),
-          ...List.generate(total, (i) {
-            final on = i < current;
-            return Padding(
-              padding: const EdgeInsets.only(right: 6),
+        children: List.generate(total, (i) {
+          final on = i < current;
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
               child: Container(
-                width: 8, height: 8,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: on ? _kAccent : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: on ? _kAccent : const Color(0xFFD0D0D0), width: 1.5),
+                  color: on ? AppColors.red : AppColors.ink200,
+                  borderRadius: BorderRadius.circular(99),
                 ),
               ),
-            );
-          }),
-        ],
+            ),
+          );
+        }),
       ),
     );
   }
