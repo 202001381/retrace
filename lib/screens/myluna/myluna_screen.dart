@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../widgets/design/logo.dart';
 
 import '../../models/attraction.dart';
 import '../../models/demo_scenario.dart';
@@ -403,57 +404,83 @@ class _MetaHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('🌙', style: TextStyle(fontSize: 22)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(surveyLabel ?? '게스트 · 조건 미지정',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    )),
-                const SizedBox(height: 2),
-                Text(
-                  [
-                    if (missingEggs > 0) '🥚 못 찾은 에그 $missingEggs',
-                    if (totalMin != null) '⏱ 총 $totalMin분',
-                  ].join('  ·  '),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.blueTint,
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
+                child: const MoonMark(
+                    size: 16, color: AppColors.blue, filled: true),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '마이 루나',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.ink900,
+                  letterSpacing: -0.6,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.blueTint,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text('LIVE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.blue,
+                      letterSpacing: 0.6,
+                    )),
+              ),
+              const Spacer(),
+              OutlinedButton.icon(
+                onPressed: onChangeConditions,
+                icon: const Icon(Icons.tune, size: 14),
+                label: const Text('조건'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  side: const BorderSide(color: AppColors.line),
+                  foregroundColor: AppColors.textSecondary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(99)),
+                  textStyle: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
           ),
-          OutlinedButton.icon(
-            onPressed: onChangeConditions,
-            icon: const Icon(Icons.tune, size: 14),
-            label: const Text('조건 변경'),
-            style: OutlinedButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              side: const BorderSide(color: AppColors.line),
-              foregroundColor: AppColors.textSecondary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              textStyle: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700),
+          if (surveyLabel != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              [
+                surveyLabel!,
+                if (missingEggs > 0) '못 찾은 에그 $missingEggs',
+                if (totalMin != null) '총 $totalMin분',
+              ].join(' · '),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.ink500,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

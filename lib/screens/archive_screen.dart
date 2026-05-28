@@ -573,23 +573,36 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.auto_stories_rounded,
-                  color: _Vintage.leather, size: 26),
-              const SizedBox(width: 8),
-              Text(
-                'Retrace Archive',
-                style: _serif(
-                  size: 22,
-                  weight: FontWeight.w900,
-                  color: _Vintage.inkDark,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
+          // v3 — 작은 RETRACE ARCHIVE eyebrow + 28px 큰 헤드라인
+          Text(
+            'RETRACE ARCHIVE · vol.1',
+            style: _serif(
+              size: 10,
+              weight: FontWeight.w800,
+              color: _Vintage.leather,
+              letterSpacing: 1.6,
+            ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          Text(
+            '기억의 책장',
+            style: _serif(
+              size: 28,
+              weight: FontWeight.w900,
+              color: _Vintage.inkDark,
+              letterSpacing: -0.6,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '서울랜드를 찾은 날들이 한 권씩 쌓이고 있어요',
+            style: _serif(
+              size: 12,
+              weight: FontWeight.w500,
+              color: _Vintage.inkMid,
+            ),
+          ),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
