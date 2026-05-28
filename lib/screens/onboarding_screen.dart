@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
 import '../services/onboarding_service.dart';
+import '../widgets/design/condition_pip.dart';
+import '../widgets/design/logo.dart';
 
 const _kAccent = Color(0xFFE60012);
 const _kSelectedBg = Color(0xFFFFF5F5);
@@ -247,7 +250,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// ─── 인트로 1: 어서오세요 ──────────────────────────────────
+// ─── 인트로 1: Welcome — v3 그라디언트 hero ─────────────────
 class _IntroWelcomePage extends StatelessWidget {
   final VoidCallback? onShowBack;
   final VoidCallback onSkip;
@@ -262,40 +265,114 @@ class _IntroWelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _kDarkBg,
-      child: Column(
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF4D7AFF), // azure
+            Color(0xFF8B6CFF), // grape
+            Color(0xFFB85AAE), // mauve
+          ],
+          stops: [0.0, 0.55, 1.0],
+        ),
+      ),
+      child: Stack(
         children: [
-          _OnboardingTopBar(showBack: false, onBack: null, onSkip: onSkip, darkMode: true),
-          const Spacer(),
-          const _RetraceLogo(darkMode: true),
-          const SizedBox(height: 56),
-          const Text('어서오세요 👋',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, height: 1.2)),
-          const SizedBox(height: 12),
-          Text('서울랜드는 처음이신가요?',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 16, fontWeight: FontWeight.w600)),
-          const Spacer(flex: 2),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
-            child: Row(
+          // 오른쪽 위 yellow→amber glow (mock crescent)
+          Positioned(
+            top: -50,
+            right: -40,
+            child: Container(
+              width: 230,
+              height: 230,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  center: Alignment(-0.2, -0.2),
+                  colors: [
+                    Color(0xFFFFF5C7),
+                    Color(0xFFFFCC2A),
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.45, 0.85],
+                ),
+              ),
+            ),
+          ),
+          // 산재된 작은 별
+          const Positioned.fill(child: _StarField()),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _BranchButton(
-                    label: '네, 처음이에요',
-                    bg: Colors.white,
-                    fg: _kDarkBg,
-                    onTap: onFirstTime,
+                _OnboardingTopBar(showBack: false, onBack: null, onSkip: onSkip, darkMode: true),
+                const Spacer(),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Eyebrow('WELCOME', color: Colors.white, size: 11),
+                      SizedBox(height: 16),
+                      Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 44,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.4,
+                            height: 1.15,
+                          ),
+                          children: [
+                            TextSpan(text: '오늘의 발자국을\n'),
+                            TextSpan(
+                              text: 'luna',
+                              style: TextStyle(color: Color(0xFFFFC700)),
+                            ),
+                            TextSpan(text: '가\n그려둘게요.'),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 18),
+                      Text(
+                        '서울랜드를 다시, 새롭게.\n취향과 동선을 기억해\n매번 다른 하루를 추천해요.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 1.55,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _BranchButton(
-                    label: '아니요, 와봤어요',
-                    bg: Colors.white.withValues(alpha: 0.18),
-                    fg: Colors.white,
-                    border: Colors.white.withValues(alpha: 0.3),
-                    onTap: onReturning,
+                const Spacer(flex: 2),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _BranchButton(
+                          label: '시작하기',
+                          bg: Colors.white,
+                          fg: AppColors.ink900,
+                          onTap: onFirstTime,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _BranchButton(
+                          label: '둘러보기',
+                          bg: Colors.white.withValues(alpha: 0.16),
+                          fg: Colors.white,
+                          border: Colors.white.withValues(alpha: 0.4),
+                          onTap: onReturning,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -305,6 +382,52 @@ class _IntroWelcomePage extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Welcome 화면 산재 별 — SVG 4꼭짓점 별 8개.
+class _StarField extends StatelessWidget {
+  const _StarField();
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _StarFieldPainter());
+  }
+}
+
+class _StarFieldPainter extends CustomPainter {
+  static const _stars = [
+    [0.20, 0.32, 6.0],
+    [0.84, 0.40, 4.0],
+    [0.92, 0.58, 5.0],
+    [0.08, 0.62, 4.0],
+    [0.78, 0.74, 6.0],
+    [0.32, 0.82, 4.0],
+    [0.16, 0.88, 5.0],
+    [0.60, 0.46, 3.0],
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.85);
+    for (final s in _stars) {
+      final cx = s[0] * size.width;
+      final cy = s[1] * size.height;
+      final r = s[2];
+      final path = Path()
+        ..moveTo(cx, cy - r * 2)
+        ..lineTo(cx + r * 0.35, cy - r * 0.35)
+        ..lineTo(cx + r * 2, cy)
+        ..lineTo(cx + r * 0.35, cy + r * 0.35)
+        ..lineTo(cx, cy + r * 2)
+        ..lineTo(cx - r * 0.35, cy + r * 0.35)
+        ..lineTo(cx - r * 2, cy)
+        ..lineTo(cx - r * 0.35, cy - r * 0.35)
+        ..close();
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StarFieldPainter o) => false;
 }
 
 class _RetraceLogo extends StatelessWidget {
