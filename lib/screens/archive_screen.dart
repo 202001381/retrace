@@ -1555,59 +1555,254 @@ class _PageJournal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final attrs = _attractions;
-    return _ParchmentBackground(
+    // v3 시안 C 왼쪽 페이지 — 흰 BG + CH·02 탐험 일지 빨간 eyebrow + 어트랙션 stamps
+    return Container(
+      color: Colors.white,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
         children: [
-          _SectionTitle(
-              icon: Icons.explore_rounded,
-              text: '탐험 일지',
-              color: config.titleColor),
+          Text(
+            'CH · 02 · 탐험 일지',
+            style: TextStyle(
+              color: const Color(0xFFE60023),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${attrs.length}곳을 거쳤어요',
+            style: const TextStyle(
+              color: Color(0xFF111111),
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.6,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '11:42 → 18:30 · 6h 48m',
+            style: TextStyle(
+              color: const Color(0xFF707070),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 18),
+          // 어트랙션 stamp 리스트 (시안 C)
+          if (attrs.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Text(
+                '기록된 어트랙션이 없어요.',
+                style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
+              ),
+            )
+          else
+            for (final a in attrs)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _JournalAttractionRow(attraction: a),
+              ),
+          const SizedBox(height: 20),
+          // dashed divider
+          const _JournalDashedRule(),
           const SizedBox(height: 14),
-          // 방문 어트랙션
-          _JournalGroup(
-            label: '방문한 어트랙션',
-            child: Column(
-              children: attrs.isEmpty
-                  ? [
-                      Text(
-                        '기록된 어트랙션이 없어요.',
-                        style: _serif(size: 12, color: _Vintage.inkFaded),
-                      ),
-                    ]
-                  : attrs
-                      .map((a) => _AttractionRow(attraction: a, accent: config.titleColor))
-                      .toList(),
+          // 미션 섹션 (compact list)
+          Text(
+            '오늘의 미션',
+            style: TextStyle(
+              color: const Color(0xFFE60023),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.4,
             ),
           ),
-          const SizedBox(height: 18),
-          // 미션
-          _JournalGroup(
-            label: '오늘의 미션',
-            child: Column(
-              children: book.missions
-                  .map((m) => _MissionRow(mission: m, accent: config.titleColor))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 18),
-          // 뱃지
-          _JournalGroup(
-            label: '획득한 뱃지',
-            child: book.badges.isEmpty
-                ? Text(
-                    '획득한 뱃지가 아직 없어요.',
-                    style: _serif(size: 12, color: _Vintage.inkFaded),
-                  )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        book.badges.map((b) => _BadgeChip(spec: b)).toList(),
+          const SizedBox(height: 10),
+          for (final m in book.missions)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    m.completed
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    size: 16,
+                    color: m.completed
+                        ? const Color(0xFFE60023)
+                        : const Color(0xFFC4C4C4),
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      m.label,
+                      style: TextStyle(
+                        color: const Color(0xFF333333),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        decoration: m.completed
+                            ? null
+                            : TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (book.badges.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const _JournalDashedRule(),
+            const SizedBox(height: 14),
+            Text(
+              '획득한 뱃지',
+              style: TextStyle(
+                color: const Color(0xFFE60023),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.4,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  book.badges.map((b) => _BadgeChip(spec: b)).toList(),
+            ),
+          ],
+          const SizedBox(height: 28),
+          // 페이지 번호
+          Center(
+            child: Text(
+              '— p. 8 of 12 —',
+              style: TextStyle(
+                color: const Color(0xFF9A9A9A),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _JournalDashedRule extends StatelessWidget {
+  const _JournalDashedRule();
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 1,
+      child: CustomPaint(painter: _HDashPainter()),
+    );
+  }
+}
+
+class _HDashPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE5E5E5)
+      ..strokeWidth = 1;
+    const dash = 4.0, gap = 4.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dash, 0), paint);
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HDashPainter o) => false;
+}
+
+class _JournalAttractionRow extends StatelessWidget {
+  final Attraction attraction;
+  const _JournalAttractionRow({required this.attraction});
+
+  String get _stampCode {
+    final n = attraction.name;
+    final ascii = RegExp(r'[A-Za-z]{2,3}').firstMatch(n);
+    if (ascii != null) return ascii.group(0)!.toUpperCase();
+    final num = RegExp(r'\d{3}').firstMatch(n);
+    if (num != null) return num.group(0)!;
+    return n.characters.take(2).toString();
+  }
+
+  String get _timeLabel {
+    // 시안 — 11:42, 13:10 형식 mock time
+    final h = (attraction.waitMinutes.hashCode % 8 + 10).toString();
+    final m = ((attraction.id.hashCode.abs()) % 60).toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tone = attraction.category == '카페'
+        ? const Color(0xFFFFC700)
+        : attraction.category == '음식점'
+            ? const Color(0xFFFFF4C7)
+            : attraction.category == '포토스팟'
+                ? const Color(0xFFFFE0E6)
+                : attraction.thrillLevel >= 4
+                    ? const Color(0xFFE60023)
+                    : const Color(0xFFDDEEFB);
+    final ink = attraction.category == '카페' || attraction.thrillLevel >= 4
+        ? Colors.white
+        : const Color(0xFF111111);
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: tone,
+            border: Border.all(
+                color: Colors.black.withOpacity(0.08), width: 1),
+          ),
+          child: Text(
+            _stampCode,
+            style: TextStyle(
+              color: ink,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                attraction.name,
+                style: const TextStyle(
+                  color: Color(0xFF111111),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _timeLabel,
+                style: const TextStyle(
+                  color: Color(0xFF707070),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1819,14 +2014,20 @@ class _PageMemory extends StatelessWidget {
   Widget build(BuildContext context) {
     final userPhoto = _PhotoStore.photoOf(book.id);
     final hasPhoto = userPhoto != null || book.sampleIllustration != null;
-    return _ParchmentBackground(
+    // v3 시안 C 오른쪽 페이지 — 흰 BG + CH·03 추억의 장 빨간 eyebrow + 사진 + 인용
+    return Container(
+      color: Colors.white,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
         children: [
-          _SectionTitle(
-            icon: Icons.history_edu_rounded,
-            text: '추억의 장',
-            color: config.titleColor,
+          Text(
+            'CH · 03 · 추억의 장',
+            style: TextStyle(
+              color: const Color(0xFFE60023),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.6,
+            ),
           ),
           const SizedBox(height: 16),
           // 스토리 (필기체 느낌 — 세리프 + 줄 라인)
