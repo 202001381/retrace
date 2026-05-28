@@ -817,22 +817,27 @@ class _Bookshelf extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(books.length, (i) {
-                    final color = config.spines[i % config.spines.length];
-                    return _BookSpine(
-                      book: books[i],
-                      color: color,
-                      onTap: () => onBookTap(i),
-                    );
-                  }),
+                  children: [
+                    // 실제 책
+                    for (var i = 0; i < books.length; i++)
+                      _BookSpine(
+                        book: books[i],
+                        color: config.spines[i % config.spines.length],
+                        onTap: () => onBookTap(i),
+                      ),
+                    // 빈 슬롯 placeholder (시안 11 — 6칸 슬롯 가정)
+                    for (var i = 0; i < (6 - books.length).clamp(0, 6); i++)
+                      const _EmptyBookSlot(),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
               Container(
-                height: 12,
-                decoration: const BoxDecoration(
+                height: 10,
+                decoration: BoxDecoration(
                   color: _Vintage.shelfShadow,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(6)),
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(8)),
                 ),
               ),
             ],
@@ -843,6 +848,60 @@ class _Bookshelf extends StatelessWidget {
   }
 }
 
+/// 책장 빈 슬롯 — 시안 11 의 dashed 윤곽 placeholder.
+class _EmptyBookSlot extends StatelessWidget {
+  const _EmptyBookSlot();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 46,
+      height: 130,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(2),
+          topRight: Radius.circular(2),
+        ),
+      ),
+      child: CustomPaint(painter: _DashedSlotPainter()),
+    );
+  }
+}
+
+class _DashedSlotPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = _Vintage.leather.withOpacity(0.28)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    const dash = 3.0, gap = 3.0;
+    // top
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dash, 0), paint);
+      x += dash + gap;
+    }
+    // left
+    double y = 0;
+    while (y < size.height) {
+      canvas.drawLine(Offset(0, y), Offset(0, y + dash), paint);
+      y += dash + gap;
+    }
+    // right
+    y = 0;
+    while (y < size.height) {
+      canvas.drawLine(
+          Offset(size.width, y), Offset(size.width, y + dash), paint);
+      y += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedSlotPainter o) => false;
+}
+
 class _BookSpine extends StatelessWidget {
   final _DiaryBook book;
   final Color color;
@@ -851,10 +910,16 @@ class _BookSpine extends StatelessWidget {
       {required this.book, required this.color, required this.onTap});
 
   String get _spineDate {
-    final y = book.date.year.toString();
-    final m = book.date.month.toString().padLeft(2, '0');
+    final m = book.date.month.toString();
     final d = book.date.day.toString().padLeft(2, '0');
-    return '$y.$m.$d';
+    return '$m.$d';
+  }
+
+  /// v3 시안 11 — 책 spine 에 헤드라인을 한 글자씩 세로 적층.
+  /// 공백·구두점은 제외, 최대 5자.
+  List<String> get _spineChars {
+    final cleaned = book.headline.replaceAll(RegExp(r'[\s·,.!?]'), '');
+    return cleaned.characters.take(5).toList();
   }
 
   @override
@@ -904,39 +969,68 @@ class _BookSpine extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
+              // 상·하 금장 띠
               Positioned(
-                top: 8,
+                top: 10,
                 child: Container(
-                  width: 30, height: 1,
-                  color: _Vintage.gold.withOpacity(0.7),
+                  width: 30,
+                  height: 1,
+                  color: _Vintage.gold.withOpacity(0.6),
                 ),
               ),
               Positioned(
-                bottom: 30,
+                bottom: 18,
                 child: Container(
-                  width: 30, height: 1,
-                  color: _Vintage.gold.withOpacity(0.7),
+                  width: 30,
+                  height: 1,
+                  color: _Vintage.gold.withOpacity(0.6),
                 ),
               ),
-              RotatedBox(
-                quarterTurns: 3,
+              // 세로 적층된 헤드라인 (시안 11)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final ch in _spineChars)
+                      Text(
+                        ch,
+                        style: TextStyle(
+                          fontFamily: _kSerif,
+                          fontFamilyFallback: _kSerifFallback,
+                          color: _Vintage.gold.withOpacity(0.92),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          height: 1.15,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // 하단 작은 날짜 라벨 (4.14 식)
+              Positioned(
+                bottom: 6,
                 child: Text(
                   _spineDate,
                   style: TextStyle(
                     fontFamily: _kSerif,
                     fontFamilyFallback: _kSerifFallback,
-                    color: _Vintage.gold.withOpacity(0.95),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
+                    color: _Vintage.gold.withOpacity(0.7),
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ),
               if (hasPhoto)
                 Positioned(
-                  bottom: 10,
+                  bottom: -2,
+                  right: 4,
                   child: Container(
-                    width: 6, height: 6,
+                    width: 5,
+                    height: 5,
                     decoration: const BoxDecoration(
                       color: _Vintage.gold,
                       shape: BoxShape.circle,
