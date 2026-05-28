@@ -603,10 +603,11 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          // v3 시즌 탭 — 흰색 pill bar + 각 항목 좌측 작은 dot (active=red filled).
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: _Vintage.parchment,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(99),
               border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
             ),
@@ -617,36 +618,63 @@ class _Header extends StatelessWidget {
               height: 36,
               child: Row(
                 children: _Season.values
-                    .map((s) => Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => onChange(s),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 240),
-                              curve: Curves.easeOut,
-                              decoration: BoxDecoration(
-                                color: season == s
-                                    ? _Vintage.leather
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(99),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                _kConfigs[s]!.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.clip,
-                                style: _serif(
-                                  size: 13,
-                                  weight: FontWeight.w900,
-                                  color: season == s
-                                      ? _Vintage.parchmentLight
-                                      : _Vintage.inkMid,
-                                  letterSpacing: 1.0,
+                    .map((s) {
+                      final active = season == s;
+                      return Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => onChange(s),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOut,
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? _Vintage.parchment
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: active
+                                        ? const Color(0xFFE60023) // red
+                                        : Colors.transparent,
+                                    border: active
+                                        ? null
+                                        : Border.all(
+                                            color: _Vintage.leather
+                                                .withOpacity(0.4),
+                                            width: 1.5),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _kConfigs[s]!.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.clip,
+                                  style: _serif(
+                                    size: 13,
+                                    weight: active
+                                        ? FontWeight.w900
+                                        : FontWeight.w600,
+                                    color: active
+                                        ? _Vintage.inkDark
+                                        : _Vintage.inkMid,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ))
+                        ),
+                      );
+                    })
                     .toList(),
               ),
             ),
@@ -724,43 +752,64 @@ class _Bookshelf extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // v3 시즌 챕터 헤더 — CHAPTER · SPRING eyebrow + 22px 챕터명 + N권 카운트
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.menu_book_rounded,
-                  size: 16, color: _Vintage.leather),
-              const SizedBox(width: 6),
-              Text(
-                '기억의 책장',
-                style: _serif(
-                  size: 14,
-                  weight: FontWeight.w900,
-                  color: _Vintage.inkDark,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'CHAPTER · ${config.label.toUpperCase()}',
+                      style: _serif(
+                        size: 10,
+                        weight: FontWeight.w900,
+                        color: const Color(0xFFE60023), // red
+                        letterSpacing: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      config.tagline,
+                      style: _serif(
+                        size: 22,
+                        weight: FontWeight.w900,
+                        color: _Vintage.inkDark,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'YEAR · ${DateTime.now().year}',
+                      style: _serif(
+                        size: 10,
+                        weight: FontWeight.w800,
+                        color: _Vintage.inkMid,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _Vintage.parchmentLight,
-                  borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
-                ),
-                child: Text(
-                  '${books.length} 권',
-                  style: _serif(
-                    size: 11,
-                    weight: FontWeight.w900,
-                    color: _Vintage.leather,
-                  ),
+              const SizedBox(width: 12),
+              Text(
+                '${books.length}\n권',
+                textAlign: TextAlign.right,
+                style: _serif(
+                  size: 11,
+                  weight: FontWeight.w800,
+                  color: _Vintage.leather,
+                  letterSpacing: 0.4,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             color: _Vintage.shelfWood,

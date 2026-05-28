@@ -15,6 +15,7 @@ import '../services/visit_history_service.dart';
 import '../widgets/companion_bottom_sheet.dart';
 import '../widgets/design/condition_pip.dart';
 import '../widgets/design/logo.dart';
+import '../widgets/design/stamp.dart';
 import '../widgets/discount_cause_label.dart';
 import '../widgets/discount_countdown.dart';
 import '../widgets/price_display.dart';
@@ -221,7 +222,12 @@ class _HomeScreenState extends State<HomeScreen> {
           final crowd = _crowdLabel(a);
           return _RouteItem(
             name: a.name,
-            emoji: a.icon,
+            code: Stamp.codeFromName(a.name),
+            tone: Stamp.toneFromHints(
+              category: a.category,
+              thrillLevel: a.thrillLevel,
+              hasEasterEgg: a.hasEasterEgg,
+            ),
             type: _typeLabel(a),
             waitMin: a.waitMinutes,
             crowd: crowd.$1,
@@ -1088,12 +1094,14 @@ class _LunaPricingSheet extends StatelessWidget {
 
 // ─── 마이 루나 카드 ────────────────────────────────────────
 class _RouteItem {
-  final String name, emoji, type, crowd;
+  final String name, code, type, crowd;
+  final StampTone tone;
   final int waitMin;
   final Color crowdColor;
   const _RouteItem({
     required this.name,
-    required this.emoji,
+    required this.code,
+    required this.tone,
     required this.type,
     required this.waitMin,
     required this.crowd,
@@ -1345,15 +1353,24 @@ class _RouteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 24, height: 24,
-          decoration: const BoxDecoration(color: AppColors.ink900, shape: BoxShape.circle),
-          alignment: Alignment.center,
-          child: Text('$index',
-              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+        // 모노타입 2자리 순번 — Stamp 와 시각 무게 분리.
+        SizedBox(
+          width: 18,
+          child: Text(
+            index.toString().padLeft(2, '0'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.ink400,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
         ),
+        const SizedBox(width: 10),
+        Stamp(code: item.code, tone: item.tone, size: 34),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -1368,8 +1385,13 @@ class _RouteRow extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            '${item.emoji} ${item.name}',
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                            item.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink900,
+                              letterSpacing: -0.2,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -1378,7 +1400,7 @@ class _RouteRow extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(4)),
                           child: Text(item.type,
-                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                              style: const TextStyle(fontSize: 10, color: AppColors.ink500, fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
