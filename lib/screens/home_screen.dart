@@ -961,13 +961,23 @@ class _LunaPricingSheet extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '오늘 루나가 ${pricing.discountPercent}%\n드리는 이유',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
+                child: Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.ink900,
+                      height: 1.25,
+                      letterSpacing: -0.6,
+                    ),
+                    children: [
+                      const TextSpan(text: '오늘 루나가 '),
+                      TextSpan(
+                        text: '${pricing.discountPercent}%',
+                        style: const TextStyle(color: AppColors.red),
+                      ),
+                      const TextSpan(text: '\n드리는 이유'),
+                    ],
                   ),
                 ),
               ),
@@ -1030,7 +1040,7 @@ class _LunaPricingSheet extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 54,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
@@ -1039,8 +1049,9 @@ class _LunaPricingSheet extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.red,
                 foregroundColor: Colors.white,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(99)),
               ),
               child: Text('루나 티켓 ${_fmt(saved)}원 아끼기',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
