@@ -74,8 +74,11 @@ class RouteService {
     // 4) 동선 길이 — purpose 따라
     final N = _routeLength(req.onboarding.purpose);
 
-    // 5) 카테고리 다양성 — 어트랙션 60%, 나머지는 카페/포토/음식점 각 1
-    final attractionCount = (N * 0.6).ceil().clamp(2, N - 2);
+    // 5) 카테고리 다양성 — 어트랙션 60%, 나머지는 카페/포토/음식점 각 1.
+    // N=3 (picnic) 같이 짧은 동선에서 clamp(min, max) 의 max(N-2)가 min(2)보다
+    // 작아져 ArgumentError 가 발생하던 버그 → 상한을 max(min, N-1)로 보호.
+    final upper = (N - 1).clamp(2, N);
+    final attractionCount = (N * 0.6).ceil().clamp(2, upper);
     final picked = <Attraction>[];
     picked.addAll(scored.where((s) => s.a.category == '어트랙션').take(attractionCount).map((s) => s.a));
     final addedCafe = scored.where((s) => s.a.category == '카페').take(1).toList();

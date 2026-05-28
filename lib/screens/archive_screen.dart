@@ -34,8 +34,8 @@ class _Vintage {
   static const inkFaded = Color(0xFF9A9A9A);      // ink400
   static const leather = Color(0xFF8A6300);       // 옅은 brown (eyebrow 용)
   static const leatherDark = Color(0xFF5A3F18);
-  static const shelfWood = Color(0xFF8B5A2B);     // plank 유지
-  static const shelfShadow = Color(0xFF5C3A21);
+  static const shelfWood = Color(0xFFEDDFBF);     // 시안 11 cream-tan plank
+  static const shelfShadow = Color(0xFFD8C594);
   static const gold = Color(0xFFC99500);
   static const stampRed = Color(0xFFE60023);      // 브랜드 레드
   static const stampInk = Color(0xFF111111);
@@ -800,16 +800,16 @@ class _Bookshelf extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: _Vintage.shelfWood,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: _Vintage.leatherDark.withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
+          padding: const EdgeInsets.fromLTRB(14, 18, 14, 6),
           child: Column(
             children: [
               SizedBox(
