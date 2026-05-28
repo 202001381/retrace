@@ -1130,26 +1130,12 @@ class _DiaryDialogState extends State<_DiaryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _Vintage.parchment,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: _Vintage.leather.withOpacity(0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 30,
-              offset: const Offset(0, 14),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(13),
-          child: Column(
+    // 첫 페이지는 dark cover, 펼침 페이지는 white. PageView 가 전환 중일 때를
+    // 대비해 배경은 black 으로 고정하고 각 페이지가 자체 BG 를 갖는다.
+    return Dialog.fullscreen(
+      backgroundColor: const Color(0xFF1C1814),
+      child: SafeArea(
+        child: Column(
             children: [
               _DialogTopBar(
                 config: widget.config,
@@ -1160,6 +1146,7 @@ class _DiaryDialogState extends State<_DiaryDialog> {
                     ? _goNextBook
                     : null,
                 onClose: () => Navigator.of(context).pop(),
+                isDark: _pageIndex == 0,
               ),
               Expanded(
                 child: PageView.builder(
@@ -1178,34 +1165,12 @@ class _DiaryDialogState extends State<_DiaryDialog> {
                         onRemovePhoto: _removePhoto,
                       ),
                     ];
-                    return AnimatedBuilder(
-                      animation: _pageCtrl,
-                      child: pages[i],
-                      builder: (_, child) {
-                        double delta = 0;
-                        if (_pageCtrl.hasClients &&
-                            _pageCtrl.position.hasContentDimensions) {
-                          delta = (_pageCtrl.page ?? 0) - i;
-                        }
-                        final clamped = delta.clamp(-1.0, 1.0);
-                        final m = Matrix4.identity()
-                          ..setEntry(3, 2, 0.0015)
-                          ..rotateY(clamped * 0.55);
-                        return Transform(
-                          transform: m,
-                          alignment: delta < 0
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: child,
-                        );
-                      },
-                    );
+                    return pages[i];
                     },
                   ),
                 ),
-              _PageIndicator(current: _pageIndex, total: 3),
+              _PageIndicator(current: _pageIndex, total: 3, isDark: _pageIndex == 0),
             ],
-          ),
         ),
       ),
     );
@@ -1217,6 +1182,7 @@ class _DialogTopBar extends StatelessWidget {
   final int bookIndex, totalBooks;
   final VoidCallback? onPrev, onNext;
   final VoidCallback onClose;
+  final bool isDark;
   const _DialogTopBar({
     required this.config,
     required this.bookIndex,
@@ -1224,45 +1190,60 @@ class _DialogTopBar extends StatelessWidget {
     required this.onPrev,
     required this.onNext,
     required this.onClose,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final fg = isDark
+        ? Colors.white.withOpacity(0.85)
+        : _Vintage.inkDark;
+    final eyebrow = isDark
+        ? Colors.white.withOpacity(0.55)
+        : _Vintage.inkMid;
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
       decoration: BoxDecoration(
-        color: _Vintage.leather,
+        color: isDark ? const Color(0xFF1C1814) : Colors.white,
         border: Border(
-          bottom:
-              BorderSide(color: _Vintage.gold.withOpacity(0.4), width: 1),
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : _Vintage.parchmentDark,
+            width: 1,
+          ),
         ),
       ),
       child: Row(
         children: [
           _IconBtn(
-              icon: Icons.chevron_left_rounded,
-              onTap: onPrev,
-              enabled: onPrev != null),
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: onClose,
+            enabled: true,
+            isDark: isDark,
+          ),
           Expanded(
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${config.label} CHAPTER',
-                    style: _serif(
-                      size: 9,
-                      weight: FontWeight.w900,
-                      color: _Vintage.gold.withOpacity(0.9),
-                      letterSpacing: 3,
+                    '${config.label.toUpperCase()} · VOL.1',
+                    style: TextStyle(
+                      color: eyebrow,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.6,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    '$bookIndex / $totalBooks',
-                    style: _serif(
-                      size: 13,
-                      weight: FontWeight.w900,
-                      color: _Vintage.parchmentLight,
+                    '${book(bookIndex)}',
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
@@ -1270,35 +1251,44 @@ class _DialogTopBar extends StatelessWidget {
             ),
           ),
           _IconBtn(
-              icon: Icons.chevron_right_rounded,
-              onTap: onNext,
-              enabled: onNext != null),
-          const SizedBox(width: 4),
-          _IconBtn(
-              icon: Icons.close_rounded, onTap: onClose, enabled: true),
+            icon: Icons.add_rounded,
+            onTap: onNext,
+            enabled: onNext != null,
+            isDark: isDark,
+          ),
         ],
       ),
     );
   }
+
+  String book(int i) => '$i / $totalBooks';
 }
 
 class _IconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final bool enabled;
-  const _IconBtn(
-      {required this.icon, required this.onTap, required this.enabled});
+  final bool isDark;
+  const _IconBtn({
+    required this.icon,
+    required this.onTap,
+    required this.enabled,
+    this.isDark = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final color = isDark
+        ? Colors.white.withOpacity(0.9)
+        : _Vintage.inkDark;
     return Opacity(
       opacity: enabled ? 1.0 : 0.25,
       child: InkResponse(
         onTap: enabled ? onTap : null,
         radius: 20,
         child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, color: _Vintage.parchmentLight, size: 22),
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: color, size: 20),
         ),
       ),
     );
@@ -1312,129 +1302,239 @@ class _PageCover extends StatelessWidget {
   const _PageCover({required this.book, required this.config});
 
   String _formatDate(DateTime d) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    return '${months[d.month - 1]} ${d.day} · ${d.year}';
+  }
+
+  String _formatKoreanDate(DateTime d) {
     final wd = const ['일', '월', '화', '수', '목', '금', '토'][d.weekday % 7];
-    return '${d.year}년 ${d.month}월 ${d.day}일 · $wd요일';
+    return '${d.month}월 ${d.day}일 · $wd요일';
   }
 
   @override
   Widget build(BuildContext context) {
-    return _ParchmentBackground(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+    // v3 시안 B (책 꺼냄) — 다크 BG + 떠 있는 빨간 책 표지 + 인용구.
+    return Container(
+      color: const Color(0xFF1C1814),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         child: Column(
           children: [
-            // 상단: 날씨 스탬프
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(
-                        color: book.weather.stampColor.withOpacity(0.75),
-                        width: 2),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(book.weather.icon,
-                          style: const TextStyle(fontSize: 18)),
-                      const SizedBox(width: 6),
-                      Text(
-                        book.weather.label,
-                        style: _serif(
-                          size: 11,
-                          weight: FontWeight.w900,
-                          color: book.weather.stampColor,
-                          letterSpacing: 1.2,
+            // 우상단 노란 글로우 (시안 B 의 떠 있는 달)
+            SizedBox(
+              height: 380,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 글로우
+                  Positioned(
+                    top: 0,
+                    right: -30,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: const Alignment(-0.2, -0.2),
+                          colors: [
+                            Colors.white.withOpacity(0.45),
+                            const Color(0xFFC7B68A).withOpacity(0.35),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.45, 0.85],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Transform.rotate(
-                  angle: 0.06,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _Vintage.stampRed.withOpacity(0.08),
-                      border: Border.all(
-                          color: _Vintage.stampRed.withOpacity(0.7), width: 1.5),
-                    ),
-                    child: Text(
-                      'VOL. ${book.date.year}',
-                      style: _serif(
-                        size: 9,
-                        weight: FontWeight.w900,
-                        color: _Vintage.stampRed,
-                        letterSpacing: 2,
-                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 28),
-            // 가운데: 시즌 아이콘 + 큰 헤드라인
-            Icon(config.icon, color: config.titleColor, size: 36),
-            const SizedBox(height: 18),
-            Text(
-              book.headline,
-              textAlign: TextAlign.center,
-              style: _serif(
-                size: 26,
-                weight: FontWeight.w900,
-                color: _Vintage.inkDark,
-                height: 1.4,
-                letterSpacing: -0.3,
+                  // 빨간 책 표지
+                  _BookCoverCard(
+                      book: book, formatDate: _formatDate, config: config),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            // 장식 구분선 (왼쪽 라인 — 가운데 다이아 — 오른쪽 라인)
+            const SizedBox(height: 20),
+            // 날짜 + 통계 row
             Row(
               children: [
                 Expanded(
-                    child: Container(
-                        height: 1, color: _Vintage.leather.withOpacity(0.3))),
-                const SizedBox(width: 8),
-                const Icon(Icons.diamond_outlined,
-                    color: _Vintage.leather, size: 12),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: Container(
-                        height: 1, color: _Vintage.leather.withOpacity(0.3))),
+                  child: Text(
+                    '${_formatKoreanDate(book.date)} · 11:42-18:30',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${book.attractionIds.length * 2} STAMPS · ${book.badges.length} EGGS',
+                  style: TextStyle(
+                    color: const Color(0xFFFFC700).withOpacity(0.85),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 24),
-            Text(
-              _formatDate(book.date),
-              style: _serif(
-                size: 14,
-                weight: FontWeight.w700,
-                color: _Vintage.inkBody,
-                letterSpacing: 0.5,
+            const SizedBox(height: 14),
+            // 빨간 좌측 막대 + 인용구 (book.story 앞부분)
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                border: const Border(
+                  left: BorderSide(color: Color(0xFFE60023), width: 3),
+                ),
               ),
-            ),
-            const Spacer(),
-            // 하단 시리즈 표기
-            Text(
-              '— Daily Exploration Magazine —',
-              style: _serif(
-                size: 10,
-                weight: FontWeight.w700,
-                color: _Vintage.inkFaded,
-                style: FontStyle.italic,
-                letterSpacing: 2,
+              child: Text(
+                '"${book.story.split(RegExp(r'[.。!?]'))[0]}."',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.92),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.55,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+/// 시안 B 의 떠 있는 빨간 책 표지 카드.
+class _BookCoverCard extends StatelessWidget {
+  final _DiaryBook book;
+  final _SeasonConfig config;
+  final String Function(DateTime) formatDate;
+  const _BookCoverCard({
+    required this.book,
+    required this.config,
+    required this.formatDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final spineColor = config.spines.first;
+    return Container(
+      width: 240,
+      height: 340,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            spineColor,
+            Color.lerp(spineColor, Colors.black, 0.35)!,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.55),
+            blurRadius: 30,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'SEOULLAND · RE·TRACE',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.6,
+              ),
+            ),
+            const SizedBox(height: 40),
+            Text(
+              book.headline.length > 8
+                  ? '${book.headline.characters.take(8).toString()}…'
+                  : book.headline,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                height: 1.25,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              formatDate(book.date),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // 작은 stamp 2개 (실 어트랙션 매핑)
+                for (final id in book.attractionIds.take(2))
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.6), width: 1.2),
+                      ),
+                      child: Text(
+                        _stampCode(id),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                Text(
+                  'VOL · ${book.date.year - 2025}',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 어트랙션 id 에서 stamp code 추출 — 영문 약자.
+  String _stampCode(String id) {
+    final byId = {for (final a in kAttractions) a.id: a};
+    final name = byId[id]?.name ?? id;
+    final ascii = RegExp(r'[A-Za-z]{2,3}').firstMatch(name);
+    if (ascii != null) return ascii.group(0)!.toUpperCase();
+    final num = RegExp(r'\d{3}').firstMatch(name);
+    if (num != null) return num.group(0)!;
+    return name.characters.take(2).toString();
   }
 }
 
@@ -2042,45 +2142,36 @@ class _PhotoActionBtn extends StatelessWidget {
 class _PageIndicator extends StatelessWidget {
   final int current;
   final int total;
-  const _PageIndicator({required this.current, required this.total});
-
-  static const _kLabels = ['표지', '탐험 일지', '추억의 장'];
+  final bool isDark;
+  const _PageIndicator({
+    required this.current,
+    required this.total,
+    this.isDark = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final active = isDark ? Colors.white : _Vintage.inkDark;
+    final inactive = isDark
+        ? Colors.white.withOpacity(0.25)
+        : _Vintage.inkDark.withOpacity(0.2);
     return Container(
-      color: _Vintage.parchmentDark,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      color: isDark ? const Color(0xFF1C1814) : Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(total, (i) {
-          final active = i == current;
+          final isActive = i == current;
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 240),
-                  width: active ? 20 : 8,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? _Vintage.leather
-                        : _Vintage.leather.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _kLabels[i],
-                  style: _serif(
-                    size: 9,
-                    weight: FontWeight.w800,
-                    color: active ? _Vintage.leather : _Vintage.inkMid,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: isActive ? 20 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isActive ? active : inactive,
+                borderRadius: BorderRadius.circular(99),
+              ),
             ),
           );
         }),
