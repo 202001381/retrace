@@ -41,6 +41,14 @@ class _Vintage {
   static const stampInk = Color(0xFF111111);
 }
 
+/// 한글 시즌 라벨 → 영문 eyebrow 매핑 (시안 v2 — 11/11b/11c/11d).
+const Map<String, String> _kSeasonEng = {
+  '봄': 'SPRING',
+  '여름': 'SUMMER',
+  '가을': 'AUTUMN',
+  '겨울': 'WINTER',
+};
+
 /// 가독성 좋은 세리프 패밀리 — 시스템 폰트 폴백.
 const String _kSerif = 'Georgia';
 const List<String> _kSerifFallback = ['Times New Roman', 'Times', 'serif'];
@@ -66,13 +74,17 @@ TextStyle _serif({
 
 class _SeasonConfig {
   final String label, tagline;
-  final Color titleColor;
+  final Color titleColor; // chapter eyebrow color (시안 v2 — 시즌별 차별)
+  final Color plankColor; // 책장 plank (시안 v2 — 시즌별 차별)
+  final Color dotColor;   // 시즌 탭 dot 컬러
   final IconData icon;
   final List<Color> spines;
   const _SeasonConfig({
     required this.label,
     required this.tagline,
     required this.titleColor,
+    required this.plankColor,
+    required this.dotColor,
     required this.icon,
     required this.spines,
   });
@@ -81,42 +93,62 @@ class _SeasonConfig {
 const Map<_Season, _SeasonConfig> _kConfigs = {
   _Season.spring: _SeasonConfig(
     label: '봄',
-    tagline: '벚꽃 흩날리는 봄날의 기억',
-    titleColor: Color(0xFFA4321E),
+    tagline: '벚꽃 흩날리는 봄날',
+    titleColor: Color(0xFFE60023), // 빨강
+    plankColor: Color(0xFFFBE5E0), // 연 핑크 plank
+    dotColor: Color(0xFFE60023),
     icon: Icons.local_florist_rounded,
     spines: [
-      Color(0xFFA8485A), Color(0xFF8B3A4A), Color(0xFFB85C6E),
-      Color(0xFF9A4054), Color(0xFFC97B89),
+      Color(0xFFE08494), // rose pink
+      Color(0xFFE5A8A8), // pale pink
+      Color(0xFFB8D4C5), // mint
+      Color(0xFFA8B8CF), // dusty lavender
+      Color(0xFFE9D6A8), // beige
     ],
   ),
   _Season.summer: _SeasonConfig(
     label: '여름',
-    tagline: '눈부신 태양 아래 여름날',
-    titleColor: Color(0xFF2E5470),
+    tagline: '바다 냄새 나는 여름',
+    titleColor: Color(0xFF0084E0), // 블루
+    plankColor: Color(0xFFFAF7F2), // 크림
+    dotColor: Color(0xFF00A8B5),   // 청록
     icon: Icons.wb_sunny_rounded,
     spines: [
-      Color(0xFF3A6A8C), Color(0xFF2E5470), Color(0xFF4682B4),
-      Color(0xFF1D4E5F), Color(0xFF5B8FA8),
+      Color(0xFF1F6F7A), // teal
+      Color(0xFFE85A4F), // coral red
+      Color(0xFFE89A47), // orange
+      Color(0xFF3A6FB8), // blue
+      Color(0xFFF2C84B), // yellow
     ],
   ),
   _Season.autumn: _SeasonConfig(
     label: '가을',
-    tagline: '단풍 물든 가을의 낭만',
-    titleColor: Color(0xFF8B4513),
+    tagline: '단풍이 깊어가는 가을',
+    titleColor: Color(0xFF8A6300), // 갈색
+    plankColor: Color(0xFFFAF1DE), // 따뜻한 cream
+    dotColor: Color(0xFFE89A47),   // 주황
     icon: Icons.eco_rounded,
     spines: [
-      Color(0xFFB8651E), Color(0xFF8B4513), Color(0xFF9A6324),
-      Color(0xFFA0522D), Color(0xFFCD7F32),
+      Color(0xFFC95A2E), // burnt orange
+      Color(0xFFA84520), // deep red-brown
+      Color(0xFFD49A3D), // gold-ochre
+      Color(0xFFB05828), // sienna
+      Color(0xFFCB6A2A), // pumpkin
     ],
   ),
   _Season.winter: _SeasonConfig(
     label: '겨울',
-    tagline: '눈 내리는 겨울밤의 동화',
-    titleColor: Color(0xFF3D4A56),
+    tagline: '눈 내리는 고요한 겨울',
+    titleColor: Color(0xFF1F2A44), // 네이비
+    plankColor: Color(0xFFF0F4F8), // 차가운 화이트
+    dotColor: Color(0xFF3A6FB8),   // 블루
     icon: Icons.ac_unit_rounded,
     spines: [
-      Color(0xFF4A5A6A), Color(0xFF6B7A8C), Color(0xFF5F7080),
-      Color(0xFF3D4A56), Color(0xFF829AAD),
+      Color(0xFF2B4255), // dark navy
+      Color(0xFF1A1A1A), // near-black
+      Color(0xFF5B4538), // dark brown
+      Color(0xFFA7C8E3), // ice blue
+      Color(0xFFE5D9C6), // cream
     ],
   ),
 };
@@ -213,8 +245,18 @@ class _PhotoStore {
 class _ArchiveScreenState extends State<ArchiveScreen> {
   _Season _season = _Season.spring;
   bool _ready = false;
+  late final PageController _seasonPager = PageController(initialPage: 0);
 
   late final Map<_Season, List<_DiaryBook>> _diaries = _buildMockDiaries();
+
+  void _onTabChange(_Season s) {
+    final idx = _Season.values.indexOf(s);
+    _seasonPager.animateToPage(
+      idx,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   void initState() {
@@ -228,38 +270,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     setState(() => _ready = true);
   }
 
-  void _openDiary(int index) {
-    showGeneralDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.65),
-      barrierDismissible: true,
-      barrierLabel: '닫기',
-      transitionDuration: const Duration(milliseconds: 360),
-      pageBuilder: (ctx, anim, secAnim) {
-        return _DiaryDialog(
-          config: _kConfigs[_season]!,
-          books: _diaries[_season]!,
-          initialBookIndex: index,
-          onPhotoChanged: () => setState(() {}),
-        );
-      },
-      transitionBuilder: (ctx, anim, secAnim, child) {
-        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-        return FadeTransition(
-          opacity: curve,
-          child: ScaleTransition(
-            scale: Tween(begin: 0.9, end: 1.0).animate(curve),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final config = _kConfigs[_season]!;
-    final books = _diaries[_season]!;
     if (!_ready) {
       return const ColoredBox(
         color: _Vintage.parchmentLight,
@@ -271,24 +283,72 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         bottom: false,
         child: Column(
           children: [
-            _Header(season: _season, onChange: (s) => setState(() => _season = s)),
+            _Header(season: _season, onChange: _onTabChange),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                children: [
-                  // v3 — _SeasonBanner 제거 (Bookshelf chapter header 와 중복).
-                  _Bookshelf(
-                      config: config, books: books, onBookTap: _openDiary),
-                  const SizedBox(height: 20),
-                  _DiaryStats(books: books, config: config),
-                  const SizedBox(height: 16),
-                  _PaperHint(),
-                ],
+              child: PageView.builder(
+                controller: _seasonPager,
+                itemCount: _Season.values.length,
+                onPageChanged: (i) =>
+                    setState(() => _season = _Season.values[i]),
+                itemBuilder: (ctx, i) {
+                  final s = _Season.values[i];
+                  final cfg = _kConfigs[s]!;
+                  final list = _diaries[s] ?? const <_DiaryBook>[];
+                  return ListView(
+                    padding:
+                        const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                    children: [
+                      _Bookshelf(
+                          config: cfg,
+                          books: list,
+                          onBookTap: (idx) => _openDiaryForSeason(s, idx)),
+                      const SizedBox(height: 20),
+                      _DiaryStats(books: list, config: cfg),
+                      const SizedBox(height: 16),
+                      _PaperHint(),
+                    ],
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _seasonPager.dispose();
+    super.dispose();
+  }
+
+  void _openDiaryForSeason(_Season s, int index) {
+    showGeneralDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.65),
+      barrierDismissible: true,
+      barrierLabel: '닫기',
+      transitionDuration: const Duration(milliseconds: 360),
+      pageBuilder: (ctx, anim, secAnim) {
+        return _DiaryDialog(
+          config: _kConfigs[s]!,
+          books: _diaries[s]!,
+          initialBookIndex: index,
+          onPhotoChanged: () => setState(() {}),
+        );
+      },
+      transitionBuilder: (ctx, anim, secAnim, child) {
+        final curve =
+            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: curve,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.9, end: 1.0).animate(curve),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
@@ -607,6 +667,7 @@ class _Header extends StatelessWidget {
                 children: _Season.values
                     .map((s) {
                       final active = season == s;
+                      final cfg = _kConfigs[s]!;
                       return Expanded(
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
@@ -624,25 +685,26 @@ class _Header extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                // 시즌별 컬러 dot — active=채움, inactive=외곽
                                 Container(
                                   width: 7,
                                   height: 7,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: active
-                                        ? const Color(0xFFE60023) // red
+                                        ? cfg.dotColor
                                         : Colors.transparent,
                                     border: active
                                         ? null
                                         : Border.all(
-                                            color: _Vintage.leather
-                                                .withOpacity(0.4),
+                                            color: cfg.dotColor
+                                                .withOpacity(0.5),
                                             width: 1.5),
                                   ),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  _kConfigs[s]!.label,
+                                  cfg.label,
                                   maxLines: 1,
                                   overflow: TextOverflow.clip,
                                   style: _serif(
@@ -751,11 +813,12 @@ class _Bookshelf extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'CHAPTER · ${config.label.toUpperCase()}',
+                      // 시즌 영문명 (CHAPTER · SPRING / SUMMER / AUTUMN / WINTER)
+                      'CHAPTER · ${_kSeasonEng[config.label] ?? config.label.toUpperCase()}',
                       style: _serif(
                         size: 10,
                         weight: FontWeight.w900,
-                        color: const Color(0xFFE60023), // red
+                        color: config.titleColor, // 시즌별 컬러
                         letterSpacing: 1.6,
                       ),
                     ),
@@ -799,11 +862,11 @@ class _Bookshelf extends StatelessWidget {
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: _Vintage.shelfWood,
+            color: config.plankColor, // 시즌별 plank
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withOpacity(0.06),
                 blurRadius: 18,
                 offset: const Offset(0, 8),
               ),
@@ -835,7 +898,8 @@ class _Bookshelf extends StatelessWidget {
               Container(
                 height: 10,
                 decoration: BoxDecoration(
-                  color: _Vintage.shelfShadow,
+                  // plank 보다 살짝 어두운 톤 — 시즌별 자동 따라감
+                  color: Color.lerp(config.plankColor, Colors.black, 0.18),
                   borderRadius:
                       const BorderRadius.vertical(bottom: Radius.circular(8)),
                 ),
