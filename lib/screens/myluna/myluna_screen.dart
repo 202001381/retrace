@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../widgets/design/logo.dart';
+import '../../widgets/design/stamp.dart';
 
 import '../../models/attraction.dart';
 import '../../models/demo_scenario.dart';
@@ -505,163 +506,200 @@ class _HeroNextCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalMin = walkMin + waitMin;
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.ink900, width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ink900.withValues(alpha: 0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.ink900,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text('다음 추천',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 검정 STOP 헤더
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              color: AppColors.ink900,
+              child: Row(
+                children: [
+                  const Text(
+                    'STOP 01 OF 04',
                     style: TextStyle(
-                      color: AppColors.bgCard,
+                      color: Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.4,
-                    )),
-              ),
-              const SizedBox(width: 8),
-              if (spot.hasEasterEgg) const Text('🥚', style: TextStyle(fontSize: 14)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 56, height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.bgPage,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(spot.icon, style: const TextStyle(fontSize: 28)),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(spot.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
-                        )),
-                    const SizedBox(height: 2),
-                    Text('${spot.category} · ${spot.zone}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        )),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          // 도보 · 대기 · 총
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-            decoration: BoxDecoration(
-              color: AppColors.bgPage,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                _StatCell(
-                  emoji: '🚶',
-                  label: '도보',
-                  value: '$walkMin분',
-                ),
-                _StatDivider(),
-                _StatCell(
-                  emoji: '⏱',
-                  label: '도착 시 대기',
-                  value: '$waitMin분',
-                ),
-                _StatDivider(),
-                _StatCell(
-                  emoji: '⊕',
-                  label: '총',
-                  value: '$totalMin분',
-                  accent: true,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onNavigate,
-                  icon: const Icon(Icons.navigation_rounded, size: 18),
-                  label: const Text('길 안내'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.ink900,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    textStyle: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w900),
+                      letterSpacing: 1.4,
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  Text(
+                    '다음 추천',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: onSkip,
-                icon: const Icon(Icons.skip_next_rounded, size: 18),
-                label: const Text('건너뛰기'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  side: const BorderSide(color: AppColors.line),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  textStyle: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w800),
-                ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Stamp(
+                        code: Stamp.codeFromName(spot.name),
+                        tone: Stamp.toneFromHints(
+                          category: spot.category,
+                          thrillLevel: spot.thrillLevel,
+                          hasEasterEgg: spot.hasEasterEgg,
+                        ),
+                        size: 56,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              spot.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.ink900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${spot.category} · ${spot.zone}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.ink500,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  // dashed divider
+                  CustomPaint(
+                    size: const Size(double.infinity, 1),
+                    painter: _DashedRulePainter(color: AppColors.line),
+                  ),
+                  const SizedBox(height: 14),
+                  // 도보 · 대기 · 총 3분할
+                  Row(
+                    children: [
+                      _StatCell(label: '도보', value: '$walkMin분'),
+                      _StatDivider(),
+                      _StatCell(label: '대기', value: '$waitMin분'),
+                      _StatDivider(),
+                      _StatCell(
+                        label: '총',
+                        value: '$totalMin분',
+                        accent: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  CustomPaint(
+                    size: const Size(double.infinity, 1),
+                    painter: _DashedRulePainter(color: AppColors.line),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed: onNavigate,
+                            icon: const Icon(Icons.directions_walk_rounded,
+                                size: 18),
+                            label: const Text('길 안내 시작'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.red,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(99)),
+                              textStyle: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: onSkip,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.line),
+                          ),
+                          child: const Icon(Icons.skip_next_rounded,
+                              size: 20, color: AppColors.ink700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+class _DashedRulePainter extends CustomPainter {
+  final Color color;
+  _DashedRulePainter({required this.color});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    const dash = 4.0, gap = 4.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dash, 0), paint);
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRulePainter o) => o.color != color;
+}
+
 class _StatCell extends StatelessWidget {
-  final String emoji;
   final String label;
   final String value;
   final bool accent;
   const _StatCell({
-    required this.emoji,
     required this.label,
     required this.value,
     this.accent = false,
@@ -673,27 +711,24 @@ class _StatCell extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-              )),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 13)),
-              const SizedBox(width: 3),
-              Text(value,
-                  style: TextStyle(
-                    fontSize: accent ? 17 : 14,
-                    fontWeight: FontWeight.w900,
-                    color:
-                        accent ? AppColors.red : AppColors.textPrimary,
-                  )),
-            ],
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppColors.ink500,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: accent ? 22 : 18,
+              fontWeight: FontWeight.w900,
+              color: accent ? AppColors.red : AppColors.ink900,
+              letterSpacing: -0.4,
+            ),
           ),
         ],
       ),
@@ -741,30 +776,29 @@ class _NextItemRow extends StatelessWidget {
           child: Row(
             children: [
               if (showOrder) ...[
-                Container(
-                  width: 24, height: 24,
-                  decoration: const BoxDecoration(
-                    color: AppColors.ink900,
-                    shape: BoxShape.circle,
+                SizedBox(
+                  width: 22,
+                  child: Text(
+                    order.toString().padLeft(2, '0'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.ink400,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: Text('$order',
-                      style: const TextStyle(
-                        color: AppColors.bgCard,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                      )),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
               ],
-              Container(
-                width: 38, height: 38,
-                decoration: const BoxDecoration(
-                  color: AppColors.bgPage,
-                  shape: BoxShape.circle,
+              Stamp(
+                code: Stamp.codeFromName(spot.name),
+                tone: Stamp.toneFromHints(
+                  category: spot.category,
+                  thrillLevel: spot.thrillLevel,
+                  hasEasterEgg: spot.hasEasterEgg,
                 ),
-                alignment: Alignment.center,
-                child: Text(spot.icon, style: const TextStyle(fontSize: 20)),
+                size: 38,
               ),
               const SizedBox(width: 12),
               Expanded(

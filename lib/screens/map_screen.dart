@@ -11,6 +11,7 @@ import '../models/attraction.dart';
 import '../models/place_filter.dart';
 import '../models/route_response.dart';
 import '../widgets/design/stamp.dart';
+import 'all_attractions_screen.dart';
 import '../services/easter_egg_service.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
@@ -752,27 +753,38 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                          // 헤더 — 필터 활성 시 "전체" 단어 제거, 결과 N곳.
+                          // 헤더 — 필터 활성 시 "전체" 단어 제거, 결과 N곳. 탭 시 풀스크린 리스트.
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _filter.isAnyActive
-                                      ? '결과 ${_visibleAttractions.length}곳'
-                                      : '전체 ${_visibleAttractions.length}곳',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textPrimary,
-                                  ),
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const AllAttractionsScreen(),
                                 ),
-                                const Spacer(),
-                                _PulseDot(),
-                                const SizedBox(width: 4),
-                                const Text('실시간 연동 중',
-                                    style: TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
-                              ],
+                              ),
+                              behavior: HitTestBehavior.opaque,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _filter.isAnyActive
+                                        ? '결과 ${_visibleAttractions.length}곳'
+                                        : '전체 ${_visibleAttractions.length}곳',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.chevron_right_rounded,
+                                      size: 18, color: AppColors.ink400),
+                                  const Spacer(),
+                                  _PulseDot(),
+                                  const SizedBox(width: 4),
+                                  const Text('실시간 연동 중',
+                                      style: TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
                             ),
                           ),
                           const Divider(height: 1, color: AppColors.line),

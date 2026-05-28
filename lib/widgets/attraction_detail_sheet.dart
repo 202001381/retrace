@@ -163,6 +163,46 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
               ],
             ),
             const SizedBox(height: 14),
+            // v3 — 이미지 strip (placeholder 3장)
+            SizedBox(
+              height: 88,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: List.generate(3, (i) {
+                  return Container(
+                    width: 130,
+                    margin: EdgeInsets.only(right: i == 2 ? 0 : 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: i.isEven
+                            ? [const Color(0xFFEDDFBF), const Color(0xFFE2CF99)]
+                            : [const Color(0xFFF8D8C0), const Color(0xFFF1C49E)],
+                      ),
+                    ),
+                    alignment: Alignment.bottomLeft,
+                    padding: const EdgeInsets.all(10),
+                    child: Text(
+                      i == 0
+                          ? 'PHOTO · MAIN'
+                          : i == 1
+                              ? 'PHOTO · ZONE'
+                              : 'PHOTO · DETAIL',
+                      style: const TextStyle(
+                        color: Color(0xFF7A5715),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 14),
             Text(a.description,
                 style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.6)),
             const SizedBox(height: 14),
