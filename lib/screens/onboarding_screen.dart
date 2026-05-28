@@ -267,13 +267,14 @@ class _IntroWelcomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(
+        // Seoul Land 레드 팔레트 — 뒤따르는 설문 화면(빨강 액센트)과 연속성.
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF4D7AFF), // azure
-            Color(0xFF8B6CFF), // grape
-            Color(0xFFB85AAE), // mauve
+            Color(0xFFE60023), // brand red
+            Color(0xFFB8001C), // red-deep
+            Color(0xFF7A0014), // deep maroon
           ],
           stops: [0.0, 0.55, 1.0],
         ),

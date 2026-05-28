@@ -66,7 +66,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   double _sheetSize = 0.08;
-  static const double _kSheetMini = 0.08;
+  // 어트랙션 목록이 기본부터 보이도록 mid 로 시작.
+  static const double _kSheetMini = 0.12;
   static const double _kSheetMid = 0.50;
   static const double _kSheetMax = 0.92;
 
@@ -654,7 +655,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           // ── 하단 시트 ──────────────────────────────────────
           DraggableScrollableSheet(
             controller: _sheetController,
-            initialChildSize: _kSheetMini,
+            // 어트랙션 목록이 첫 화면부터 보이도록 mid 위치로 시작.
+            initialChildSize: _kSheetMid,
             minChildSize: _kSheetMini,
             maxChildSize: _kSheetMax,
             snap: true,

@@ -102,13 +102,19 @@ class MoonMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _MoonPainter(color: color, filled: filled),
+    // Path.combine 의 가용성 차이를 피하기 위해 Icon으로 폴백.
+    // 디자인적으로 동일한 초승달 글리프 (Material Icons.nightlight_round).
+    return Icon(
+      filled ? Icons.nightlight_round : Icons.nightlight_outlined,
+      size: size,
+      color: color,
     );
   }
 }
 
+/// 초승달을 두 원의 차집합(difference)으로 그린다.
+/// SVG arcToPoint는 chord > diameter 조합에서 비정상 동작할 수 있어
+/// 차집합 방식이 더 안전하다.
 class _MoonPainter extends CustomPainter {
   final Color color;
   final bool filled;
@@ -117,20 +123,19 @@ class _MoonPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width / 24;
-    final path = Path()
-      ..moveTo(20 * s, 14.5 * s)
-      ..arcToPoint(Offset(9.5 * s, 4 * s),
-          radius: Radius.circular(8 * s), clockwise: false)
-      ..arcToPoint(Offset(20 * s, 14.5 * s),
-          radius: Radius.circular(6.5 * s), clockwise: false)
-      ..close();
+    // 큰 원 (전체 달)과 살짝 오른쪽으로 옮긴 작은 원의 차 = 초승달.
+    final outer = Path()
+      ..addOval(Rect.fromCircle(center: Offset(12 * s, 12 * s), radius: 8 * s));
+    final inner = Path()
+      ..addOval(Rect.fromCircle(center: Offset(15 * s, 10 * s), radius: 7 * s));
+    final crescent = Path.combine(PathOperation.difference, outer, inner);
     final paint = Paint()
       ..color = color
       ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke
       ..strokeWidth = 1.6 * s
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(path, paint);
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(crescent, paint);
   }
 
   @override
