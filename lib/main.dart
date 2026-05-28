@@ -196,33 +196,37 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
+  /// v3 floating-center 패턴 — 마이 루나(index 2)는 가운데 떠 있는 큰 빨간 원.
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
+        color: AppColors.bgCard.withValues(alpha: 0.96),
+        border: const Border(top: BorderSide(color: AppColors.line)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
+        top: false,
         child: SizedBox(
-          height: 60,
+          height: 68,
           child: Row(
             children: [
               _navItem(0, Icons.home_rounded, '홈'),
-              _navItem(1, Icons.map_rounded, '추천 지도'),
-              _navItem(2, Icons.nightlight_round, '마이 루나'),
-              _navItem(3, Icons.menu_book_rounded, 'Archive'),
-              _navItem(4, Icons.person_rounded, '마이페이지'),
+              _navItem(1, Icons.map_outlined, '지도'),
+              _centerNavItem(2, '마이 루나'),
+              _navItem(3, Icons.menu_book_outlined, 'Archive'),
+              _navItem(4, Icons.person_outline_rounded, '마이'),
             ],
           ),
         ),
@@ -232,34 +236,83 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isActive = _currentIndex == index;
-    // 마이 루나 = 메인 기능. 다른 탭과 다른 브랜드 컬러(lunaNavy)로 항시 강조.
-    final isMyLuna = index == 2;
-    final Color color = isMyLuna
-        ? (isActive
-            ? AppColors.ink900
-            : AppColors.ink900.withValues(alpha: 0.7))
-        : (isActive ? AppColors.red : AppColors.textSecondary);
+    final color = isActive ? AppColors.ink900 : AppColors.ink400;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {
           _currentIndex = index;
-          // 추천 지도 탭 진입 시 동선 자동 표시.
           if (index == 1) _mapMyLuna = true;
         }),
         behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: isMyLuna ? 24 : 22),
-            const SizedBox(height: 3),
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 color: color,
                 fontSize: 10,
-                fontWeight: isMyLuna
-                    ? FontWeight.w800
-                    : (isActive ? FontWeight.w700 : FontWeight.w400),
+                letterSpacing: -0.1,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 가운데 floating 큰 동그라미 — 항시 강조.
+  Widget _centerNavItem(int index, String label) {
+    final isActive = _currentIndex == index;
+    final color = isActive ? AppColors.ink900 : AppColors.ink400;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _currentIndex = index),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Transform.translate(
+              offset: const Offset(0, -10),
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive ? AppColors.red : AppColors.bgCardWarm,
+                  border: isActive
+                      ? null
+                      : Border.all(color: AppColors.line, width: 1),
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: AppColors.red.withValues(alpha: 0.32),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Icon(
+                  Icons.nightlight_round,
+                  size: 24,
+                  color: isActive ? Colors.white : AppColors.ink700,
+                ),
+              ),
+            ),
+            Transform.translate(
+              offset: const Offset(0, -8),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  letterSpacing: -0.1,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],
