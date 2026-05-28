@@ -22,21 +22,23 @@ class ArchiveScreen extends StatefulWidget {
 enum _Season { spring, summer, autumn, winter }
 
 // ─── 빈티지 팔레트 ───────────────────────────────────────
+/// v3 — vintage "brown leather" 톤에서 cream paper + 빨간 액센트로 전환.
+/// 책장 plank만 따뜻한 우디 톤(shelfWood) 유지, 나머지는 백색/크림.
 class _Vintage {
-  static const parchmentLight = Color(0xFFF8F1DD);
-  static const parchment = Color(0xFFF1E6CC);
-  static const parchmentDark = Color(0xFFE6D5B0);
-  static const inkDark = Color(0xFF2E1F12);
-  static const inkBody = Color(0xFF4A3826);
-  static const inkMid = Color(0xFF7A5C42);
-  static const inkFaded = Color(0xFFA08866);
-  static const leather = Color(0xFF6B4423);
-  static const leatherDark = Color(0xFF3E2616);
-  static const shelfWood = Color(0xFF8B5A2B);
+  static const parchmentLight = Color(0xFFFFFFFF); // 거의 흰색 (시안 11 BG)
+  static const parchment = Color(0xFFFAFAF8);     // bgCardWarm
+  static const parchmentDark = Color(0xFFF4F1EA); // 미세 cream
+  static const inkDark = Color(0xFF111111);       // ink900
+  static const inkBody = Color(0xFF333333);       // ink700
+  static const inkMid = Color(0xFF707070);        // ink500
+  static const inkFaded = Color(0xFF9A9A9A);      // ink400
+  static const leather = Color(0xFF8A6300);       // 옅은 brown (eyebrow 용)
+  static const leatherDark = Color(0xFF5A3F18);
+  static const shelfWood = Color(0xFF8B5A2B);     // plank 유지
   static const shelfShadow = Color(0xFF5C3A21);
-  static const gold = Color(0xFFB8860B);
-  static const stampRed = Color(0xFFA4321E);
-  static const stampInk = Color(0xFF3D2817);
+  static const gold = Color(0xFFC99500);
+  static const stampRed = Color(0xFFE60023);      // 브랜드 레드
+  static const stampInk = Color(0xFF111111);
 }
 
 /// 가독성 좋은 세리프 패밀리 — 시스템 폰트 폴백.
@@ -272,15 +274,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             _Header(season: _season, onChange: (s) => setState(() => _season = s)),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
                 children: [
-                  _SeasonBanner(config: config),
-                  const SizedBox(height: 24),
+                  // v3 — _SeasonBanner 제거 (Bookshelf chapter header 와 중복).
                   _Bookshelf(
                       config: config, books: books, onBookTap: _openDiary),
-                  const SizedBox(height: 24),
-                  _DiaryStats(books: books, config: config),
                   const SizedBox(height: 20),
+                  _DiaryStats(books: books, config: config),
+                  const SizedBox(height: 16),
                   _PaperHint(),
                 ],
               ),
@@ -513,24 +514,10 @@ class _ParchmentBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v3 — 거의 흰색에 가까운 cream 단색. 시안 11 의 깨끗한 background.
     return Container(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(0, -0.3),
-          radius: 1.4,
-          colors: [_Vintage.parchmentLight, _Vintage.parchmentDark],
-          stops: [0.0, 1.0],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // 미세 격자 노이즈 — 종이 결.
-          Positioned.fill(
-            child: CustomPaint(painter: _PaperGrainPainter()),
-          ),
-          child,
-        ],
-      ),
+      color: const Color(0xFFFAFAF8),
+      child: child,
     );
   }
 }
@@ -2128,22 +2115,23 @@ class _PaperHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _Vintage.parchment.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
+        color: const Color(0xFFFFF8E0), // bgYellow (밝은 노랑 틴트 — 가독성↑)
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFC700).withOpacity(0.35)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.tips_and_updates_rounded,
-              color: _Vintage.gold, size: 18),
+              color: Color(0xFF8A6300), size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요. 사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.',
+              '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요.\n사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.',
               style: _serif(
-                size: 11,
-                color: _Vintage.inkMid,
-                height: 1.5,
+                size: 12,
+                color: const Color(0xFF5A3F18), // 충분히 진한 갈색 — 가독성
+                height: 1.55,
                 weight: FontWeight.w600,
               ),
             ),
