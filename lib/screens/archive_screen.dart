@@ -823,7 +823,8 @@ class _BookSpine extends StatelessWidget {
         builder: (context, t, child) {
           return Transform.translate(
             offset: Offset(0, (1 - t) * 12),
-            child: Opacity(opacity: t, child: child),
+            // easeOutBack overshoots beyond 1.0; clamp for Opacity assertion.
+            child: Opacity(opacity: t.clamp(0.0, 1.0), child: child),
           );
         },
         child: Container(
@@ -840,10 +841,9 @@ class _BookSpine extends StatelessWidget {
               topLeft: Radius.circular(2),
               topRight: Radius.circular(2),
             ),
-            border: const Border(
-              left: BorderSide(color: Colors.white24, width: 2),
-              top: BorderSide(color: Colors.black26, width: 1),
-            ),
+            // Non-uniform Border + borderRadius is illegal in Flutter; use a
+            // uniform subtle outline and let the gradient carry the highlight.
+            border: Border.all(color: Colors.black26, width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.25),
@@ -1589,12 +1589,15 @@ class _PageMemory extends StatelessWidget {
           // 스토리 (필기체 느낌 — 세리프 + 줄 라인)
           Container(
             padding: const EdgeInsets.all(16),
+            // Non-uniform Border + borderRadius is illegal; left red-accent
+            // bar rendered as a separate Container via Stack below would have
+            // worked, but here we drop the radius — the left rule is the
+            // pull-quote signal.
             decoration: BoxDecoration(
               color: _Vintage.parchmentLight,
-              borderRadius: BorderRadius.circular(8),
               border: Border(
-                left:
-                    BorderSide(color: _Vintage.stampRed.withOpacity(0.6), width: 3),
+                left: BorderSide(
+                    color: _Vintage.stampRed.withOpacity(0.6), width: 3),
               ),
             ),
             child: Text(
