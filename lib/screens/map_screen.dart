@@ -841,7 +841,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                                   child: _AttractionCard(
                                     attraction: a,
-                                    catColor: _categoryColor(a.category),
                                     dim: !a.isOperating,
                                     onTap: () => _openDetail(a),
                                   ),
@@ -1083,12 +1082,10 @@ class _FilterToggleRow extends StatelessWidget {
 
 class _AttractionCard extends StatelessWidget {
   final Attraction attraction;
-  final Color catColor;
   final bool dim;
   final VoidCallback onTap;
   const _AttractionCard({
     required this.attraction,
-    required this.catColor,
     required this.dim,
     required this.onTap,
   });
