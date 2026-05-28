@@ -4,6 +4,7 @@ import '../core/theme/app_colors.dart';
 
 import '../models/attraction.dart';
 import '../services/easter_egg_service.dart';
+import 'design/stamp.dart';
 
 /// 지도 마커/카드 탭 시 표시되는 어트랙션 상세 시트.
 class AttractionDetailSheet extends StatefulWidget {
@@ -116,14 +117,14 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
             ),
             Row(
               children: [
-                Container(
-                  width: 56, height: 56,
-                  decoration: BoxDecoration(
-                    color: _catColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
+                Stamp(
+                  code: Stamp.codeFromName(a.name),
+                  tone: Stamp.toneFromHints(
+                    category: a.category,
+                    thrillLevel: a.thrillLevel,
+                    hasEasterEgg: a.hasEasterEgg,
                   ),
-                  alignment: Alignment.center,
-                  child: Text(a.icon, style: const TextStyle(fontSize: 28)),
+                  size: 56,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -146,7 +147,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                       ),
                       const SizedBox(height: 4),
                       Text(a.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.5)),
                     ],
                   ),
                 ),
@@ -327,67 +328,222 @@ class _LunaLoadingDialog extends StatelessWidget {
 }
 
 // ─── 전체화면 서사 팝업 ────────────────────────────────────
+/// v3 이스터에그 발견 시퀀스 — 다크 라디얼 그라디언트 + 스파클 + 빨간 도장.
 class _NarrativePopup extends StatelessWidget {
   final Attraction attraction;
   final String narrative;
   const _NarrativePopup({required this.attraction, required this.narrative});
 
+  String get _today {
+    final now = DateTime.now();
+    return '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
-      backgroundColor: AppColors.ink900,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                ),
-              ),
-              const Spacer(),
-              const Text('✦ AI SCANNED',
-                  style: TextStyle(color: AppColors.grape, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-              const SizedBox(height: 18),
-              Text(attraction.icon, style: const TextStyle(fontSize: 64)),
-              const SizedBox(height: 14),
-              Text(attraction.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  narrative,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.7),
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.grape,
-                    foregroundColor: AppColors.ink900,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
-                ),
-              ),
-            ],
+      backgroundColor: const Color(0xFF0A1631),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.2),
+            radius: 0.95,
+            colors: [Color(0xFF182849), Color(0xFF0A1631)],
           ),
+        ),
+        child: Stack(
+          children: [
+            // 산재된 별
+            const Positioned.fill(child: _DarkStarField()),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                      ),
+                    ),
+                    const Spacer(),
+                    const Text(
+                      '✦ EASTER EGG · DISCOVERED',
+                      style: TextStyle(
+                        color: AppColors.yellow,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.8,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // 큰 빨간 STAMPED 도장 — 살짝 기운 회전.
+                    Transform.rotate(
+                      angle: -0.12,
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.red, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.red.withValues(alpha: 0.55),
+                              blurRadius: 40,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'STAMPED',
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2.2,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              '발견!',
+                              style: TextStyle(
+                                color: AppColors.red,
+                                fontSize: 38,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1.2,
+                                height: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 1.5,
+                              width: 60,
+                              color: AppColors.red.withValues(alpha: 0.4),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _today,
+                              style: TextStyle(
+                                color: AppColors.red.withValues(alpha: 0.85),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      attraction.name,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1)),
+                      ),
+                      child: Text(
+                        narrative,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontSize: 14,
+                          height: 1.65,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.red,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(99)),
+                        ),
+                        child: const Text(
+                          '다음 동선 보기',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _DarkStarField extends StatelessWidget {
+  const _DarkStarField();
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _DarkStarPainter());
+  }
+}
+
+class _DarkStarPainter extends CustomPainter {
+  static const _stars = [
+    [0.12, 0.18, 4.0, 0.9],
+    [0.78, 0.14, 3.0, 0.7],
+    [0.88, 0.32, 5.0, 0.85],
+    [0.06, 0.36, 3.0, 0.6],
+    [0.16, 0.68, 4.0, 0.8],
+    [0.84, 0.62, 5.0, 0.75],
+    [0.36, 0.86, 3.5, 0.65],
+    [0.74, 0.88, 4.0, 0.7],
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final s in _stars) {
+      final cx = s[0] * size.width;
+      final cy = s[1] * size.height;
+      final r = s[2];
+      final alpha = s[3];
+      final paint = Paint()
+        ..color = const Color(0xFFFFF5C7).withValues(alpha: alpha);
+      final path = Path()
+        ..moveTo(cx, cy - r * 2)
+        ..lineTo(cx + r * 0.35, cy - r * 0.35)
+        ..lineTo(cx + r * 2, cy)
+        ..lineTo(cx + r * 0.35, cy + r * 0.35)
+        ..lineTo(cx, cy + r * 2)
+        ..lineTo(cx - r * 0.35, cy + r * 0.35)
+        ..lineTo(cx - r * 2, cy)
+        ..lineTo(cx - r * 0.35, cy - r * 0.35)
+        ..close();
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DarkStarPainter o) => false;
 }

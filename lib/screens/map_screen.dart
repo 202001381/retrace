@@ -1107,14 +1107,14 @@ class _AttractionCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: catColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              Stamp(
+                code: Stamp.codeFromName(attraction.name),
+                tone: Stamp.toneFromHints(
+                  category: attraction.category,
+                  thrillLevel: attraction.thrillLevel,
+                  hasEasterEgg: attraction.hasEasterEgg,
                 ),
-                alignment: Alignment.center,
-                child: Text(attraction.icon, style: const TextStyle(fontSize: 22)),
+                size: 40,
               ),
               const SizedBox(width: 12),
               Expanded(
