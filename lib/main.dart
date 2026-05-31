@@ -35,7 +35,12 @@ class SeoulLandApp extends StatelessWidget {
       title: 'SeoulLand',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Pretendard',
+        // 'Pretendard' 미번들 상태에서 명시하면 iOS/macOS 가 무거운 한글
+        // weight 를 명조(세리프) 로 폴백시킴 (특히 w800/w900 헤드라인).
+        // 폰트 번들 전까지는 platform default sans-serif (Apple SD Gothic
+        // Neo / Noto Sans CJK) 를 그대로 받기 위해 명시 제거.
+        // TODO: assets/fonts/Pretendard*.otf 번들 + pubspec 등록 후
+        //       fontFamily: 'Pretendard' 복구.
         useMaterial3: true,
         brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.bgPage,
