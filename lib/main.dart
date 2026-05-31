@@ -67,9 +67,22 @@ class SeoulLandApp extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
         ),
         dividerColor: AppColors.line,
+        // 한글 폰트 fallback 체인 강제 — macOS CoreText 가 w900 한글 글리프를
+        // Apple Myungjo(명조/세리프) 로 자동 매칭하지 못하도록 sans 후보들을
+        // 우선순위로 박아둠. 디바이스별 순서:
+        //   1) Apple SD Gothic Neo (macOS/iOS 기본 한글 sans, w100~w900)
+        //   2) Noto Sans CJK KR (Android/Linux)
+        //   3) Malgun Gothic (Windows)
+        //   4) sans-serif (Web CSS)
         textTheme: const TextTheme().apply(
           bodyColor: AppColors.textPrimary,
           displayColor: AppColors.textPrimary,
+          fontFamilyFallback: const [
+            'Apple SD Gothic Neo',
+            'Noto Sans CJK KR',
+            'Malgun Gothic',
+            'sans-serif',
+          ],
         ),
       ),
       home: const _AppGate(),
