@@ -34,6 +34,7 @@ SCHEDULER_ENABLED=0 python -m backend.app
 | POST | `/api/discount` | `{crowd_level, rain_prob}` | `{crowd_level, rain_prob, discount_pct, reason}` |
 | POST | `/api/score` | `{crowd_level, weather, weekday, is_holiday, discount_pct}` | `{score, breakdown, inputs}` |
 | POST | `/api/predict` | 7개 피처 + `weather` (선택) | `{crowd_level, visitor_count, discount, score}` |
+| POST | `/api/route` | `RouteRequest`(uid, lat, lng, has_gps, onboarding, completed_attraction_ids, discovered_eggs, request_reason) + 선택 `features` | `{route[{id,order,eta_min_from_prev}], total_min, rationale, computed_at, cache_key}` |
 | POST | `/api/run-pipeline?target=today\|tomorrow` | — | 파이프라인 결과 + FCM 발송 |
 | GET  | `/api/crowd-level?visitor_count=N` | — | 임계치 기반 등급 |
 | POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` |

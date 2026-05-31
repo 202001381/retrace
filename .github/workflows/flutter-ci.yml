@@ -1,0 +1,43 @@
+name: Flutter CI
+
+on:
+  push:
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'analysis_options.yaml'
+      - '.github/workflows/flutter-ci.yml'
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Install deps
+        run: flutter pub get
+
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: Unit + widget tests
+        run: flutter test --reporter compact
+
+      - name: Build web (smoke)
+        # 데스크탑 / 모바일 빌드는 SDK 설치 비용 큼 — web 빌드만 smoke check.
+        run: flutter build web --release --no-tree-shake-icons
