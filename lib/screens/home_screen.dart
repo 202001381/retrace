@@ -18,7 +18,9 @@ import '../widgets/design/logo.dart';
 import '../widgets/design/stamp.dart';
 import '../widgets/discount_cause_label.dart';
 import '../widgets/discount_countdown.dart';
+import '../widgets/notification_sheet.dart';
 import '../widgets/price_display.dart';
+import 'all_attractions_screen.dart';
 import 'checkout_screen.dart';
 
 /// 홈 탭 — "방문 전" 전용 화면. 방문 결정 → 티켓 구매까지만 담당.
@@ -259,6 +261,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return ('혼잡', AppColors.red);
   }
 
+  void _openSearch() {
+    AnalyticsService.instance.logScreenView('home_search');
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AllAttractionsScreen()),
+    );
+  }
+
+  void _openNotifications() {
+    AnalyticsService.instance.logScreenView('home_notifications');
+    NotificationSheet.show(context);
+  }
+
   void _onLogoTap() {
     final now = DateTime.now();
     if (_lastLogoTap == null || now.difference(_lastLogoTap!) > const Duration(seconds: 2)) {
@@ -351,6 +365,9 @@ class _HomeScreenState extends State<HomeScreen> {
             _Header(
               onLogoTap: _onLogoTap,
               onProfileTap: widget.onOpenMyPage,
+              onSearchTap: _openSearch,
+              onNotifyTap: _openNotifications,
+              hasUnread: true, // mock — 백엔드 연동 시 unread count 기반
             ),
             const SizedBox(height: 10),
             // 2. 컨디션 strip — 날씨/혼잡/대기 (탭 시 상세)
@@ -398,7 +415,16 @@ class _HomeScreenState extends State<HomeScreen> {
 class _Header extends StatelessWidget {
   final VoidCallback? onLogoTap;
   final VoidCallback? onProfileTap;
-  const _Header({this.onLogoTap, this.onProfileTap});
+  final VoidCallback? onSearchTap;
+  final VoidCallback? onNotifyTap;
+  final bool hasUnread;
+  const _Header({
+    this.onLogoTap,
+    this.onProfileTap,
+    this.onSearchTap,
+    this.onNotifyTap,
+    this.hasUnread = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -412,9 +438,13 @@ class _Header extends StatelessWidget {
             child: const RetraceLogo(size: 24, showBeta: true),
           ),
           const Spacer(),
-          _PillIcon(icon: Icons.search_rounded, onTap: () {}),
+          _PillIcon(
+              icon: Icons.search_rounded, onTap: onSearchTap ?? () {}),
           const SizedBox(width: 8),
-          _PillIcon(icon: Icons.notifications_none_rounded, dot: true, onTap: () {}),
+          _PillIcon(
+              icon: Icons.notifications_none_rounded,
+              dot: hasUnread,
+              onTap: onNotifyTap ?? () {}),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: onProfileTap,
