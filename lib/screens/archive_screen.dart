@@ -72,18 +72,31 @@ TextStyle _serif({
       fontStyle: style,
     );
 
+/// v3 시즌별 spine 팔레트 — 스파인 컬러 + 텍스트 컬러 쌍.
+class _SpinePalette {
+  final Color spine;
+  final Color text;
+  const _SpinePalette(this.spine, this.text);
+}
+
 class _SeasonConfig {
   final String label, tagline;
-  final Color titleColor; // chapter eyebrow color (시안 v2 — 시즌별 차별)
-  final Color plankColor; // 책장 plank (시안 v2 — 시즌별 차별)
-  final Color dotColor;   // 시즌 탭 dot 컬러
+  final Color titleColor;     // chapter eyebrow 대표 컬러 (브랜드 톤)
+  final Color accentColor;    // 시안 def.accent — chapter eyebrow 소프트 컬러
+  final Color bgColor;        // shelf 내부 옅은 시즌 BG
+  final Color plankTop;       // plank 그라디언트 위
+  final Color plankBottom;    // plank 그라디언트 아래
+  final Color dotColor;       // 시즌 탭 dot
   final IconData icon;
-  final List<Color> spines;
+  final List<_SpinePalette> spines;
   const _SeasonConfig({
     required this.label,
     required this.tagline,
     required this.titleColor,
-    required this.plankColor,
+    required this.accentColor,
+    required this.bgColor,
+    required this.plankTop,
+    required this.plankBottom,
     required this.dotColor,
     required this.icon,
     required this.spines,
@@ -94,61 +107,73 @@ const Map<_Season, _SeasonConfig> _kConfigs = {
   _Season.spring: _SeasonConfig(
     label: '봄',
     tagline: '벚꽃 흩날리는 봄날',
-    titleColor: Color(0xFFE60023), // 빨강
-    plankColor: Color(0xFFFBE5E0), // 연 핑크 plank
-    dotColor: Color(0xFFE60023),
+    titleColor: Color(0xFFE60023),
+    accentColor: Color(0xFFE89AB0),
+    bgColor: Color(0xFFFDEFF2),
+    plankTop: Color(0xFFE8C7CC),
+    plankBottom: Color(0xFFBC8A91),
+    dotColor: Color(0xFFF4A4B7),
     icon: Icons.local_florist_rounded,
     spines: [
-      Color(0xFFE08494), // rose pink
-      Color(0xFFE5A8A8), // pale pink
-      Color(0xFFB8D4C5), // mint
-      Color(0xFFA8B8CF), // dusty lavender
-      Color(0xFFE9D6A8), // beige
+      _SpinePalette(Color(0xFFE89AB0), Color(0xFFFFF5F0)), // cherry pink
+      _SpinePalette(Color(0xFFB8D8E8), Color(0xFF1A3A4A)), // pale sky
+      _SpinePalette(Color(0xFFF4D88A), Color(0xFF5A4015)), // soft yellow
+      _SpinePalette(Color(0xFFA8D8C0), Color(0xFF1A4A35)), // fresh mint
+      _SpinePalette(Color(0xFFF5EBD8), Color(0xFF8A5A2A)), // cream
     ],
   ),
   _Season.summer: _SeasonConfig(
     label: '여름',
     tagline: '바다 냄새 나는 여름',
-    titleColor: Color(0xFF0084E0), // 블루
-    plankColor: Color(0xFFFAF7F2), // 크림
-    dotColor: Color(0xFF00A8B5),   // 청록
+    titleColor: Color(0xFF0084E0),
+    accentColor: Color(0xFF1F8FB0),
+    bgColor: Color(0xFFE5F4F9),
+    plankTop: Color(0xFFB5D5DD),
+    plankBottom: Color(0xFF6B9AA8),
+    dotColor: Color(0xFF39B5D6),
     icon: Icons.wb_sunny_rounded,
     spines: [
-      Color(0xFF1F6F7A), // teal
-      Color(0xFFE85A4F), // coral red
-      Color(0xFFE89A47), // orange
-      Color(0xFF3A6FB8), // blue
-      Color(0xFFF2C84B), // yellow
+      _SpinePalette(Color(0xFF1F5A6E), Color(0xFFE8F0E5)), // deep teal
+      _SpinePalette(Color(0xFFFF6B5A), Color(0xFFFFF5F0)), // coral
+      _SpinePalette(Color(0xFF39B5D6), Color(0xFFFFFFFF)), // bright sky
+      _SpinePalette(Color(0xFF88C04A), Color(0xFF1A2A0A)), // lime
+      _SpinePalette(Color(0xFFF5C84A), Color(0xFF3A2400)), // sun yellow
     ],
   ),
   _Season.autumn: _SeasonConfig(
     label: '가을',
     tagline: '단풍이 깊어가는 가을',
-    titleColor: Color(0xFF8A6300), // 갈색
-    plankColor: Color(0xFFFAF1DE), // 따뜻한 cream
-    dotColor: Color(0xFFE89A47),   // 주황
+    titleColor: Color(0xFF8A6300),
+    accentColor: Color(0xFFB5491E),
+    bgColor: Color(0xFFFAF0E2),
+    plankTop: Color(0xFFD2B080),
+    plankBottom: Color(0xFF8C6B3F),
+    dotColor: Color(0xFFC9A04A),
     icon: Icons.eco_rounded,
     spines: [
-      Color(0xFFC95A2E), // burnt orange
-      Color(0xFFA84520), // deep red-brown
-      Color(0xFFD49A3D), // gold-ochre
-      Color(0xFFB05828), // sienna
-      Color(0xFFCB6A2A), // pumpkin
+      _SpinePalette(Color(0xFFB5491E), Color(0xFFFFF1DC)), // burnt orange
+      _SpinePalette(Color(0xFF6B4423), Color(0xFFF4D88A)), // dark brown
+      _SpinePalette(Color(0xFFC9A04A), Color(0xFF3A2A0A)), // mustard
+      _SpinePalette(Color(0xFF7A2828), Color(0xFFF4D88A)), // wine
+      _SpinePalette(Color(0xFFA05E2C), Color(0xFFFFF5E8)), // amber
     ],
   ),
   _Season.winter: _SeasonConfig(
     label: '겨울',
     tagline: '눈 내리는 고요한 겨울',
-    titleColor: Color(0xFF1F2A44), // 네이비
-    plankColor: Color(0xFFF0F4F8), // 차가운 화이트
-    dotColor: Color(0xFF3A6FB8),   // 블루
+    titleColor: Color(0xFF1F2A44),
+    accentColor: Color(0xFF2A4A6E),
+    bgColor: Color(0xFFEAEFF5),
+    plankTop: Color(0xFFBCC8D6),
+    plankBottom: Color(0xFF6E7E92),
+    dotColor: Color(0xFF85A8C4),
     icon: Icons.ac_unit_rounded,
     spines: [
-      Color(0xFF2B4255), // dark navy
-      Color(0xFF1A1A1A), // near-black
-      Color(0xFF5B4538), // dark brown
-      Color(0xFFA7C8E3), // ice blue
-      Color(0xFFE5D9C6), // cream
+      _SpinePalette(Color(0xFF1A2B4A), Color(0xFFE8F0FA)), // deep navy
+      _SpinePalette(Color(0xFF5C6B7A), Color(0xFFFFFFFF)), // slate
+      _SpinePalette(Color(0xFF2D2D38), Color(0xFFD8DCE8)), // charcoal
+      _SpinePalette(Color(0xFF85A8C4), Color(0xFF0A1F35)), // ice blue
+      _SpinePalette(Color(0xFF2C4D3F), Color(0xFFD8E8DC)), // evergreen
     ],
   ),
 };
@@ -650,13 +675,13 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // v3 시즌 탭 — 흰색 pill bar + 각 항목 좌측 작은 dot (active=red filled).
+          // v3 시즌 탭 — bgCardWarm pill bar + active=ink900 채움 + 컬러 dot
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFFFAFAF8),
               borderRadius: BorderRadius.circular(99),
-              border: Border.all(color: _Vintage.leather.withOpacity(0.2)),
+              border: Border.all(color: const Color(0xFFECECEC)),
             ),
             // 모든 세그먼트가 균등 너비·높이 — Apple HIG segmented control 정합.
             // Expanded + 명시 height 36 + maxLines 1 로 글자수 차이(봄 vs 여름)에
@@ -676,8 +701,9 @@ class _Header extends StatelessWidget {
                             duration: const Duration(milliseconds: 220),
                             curve: Curves.easeOut,
                             decoration: BoxDecoration(
+                              // 시안 v3 — active 시 ink-900 검정 채움, 컬러 dot
                               color: active
-                                  ? _Vintage.parchment
+                                  ? const Color(0xFF111111)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(99),
                             ),
@@ -685,21 +711,22 @@ class _Header extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // 시즌별 컬러 dot — active=채움, inactive=외곽
                                 Container(
-                                  width: 7,
-                                  height: 7,
+                                  width: 8,
+                                  height: 8,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: active
-                                        ? cfg.dotColor
-                                        : Colors.transparent,
-                                    border: active
-                                        ? null
-                                        : Border.all(
-                                            color: cfg.dotColor
-                                                .withOpacity(0.5),
-                                            width: 1.5),
+                                    color: cfg.dotColor,
+                                    boxShadow: active
+                                        ? [
+                                            BoxShadow(
+                                              color: cfg.dotColor
+                                                  .withOpacity(0.4),
+                                              blurRadius: 0,
+                                              spreadRadius: 2,
+                                            ),
+                                          ]
+                                        : null,
                                   ),
                                 ),
                                 const SizedBox(width: 6),
@@ -707,15 +734,15 @@ class _Header extends StatelessWidget {
                                   cfg.label,
                                   maxLines: 1,
                                   overflow: TextOverflow.clip,
-                                  style: _serif(
-                                    size: 13,
-                                    weight: active
-                                        ? FontWeight.w900
-                                        : FontWeight.w600,
+                                  style: TextStyle(
+                                    fontFamily: _kSerif,
+                                    fontFamilyFallback: _kSerifFallback,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
                                     color: active
-                                        ? _Vintage.inkDark
-                                        : _Vintage.inkMid,
-                                    letterSpacing: 0.4,
+                                        ? Colors.white
+                                        : const Color(0xFF333333),
+                                    letterSpacing: -0.1,
                                   ),
                                 ),
                               ],
@@ -801,11 +828,11 @@ class _Bookshelf extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // v3 시즌 챕터 헤더 — CHAPTER · SPRING eyebrow + 22px 챕터명 + N권 카운트
+        // v3 시즌 챕터 헤더 — CHAPTER · X 액센트 eyebrow + 20px 챕터명 + "N / 12" 모노
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
                 child: Column(
@@ -813,96 +840,130 @@ class _Bookshelf extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      // 시즌 영문명 (CHAPTER · SPRING / SUMMER / AUTUMN / WINTER)
                       'CHAPTER · ${_kSeasonEng[config.label] ?? config.label.toUpperCase()}',
-                      style: _serif(
-                        size: 10,
-                        weight: FontWeight.w900,
-                        color: config.titleColor, // 시즌별 컬러
+                      style: TextStyle(
+                        fontFamily: _kSerif,
+                        fontFamilyFallback: _kSerifFallback,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: config.accentColor,
                         letterSpacing: 1.6,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       config.tagline,
-                      style: _serif(
-                        size: 22,
-                        weight: FontWeight.w900,
-                        color: _Vintage.inkDark,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'YEAR · ${DateTime.now().year}',
-                      style: _serif(
-                        size: 10,
-                        weight: FontWeight.w800,
-                        color: _Vintage.inkMid,
-                        letterSpacing: 1.4,
+                      style: TextStyle(
+                        fontFamily: _kSerif,
+                        fontFamilyFallback: _kSerifFallback,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111111),
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                '${books.length}\n권',
-                textAlign: TextAlign.right,
-                style: _serif(
-                  size: 11,
-                  weight: FontWeight.w800,
-                  color: _Vintage.leather,
-                  letterSpacing: 0.4,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '${books.length} / 12',
+                  style: const TextStyle(
+                    fontFamily: 'Menlo',
+                    fontFamilyFallback: ['Courier New', 'monospace'],
+                    fontSize: 11,
+                    color: Color(0xFF707070),
+                    letterSpacing: 1.0,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: config.plankColor, // 시즌별 plank
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+        const SizedBox(height: 14),
+        // YEAR · 2026 mono + N권 — 시안 v3 shelf header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              Text(
+                'YEAR · ${DateTime.now().year}',
+                style: const TextStyle(
+                  fontFamily: 'Menlo',
+                  fontFamilyFallback: ['Courier New', 'monospace'],
+                  fontSize: 10,
+                  color: Color(0xFF707070),
+                  letterSpacing: 1.4,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${books.length}권',
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF707070),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
-          padding: const EdgeInsets.fromLTRB(14, 18, 14, 6),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 160,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // 실제 책
-                    for (var i = 0; i < books.length; i++)
-                      _BookSpine(
-                        book: books[i],
-                        color: config.spines[i % config.spines.length],
-                        onTap: () => onBookTap(i),
-                      ),
-                    // 빈 슬롯 placeholder (시안 11 — 6칸 슬롯 가정)
-                    for (var i = 0; i < (6 - books.length).clamp(0, 6); i++)
-                      const _EmptyBookSlot(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  // plank 보다 살짝 어두운 톤 — 시즌별 자동 따라감
-                  color: Color.lerp(config.plankColor, Colors.black, 0.18),
-                  borderRadius:
-                      const BorderRadius.vertical(bottom: Radius.circular(8)),
-                ),
+        ),
+        const SizedBox(height: 6),
+        // 책 영역 — 시즌별 옅은 bgColor + 책 + 빈 슬롯
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+          decoration: BoxDecoration(
+            color: config.bgColor,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(8),
+            ),
+          ),
+          child: SizedBox(
+            height: 132,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // 실제 책 — 시안 v3 BookSpine 사용 (palette 매핑)
+                for (var i = 0; i < books.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: _BookSpine(
+                      book: books[i],
+                      palette: config
+                          .spines[i % config.spines.length],
+                      onTap: () => onBookTap(i),
+                    ),
+                  ),
+                // 빈 슬롯 dashed 22×100
+                for (var i = 0; i < (5 - books.length).clamp(0, 5); i++)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 3),
+                    child: _EmptyBookSlot(),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        // Plank 그라디언트 bar (8px)
+        Container(
+          height: 8,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [config.plankTop, config.plankBottom],
+            ),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(2),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x30502810),
+                blurRadius: 4,
+                offset: Offset(0, 2),
               ),
             ],
           ),
@@ -912,22 +973,15 @@ class _Bookshelf extends StatelessWidget {
   }
 }
 
-/// 책장 빈 슬롯 — 시안 11 의 dashed 윤곽 placeholder.
+/// v3 책장 빈 슬롯 — 22×100 dashed 윤곽.
 class _EmptyBookSlot extends StatelessWidget {
   const _EmptyBookSlot();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 130,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(2),
-          topRight: Radius.circular(2),
-        ),
-      ),
+    return SizedBox(
+      width: 22,
+      height: 100,
       child: CustomPaint(painter: _DashedSlotPainter()),
     );
   }
@@ -937,25 +991,21 @@ class _DashedSlotPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = _Vintage.leather.withOpacity(0.28)
+      ..color = const Color(0xFFD8D8D8) // lineStrong
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     const dash = 3.0, gap = 3.0;
-    // top
+    // 사각 점선 윤곽 (4변)
     double x = 0;
     while (x < size.width) {
       canvas.drawLine(Offset(x, 0), Offset(x + dash, 0), paint);
+      canvas.drawLine(
+          Offset(x, size.height), Offset(x + dash, size.height), paint);
       x += dash + gap;
     }
-    // left
     double y = 0;
     while (y < size.height) {
       canvas.drawLine(Offset(0, y), Offset(0, y + dash), paint);
-      y += dash + gap;
-    }
-    // right
-    y = 0;
-    while (y < size.height) {
       canvas.drawLine(
           Offset(size.width, y), Offset(size.width, y + dash), paint);
       y += dash + gap;
@@ -966,12 +1016,22 @@ class _DashedSlotPainter extends CustomPainter {
   bool shouldRepaint(_DashedSlotPainter o) => false;
 }
 
+/// v3 책 spine — 시안 spec 그대로:
+/// - width = clamp(28 + title.length * 1.4, 36) ≈ 30~36px
+/// - 상·하 white-40% / black-18% 띠
+/// - vertical writing 헤드라인 (RotatedBox 90° + 한 글자씩)
+/// - vertical mono 날짜
+/// - 미세 random tilt
+/// - 인너 highlight gradient
 class _BookSpine extends StatelessWidget {
   final _DiaryBook book;
-  final Color color;
+  final _SpinePalette palette;
   final VoidCallback onTap;
-  const _BookSpine(
-      {required this.book, required this.color, required this.onTap});
+  const _BookSpine({
+    required this.book,
+    required this.palette,
+    required this.onTap,
+  });
 
   String get _spineDate {
     final m = book.date.month.toString();
@@ -979,11 +1039,21 @@ class _BookSpine extends StatelessWidget {
     return '$m.$d';
   }
 
-  /// v3 시안 11 — 책 spine 에 헤드라인을 한 글자씩 세로 적층.
-  /// 공백·구두점은 제외, 최대 5자.
-  List<String> get _spineChars {
+  /// 헤드라인에서 공백·구두점 제거, 최대 5자.
+  String get _spineTitle {
     final cleaned = book.headline.replaceAll(RegExp(r'[\s·,.!?]'), '');
-    return cleaned.characters.take(5).toList();
+    return cleaned.characters.take(5).toString();
+  }
+
+  double get _width {
+    final len = _spineTitle.characters.length;
+    return (28 + len * 1.4).clamp(28.0, 36.0);
+  }
+
+  double get _tilt {
+    // book.id hashCode 로 안정적 의사난수 tilt (-1.5 ~ +1.5deg)
+    final h = book.id.hashCode;
+    return ((h % 60) - 30) / 20.0 * 0.026; // ≈ ±1.5°
   }
 
   @override
@@ -1001,107 +1071,144 @@ class _BookSpine extends StatelessWidget {
         builder: (context, t, child) {
           return Transform.translate(
             offset: Offset(0, (1 - t) * 12),
-            // easeOutBack overshoots beyond 1.0; clamp for Opacity assertion.
             child: Opacity(opacity: t.clamp(0.0, 1.0), child: child),
           );
         },
-        child: Container(
-          width: 46,
-          height: 150,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [color, Color.lerp(color, Colors.black, 0.25)!],
+        child: Transform.rotate(
+          angle: _tilt,
+          child: Container(
+            width: _width,
+            height: 110,
+            decoration: BoxDecoration(
+              color: palette.spine,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(2),
+                topRight: Radius.circular(2),
+                bottomLeft: Radius.circular(1),
+                bottomRight: Radius.circular(1),
+              ),
+              // 인너 하이라이트 + 그림자 시뮬
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withOpacity(0.08),
+                  palette.spine,
+                  palette.spine,
+                  Colors.black.withOpacity(0.18),
+                ],
+                stops: const [0.0, 0.12, 0.88, 1.0],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0x30502810),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(2),
-              topRight: Radius.circular(2),
-            ),
-            // Non-uniform Border + borderRadius is illegal in Flutter; use a
-            // uniform subtle outline and let the gradient carry the highlight.
-            border: Border.all(color: Colors.black26, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.25),
-                blurRadius: 5,
-                offset: const Offset(2, 2),
-              ),
-            ],
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // 상·하 금장 띠
-              Positioned(
-                top: 10,
-                child: Container(
-                  width: 30,
-                  height: 1,
-                  color: _Vintage.gold.withOpacity(0.6),
-                ),
-              ),
-              Positioned(
-                bottom: 18,
-                child: Container(
-                  width: 30,
-                  height: 1,
-                  color: _Vintage.gold.withOpacity(0.6),
-                ),
-              ),
-              // 세로 적층된 헤드라인 (시안 11)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final ch in _spineChars)
-                      Text(
-                        ch,
-                        style: TextStyle(
-                          fontFamily: _kSerif,
-                          fontFamilyFallback: _kSerifFallback,
-                          color: _Vintage.gold.withOpacity(0.92),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          height: 1.15,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // 하단 작은 날짜 라벨 (4.14 식)
-              Positioned(
-                bottom: 6,
-                child: Text(
-                  _spineDate,
-                  style: TextStyle(
-                    fontFamily: _kSerif,
-                    fontFamilyFallback: _kSerifFallback,
-                    color: _Vintage.gold.withOpacity(0.7),
-                    fontSize: 8,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-              if (hasPhoto)
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 좌·우 인너 에지 — 흰색 12%, 검정 20%
                 Positioned(
-                  bottom: -2,
-                  right: 4,
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
                   child: Container(
-                    width: 5,
-                    height: 5,
-                    decoration: const BoxDecoration(
-                      color: _Vintage.gold,
-                      shape: BoxShape.circle,
+                      width: 1.5,
+                      color: Colors.white.withOpacity(0.12)),
+                ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                      width: 1.5, color: Colors.black.withOpacity(0.2)),
+                ),
+                // 상단 흰 띠 (70% width)
+                Positioned(
+                  top: 8,
+                  child: Container(
+                    width: _width * 0.7,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(1),
                     ),
                   ),
                 ),
-            ],
+                // 하단 검정 띠 (70% width)
+                Positioned(
+                  bottom: 8,
+                  child: Container(
+                    width: _width * 0.7,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+                // 세로 적층 헤드라인 (한 글자씩 위→아래)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final ch in _spineTitle.characters)
+                        Text(
+                          ch,
+                          style: TextStyle(
+                            fontFamily: _kSerif,
+                            fontFamilyFallback: _kSerifFallback,
+                            color: palette.text,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            height: 1.1,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // 하단 작은 mono 날짜
+                Positioned(
+                  bottom: 16,
+                  child: RotatedBox(
+                    quarterTurns: 1,
+                    child: Text(
+                      _spineDate,
+                      style: TextStyle(
+                        fontFamily: 'Menlo',
+                        fontFamilyFallback: const [
+                          'Courier New',
+                          'monospace'
+                        ],
+                        color: palette.text.withOpacity(0.7),
+                        fontSize: 7,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ),
+                ),
+                if (hasPhoto)
+                  Positioned(
+                    top: 3,
+                    right: 3,
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: palette.text.withOpacity(0.8),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1485,7 +1592,7 @@ class _BookCoverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spineColor = config.spines.first;
+    final spineColor = config.spines.first.spine;
     return Container(
       width: 240,
       height: 340,
