@@ -49,9 +49,20 @@ const Map<String, String> _kSeasonEng = {
   '겨울': 'WINTER',
 };
 
-/// 아카이브 본문 공용 텍스트 헬퍼 — theme default (Pretendard fallback system sans)
-/// 를 그대로 inherit. fontFamily 명시는 절대 금지 (기기에 번들 안 된 폰트 명시 →
-/// iOS 가 Times 류 세리프 폴백 골라 톤 깨짐).
+/// 아카이브 본문 공용 텍스트 헬퍼.
+///
+/// macOS CoreText 는 fontFamily 미지정 + 한글 + heavy weight (w800/w900)
+/// 조합에서 시스템 폰트 fallback 으로 'Apple Myungjo'(명조/세리프) 를
+/// 자동 매칭할 때가 있음. 이걸 차단하기 위해 sans-serif 한글 후보 체인을
+/// fontFamilyFallback 에 명시. fontFamily 자체는 null 로 두어 Latin 글리프는
+/// system default(SF Pro / Roboto)가 받도록 함.
+const List<String> _kKoreanSansFallback = [
+  'Apple SD Gothic Neo', // macOS / iOS 기본 한글 sans (w100~w900)
+  'Noto Sans CJK KR',    // Android / Linux
+  'Malgun Gothic',        // Windows
+  'sans-serif',           // Web CSS
+];
+
 TextStyle _serif({
   double size = 14,
   FontWeight weight = FontWeight.w500,
@@ -61,6 +72,7 @@ TextStyle _serif({
   FontStyle? style,
 }) =>
     TextStyle(
+      fontFamilyFallback: _kKoreanSansFallback,
       fontSize: size,
       fontWeight: weight,
       color: color,
@@ -300,7 +312,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         child: Center(child: CircularProgressIndicator(color: _Vintage.leather)),
       );
     }
-    return _ParchmentBackground(
+    // 모든 자식 Text 가 한글 sans 폴백 체인을 자동 inherit.
+    // (CoreText 가 명조로 fallback 시도하기 전에 이 체인을 먼저 시도하도록 강제)
+    return DefaultTextStyle.merge(
+      style: const TextStyle(fontFamilyFallback: _kKoreanSansFallback),
+      child: _ParchmentBackground(
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -336,6 +352,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
