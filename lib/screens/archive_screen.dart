@@ -49,9 +49,10 @@ const Map<String, String> _kSeasonEng = {
   '겨울': 'WINTER',
 };
 
-/// 가독성 좋은 세리프 패밀리 — 시스템 폰트 폴백.
-const String _kSerif = 'Georgia';
-const List<String> _kSerifFallback = ['Times New Roman', 'Times', 'serif'];
+/// 아카이브 본문 공용 폰트 — 앱 전체 통일을 위해 Pretendard (theme default).
+/// _kSerif*는 상수만 유지(다수 호출처 호환). 실제 폰트는 'Pretendard'.
+const String _kSerif = 'Pretendard';
+const List<String> _kSerifFallback = <String>[];
 
 TextStyle _serif({
   double size = 14,
