@@ -1,0 +1,74 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# ───── Backend (Python) ─────
+__pycache__/
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Backend secrets — 절대 commit 금지
+backend/.env
+backend/.env.*
+# 예외: 템플릿은 commit (값은 비어있음)
+!backend/.env.example
+backend/secrets/
+**/firebase-sa*.json
+**/*service-account*.json
+
+# Backend 빌드·캐시 산출물 (재생성 가능)
+backend/models/
+backend/cache/
+
+# 로컬 가상환경
+backend/.venv/
+backend/venv/
+
+# Python 빌드
+*.egg-info/
+dist/
+build/

@@ -1,0 +1,39 @@
+# Cloud Build/Run 빌드 컨텍스트에서 제외할 파일·디렉터리.
+# Dockerfile 의 COPY 는 이 파일 이후 적용됨.
+
+# 시크릿·서비스 계정 키 (절대 컨테이너에 넣지 않음)
+.env
+.env.*
+secrets/
+*.json
+!package.json
+
+# 학습된 모델 — Dockerfile 안에서 RUN python train_model.py 로 재학습
+models/
+
+# 로컬 캐시 (Claude 스토리)
+cache/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 문서·테스트
+README.md
+*.md
