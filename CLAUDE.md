@@ -1,107 +1,78 @@
-# SEOULLAND : RE-TRACE
+# CLAUDE.md
 
-한국외국어대학교 캡스톤 디자인 1팀(노원) | 2026학년도 1학기  
-서울랜드 AI 기반 스마트 테마파크 앱
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
+## Project
 
-## 프로젝트 개요
+Flutter app for Seoul Land theme park (경기 과천 서울랜드) — `seoul_land_app`. Visitor guide with personalized routing, interactive map, recommendations, and seasonal "archive" memory book. Korean UI throughout.
 
-서울랜드의 38년 역사와 실측 운영 데이터를 AI로 재해석하여,  
-방문객에게는 **초개인화된 경험**을, 운영사에는 **비수기 매출 최적화**를 실현하는 B2C 스마트 테마파크 서비스.
+## Common Commands
 
----
-
-## 핵심 서비스 구조 (Two-Track)
-
-### Track 1. 다이나믹 프라이싱
-- **목적**: 비수기 방문 결정 트리거 (유입 극대화)
-- **핵심 기술**: XGBoost 수요 예측 모델 + 기상청 API 연동
-- **출력**: 최대 25% 동적 할인 자동 발동 (Rainy-Pass)
-- **전달 채널**: 문자, 카카오톡 외부 알림 (방문 전 선제 유인)
-
-### Track 2. 개인화 동선 추천
-- **목적**: 방문 중 몰입 + 재방문 구조 (체류 시간 연장)
-- **핵심 기술**: GPS 기반 실시간 이스터에그 활성화 + Claude API 서사 생성
-- **출력**: 구성원 맞춤 Top-3 어트랙션 + 이동 경로
-- **전달 채널**: RE-TRACE 앱 푸시, 인앱 메시지
-
----
-
-## AI 모델 설계
-
-| 모델 | 알고리즘 | 입력 피처 | 출력 |
-|------|---------|-----------|------|
-| 수요 예측 + 할인율 산출 | XGBoost (scikit-learn), Train/Test 80:20 | 시간대·요일·공휴일·날씨(기온·강수확률)·입장권 사전 판매량·이벤트 여부 | 혼잡도 등급(상/중/하) + 최적 할인율 |
-| 동선 추천 + 미션 배치 | 스코어링 알고리즘 (혼잡↓·거리↓→점수↑) | 혼잡도 등급·사용자 GPS 위치·구성원 정보·잔여 체류·방문 이력 | Top-3 어트랙션 + 실시간 미션 배치 |
-| 서사 생성 | Claude API + 랜드마크별 컨텍스트 프롬프트 | 어트랙션 역사 DB·동행자·계절·현재 날씨·시간 | 38년 역사 기반 서사 텍스트 |
-| 개인화 재방문 푸시 | Firebase ML 규칙 기반 트리거 + LLM 메시지 생성 | 방문 이력·체류 시간·미발견 이스터에그 | 개인화 푸시 메시지 |
-
-**피처 7종**: 시간대, 요일, 기온, 강수확률, 이벤트 여부, user_visit_count, user_favorite_type
-
----
-
-## 기술 스택
-
-```
-Frontend   Flutter (Dart)
-Backend    Flask (Python) REST API
-AI/ML      Python, XGBoost, scikit-learn, pandas
-Database   Firebase Firestore (실시간 로그)
-API        기상청 API, Claude API (서사 생성)
-지도       Flutter GPS + 지도 SDK
+```bash
+flutter pub get                # install deps
+flutter analyze                # lint (uses package:flutter_lints/flutter.yaml)
+flutter test                   # runs test/widget_test.dart only
+flutter test test/widget_test.dart -p chrome   # single test
+flutter run -d chrome          # fastest preview; map works, GPS needs HTTPS/permission
+flutter run -d <device-id>     # see `flutter devices`
+flutter build apk              # Android release
+flutter build web              # static web bundle in build/web/
 ```
 
----
+No CI or pre-commit hooks configured.
 
-## 앱 화면 구성
+## Architecture
 
-```
-lib/
-├── main.dart
-├── models/
-├── screens/
-│   ├── home_screen.dart        # 메인 대시보드 (날씨 기반 할인, 방문가치 스코어)
-│   ├── map_screen.dart         # 동선 추천 지도 (혼잡도 히트맵, Top-3 어트랙션)
-│   ├── recommend_screen.dart   # AI 맞춤 동선 추천
-│   ├── route_screen.dart       # 실시간 루트 안내
-│   └── archive_screen.dart     # 연대기 책장 (재방문 게이미피케이션)
-└── widgets/
-```
+### Navigation shell
+`lib/main.dart` → `MainScreen` keeps a 4-tab bottom nav over an `IndexedStack` (state preserved per tab):
+1. `HomeScreen` (홈) — weather/crowd cards, route preview, today's events
+2. `MapScreen` (MAP) — flutter_map + GPS + spot markers
+3. `RecommendScreen` (추천) — attraction cards w/ like state
+4. `ArchiveScreen` (Archive) — seasonal collectible "books"
 
----
+`RouteScreen` is not in the bottom nav — pushed via `Navigator` from MapScreen.
 
-## 화면별 기능 상세
+### Data layer
+**All park data lives in one file: `lib/models/spot_model.dart` (~1100 lines).**
 
-| 화면 | 구성 요소 | 연결 AI |
-|------|-----------|---------|
-| 메인 대시보드 | 날씨 기반 할인 혜택 시각화, 방문가치 스코어(0~100), 오늘의 동선 요약 | XGBoost → 할인율 자동 표시 |
-| 동선 추천 지도 | 현재 위치 기반 Top-3 어트랙션, 혼잡도 히트맵, 예상 이동 경로 | 스코어링 알고리즘 + GPS |
-| 스토리텔링 | GPS 진입 시 이스터에그 팝업, AI 생성 서사 텍스트 | Claude API 실시간 생성 |
-| 연대기 책장 | 시즌 4챕터 책장 UI, 달성 시 굿즈/입장권 리워드 | Firebase 방문 이력 연동 |
+- `Spot` — immutable data class with `LatLng position`, `SpotCategory` (attraction/food/photo), `List<SpotTheme>` (thrill/family/relaxed/photo/food), rating, zone, etc.
+- `SeoulLandSpots` — static container holding **all** spots in a `const List<Spot> all`. Park center `LatLng(37.4279, 127.0247)`.
+- Public query helpers: `byCategory(category)`, `byTheme(theme)`, `recommendedRoute({companionType, preferences, maxSpots})`. The recommender scores spots by theme overlap + rating boosts, picks 4 attractions + 3 photo spots + 2 food spots, then orders by nearest-neighbor proximity (`_sortByProximity`).
 
----
+To add or edit park content, edit `SeoulLandSpots.all` — there is no backend or JSON loader.
 
-## 개발 규칙
+### State model (important gotcha)
+There is **no state management library** despite `provider` being listed in `pubspec.yaml` (declared but unused — safe to remove if you don't plan to use it).
 
-- Flutter 코드는 `lib/` 아래에 화면별로 분리
-- 상태관리: Provider 또는 Riverpod 사용
-- Firebase 로그: 어트랙션 방문, 추천 수락 여부, 스탬프 이력 실시간 저장
-- API 키는 `.env` 파일로 관리, 절대 커밋 금지
-- 커밋 메시지: `[Track1] 기능명` 또는 `[Track2] 기능명` 접두사 사용
+User profile (`_companionType`, `_preferences`) is held locally in `HomeScreen._HomeScreenState` and **duplicated** in `MapScreen._MapScreenState`. Picking new values on Home does not propagate to Map. If you need shared state, you must wire it explicitly (lift state to `MainScreen`, add Provider/Riverpod, or pass via constructor + callback).
 
----
+`CompanionBottomSheet` (auto-shown on first Home frame via `addPostFrameCallback`) is the entry point for setting companion + preferences — pattern: pass `onConfirm(companion, prefs)` callback.
 
-## 디자인
+### Map screen specifics
+- `flutter_map` 8.x with default OSM tiles
+- `geolocator` for GPS — requires runtime permission on Android (manifest already declared) and HTTPS on web
+- Category filter chips bind to `SpotCategory?` (`null` = all)
+- Tapping a marker sets `_selectedSpot` → shows `SpotDetailSheet`
+- "AI 스캔" FAB → `AiScanModal` (mock; no real camera/ML integration)
 
-- Figma 링크: https://www.figma.com/make/tlu1ZfzRu42PCtkETjDgJw/Seoul-Land-App?t=SXT2c3VXhwKBeFmB-1
-- 디자인 기준으로 모든 화면 업데이트 진행
+### No persistence
+Favorites, archive collection, visited spots, etc. are all in-memory. `shared_preferences` is declared but currently not invoked anywhere. Restarting the app resets all user state.
 
----
+### Theming
+Material 3, seed color `#E60012` (Seoul Land red), scaffold bg `#F7F7F7`. `fontFamily: 'Pretendard'` is set on the theme but **the font is not bundled** in `pubspec.yaml` — falls back to system. Bundle the font files under `assets/fonts/` and declare them in `pubspec.yaml` if needed.
 
-## 팀 정보
+## Conventions
 
-- 팀명: No.1 (노원) | 한국외국어대학교 캡스톤 디자인
-- 팀장: 박동희
-- 팀원: 탁주혜, 민수현, 황현선, 박세민, 박도연
-- 담당교수: 배주호 교수님 / 이지효 교수님
+- Korean strings live inline as literals (no i18n setup). Keep new copy in Korean unless asked otherwise.
+- Hardcoded colors use `Color(0xFF...)` rather than theme tokens — match the existing palette (`#E60012` accent, `#1F1F1F` text, `#9E9E9E` inactive, `#F7F7F7` bg).
+- Card pattern: white container + `borderRadius: 12–16`, soft shadow `Colors.black.withValues(alpha: 0.05)`.
+- Private widgets prefixed with `_` and kept in the same file as their parent screen (see `_WeatherCard`, `_CrowdCard` in `home_screen.dart`).
+- File names: screens `*_screen.dart`, widgets `*_sheet.dart` / `*_modal.dart`, models `*_model.dart`.
+
+## Backend
+
+Python/Flask backend lives under `backend/` (separate from the Flutter app). It hosts the XGBoost crowd-prediction model, the 기상청 → model → FCM pipeline, and the discount/score endpoints the Flutter client calls. See `backend/README.md` for setup, env vars, and the API surface.
+
+## Branch policy
+
+Work happens on `claude/continue-flutter-development-r4WfU`. Push there; do not push to `main` without explicit instruction.

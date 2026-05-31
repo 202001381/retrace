@@ -1,532 +1,366 @@
 import 'package:flutter/material.dart';
 
+import '../models/attraction.dart';
+import '../services/onboarding_service.dart';
+import 'onboarding_screen.dart'; // 조건 변경 시 이동할 온보딩 화면
+
 class RecommendScreen extends StatefulWidget {
   const RecommendScreen({super.key});
-
   @override
   State<RecommendScreen> createState() => _RecommendScreenState();
 }
 
 class _RecommendScreenState extends State<RecommendScreen> {
-  String _topTab = '어트랙션';
-  String _categoryFilter = '전체';
+  SurveyAnswers? _answers;
+  List<Attraction> _top3 = const [];
+  bool _loading = true;
 
-  final List<String> _categories = ['전체', '스릴', '가족', '여유', '포토'];
+  // 하단 카테고리 및 세부 필터용 상태 변수
+  String _selectedCategory = '어트랙션';
+  final List<String> _categories = ['어트랙션', '음식점', '공연', '편의시설'];
 
-  final List<Map<String, dynamic>> _attractions = [
-    {
-      'name': '후룸라이드',
-      'rating': 4.8,
-      'reviewCount': 1240,
-      'desc': '시원한 물줄기를 가르며 스릴을 만끽하세요!',
-      'tags': ['#짜릿함', '#여름필수', '#물놀이'],
-      'category': '스릴',
-      'status': '지금 가기 최적',
-      'statusDetail': '여유 · 대기 5분',
-      'statusColor': const Color(0xFF4CAF50),
-      'icon': '🌊',
-      'liked': false,
-    },
-    {
-      'name': '자이로스윙',
-      'rating': 4.6,
-      'reviewCount': 987,
-      'desc': '360도 회전하며 하늘을 나는 느낌!',
-      'tags': ['#아찔함', '#익스트림', '#스릴만점'],
-      'category': '스릴',
-      'status': '대기 있음',
-      'statusDetail': '보통 · 대기 25분',
-      'statusColor': const Color(0xFFFFB300),
-      'icon': '🎡',
-      'liked': false,
-    },
-    {
-      'name': '대관람차',
-      'rating': 4.7,
-      'reviewCount': 2100,
-      'desc': '서울랜드 전경을 한눈에! 낭만적인 뷰.',
-      'tags': ['#낭만', '#포토명소', '#커플추천'],
-      'category': '여유',
-      'status': '지금 가기 최적',
-      'statusDetail': '여유 · 대기 없음',
-      'statusColor': const Color(0xFF4CAF50),
-      'icon': '🎠',
-      'liked': true,
-    },
-    {
-      'name': '킹바이킹',
-      'rating': 4.5,
-      'reviewCount': 756,
-      'desc': '바다를 정복하는 해적선! 용감한 자만 탑승.',
-      'tags': ['#해적선', '#가족', '#스릴'],
-      'category': '가족',
-      'status': '여유',
-      'statusDetail': '여유 · 대기 5분',
-      'statusColor': const Color(0xFF4CAF50),
-      'icon': '⚓',
-      'liked': false,
-    },
-    {
-      'name': '범퍼카',
-      'rating': 4.3,
-      'reviewCount': 1560,
-      'desc': '신나게 부딪히며 즐기는 가족 필수 코스!',
-      'tags': ['#가족', '#어린이', '#신남'],
-      'category': '가족',
-      'status': '여유',
-      'statusDetail': '여유 · 대기 없음',
-      'statusColor': const Color(0xFF4CAF50),
-      'icon': '🚗',
-      'liked': false,
-    },
-  ];
+  // 🚀 기획서 반영: 세부 토글 필터 상태
+  bool _showOperatingOnly = false;
+  bool _showEasterEggOnly = false;
 
-  final List<Map<String, dynamic>> _courses = [
-    {
-      'emoji': '🔥',
-      'name': '스릴 만점 코스',
-      'duration': '3~4시간',
-      'attractionCount': 4,
-      'route': '롤러코스터 > 자이로스윙 > 후룸라이드 > 범퍼카',
-      'routeColor': const Color(0xFFFFEBEE),
-      'routeBorderColor': const Color(0xFFFF5A5A),
-      'routeTextColor': const Color(0xFFE60012),
-    },
-    {
-      'emoji': '🌸',
-      'name': '가족 힐링 코스',
-      'duration': '2~3시간',
-      'attractionCount': 5,
-      'route': '회전목마 > 대관람차 > 범퍼카 > 워터건 > 퍼레이드',
-      'routeColor': const Color(0xFFF1F8E9),
-      'routeBorderColor': const Color(0xFF81C784),
-      'routeTextColor': const Color(0xFF2E7D32),
-    },
-    {
-      'emoji': '📸',
-      'name': '포토존 투어 코스',
-      'duration': '2시간',
-      'attractionCount': 4,
-      'route': '대관람차 > 벚꽃포토존 > 세계광장 > 미래의나라',
-      'routeColor': const Color(0xFFFCE4EC),
-      'routeBorderColor': const Color(0xFFF48FB1),
-      'routeTextColor': const Color(0xFFC2185B),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadAndCompute();
+  }
 
-  List<Map<String, dynamic>> get _filteredAttractions {
-    if (_categoryFilter == '전체') return _attractions;
-    return _attractions.where((a) => a['category'] == _categoryFilter).toList();
+  Future<void> _loadAndCompute() async {
+    setState(() => _loading = true);
+    final ans = await OnboardingService.read();
+    setState(() {
+      _answers = ans;
+      _top3 = _computeTop3(ans);
+      _loading = false;
+    });
+  }
+
+  /// 설문 응답 기반 동선 스코어링 (기획서 로직 100% 반영됨)
+  List<Attraction> _computeTop3(SurveyAnswers? ans) {
+    final answers = ans;
+    Iterable<Attraction> pool = kAttractions.where((a) => a.category == '어트랙션');
+
+    // 유아 동반 시 키 제한 필터링
+    if (answers?.hasInfant ?? false) {
+      pool = pool.where((a) => a.heightLimit == 0);
+    }
+
+    const center = (lat: 37.4279, lng: 127.0247);
+    double distScore(Attraction a) {
+      final dLat = a.lat - center.lat;
+      final dLng = a.lng - center.lng;
+      final d2 = dLat * dLat + dLng * dLng;
+      return 1.0 / (1.0 + d2 * 1e6);
+    }
+
+    final scored = pool.map((a) {
+      double score = 0;
+      score += (60 - a.waitMinutes).clamp(-20, 60).toDouble();
+
+      if (answers != null) {
+        if (answers.hasInfant) {
+          if (a.indoor) score += 30; // 실내 가중치 상향
+          score += distScore(a) * 25;
+        }
+        if (answers.hasChild && a.thrillLevel <= 2) score += 20;
+        if (answers.hasSenior) {
+          if (a.thrillLevel <= 3) score += 10;
+          score += distScore(a) * 8;
+        }
+
+        // 스릴 선호 가중치 상향
+        if (answers.favoriteType == FavoriteType.thrill && a.thrillLevel >= 4) score += 20;
+        if (answers.favoriteType == FavoriteType.family && a.thrillLevel <= 2) score += 20;
+
+        switch (answers.purpose) {
+          case VisitPurpose.rides:
+            score += a.thrillLevel * 2.0;
+            break;
+          case VisitPurpose.picnic:
+            if (a.thrillLevel <= 2) score += 8;
+            break;
+          case VisitPurpose.kidsOuting:
+            if (a.heightLimit == 0) score += 10;
+            if (a.indoor) score += 6;
+            break;
+          case VisitPurpose.date:
+            if (a.thrillLevel >= 3 && a.thrillLevel <= 4) score += 10;
+            break;
+        }
+      }
+
+      return (attraction: a, score: score);
+    }).toList()
+      ..sort((a, b) => b.score.compareTo(a.score));
+
+    return scored.take(3).map((e) => e.attraction).toList();
+  }
+
+  void _goToOnboarding() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OnboardingScreen(
+          onDone: (exitStatus) {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    ).then((_) {
+      _loadAndCompute();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Text('⚡', style: TextStyle(fontSize: 22)),
-                        SizedBox(width: 6),
-                        Text(
-                          '맞춤 추천',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '지금 가기 딱 좋은 어트랙션을 추천해드려요 ✨',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                    ),
-                    const SizedBox(height: 14),
-                    // 상단 탭 (어트랙션 / 추천 코스)
-                    Row(
-                      children: [
-                        _TopTab(
-                          icon: '🎡',
-                          label: '어트랙션',
-                          isActive: _topTab == '어트랙션',
-                          activeColor: const Color(0xFFE60012),
-                          onTap: () => setState(() => _topTab = '어트랙션'),
-                        ),
-                        const SizedBox(width: 10),
-                        _TopTab(
-                          icon: '🗺️',
-                          label: '추천 코스',
-                          isActive: _topTab == '추천 코스',
-                          activeColor: const Color(0xFF1E3158),
-                          onTap: () => setState(() => _topTab = '추천 코스'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 0),
-                  ],
-                ),
-              ),
-            ),
+    // 🚀 기획서 반영: 세부 필터링 로직 적용
+    final filteredAttractions = kAttractions.where((a) {
+      if (a.category != _selectedCategory) return false;
+      if (_showEasterEggOnly && !a.hasEasterEgg) return false;
+      // 모델에 isOperating이 없다면 대기시간이 0 이상인 것을 운영 중으로 임시 간주
+      if (_showOperatingOnly && a.waitMinutes < 0) return false;
+      return true;
+    }).toList();
 
-            if (_topTab == '어트랙션') ...[
-              // 카테고리 필터
-              SliverToBoxAdapter(
-                child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: SizedBox(
-                    height: 36,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _categories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (_, i) {
-                        final cat = _categories[i];
-                        final isActive = _categoryFilter == cat;
-                        return GestureDetector(
-                          onTap: () => setState(() => _categoryFilter = cat),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isActive ? const Color(0xFF1F1F1F) : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isActive ? const Color(0xFF1F1F1F) : const Color(0xFFE0E0E0),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                if (cat == '전체') const Text('✨ ', style: TextStyle(fontSize: 12)),
-                                if (cat == '스릴') const Text('🎢 ', style: TextStyle(fontSize: 12)),
-                                if (cat == '가족') const Text('👨‍👩‍👧 ', style: TextStyle(fontSize: 12)),
-                                if (cat == '여유') const Text('☁️ ', style: TextStyle(fontSize: 12)),
-                                if (cat == '포토') const Text('📸 ', style: TextStyle(fontSize: 12)),
-                                Text(
-                                  cat,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: isActive ? Colors.white : const Color(0xFF555555),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+    return ColoredBox(
+      color: const Color(0xFFF7F7F7),
+      child: SafeArea(
+        bottom: false,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFFE60012)))
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+                children: [
+                  _HeaderRow(
+                    onRefresh: _loadAndCompute,
+                    onChangeCondition: _goToOnboarding,
+                  ),
+                  const SizedBox(height: 16),
+                  _SummaryChips(answers: _answers),
+                  const SizedBox(height: 20),
+
+                  if (_top3.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                      child: const Center(
+                        child: Text('조건에 맞는 어트랙션이 없어요', style: TextStyle(color: Color(0xFF888888), fontWeight: FontWeight.w700)),
+                      ),
+                    )
+                  else
+                    ..._top3.asMap().entries.map((e) => Padding(
+                          padding: EdgeInsets.only(bottom: e.key == _top3.length - 1 ? 0 : 12),
+                          child: _AttractionCard(index: e.key + 1, item: e.value),
+                        )),
+
+                  const SizedBox(height: 32),
+                  const Divider(height: 1, color: Color(0xFFDDDDDD)),
+                  const SizedBox(height: 24),
+
+                  const Text('🎢 전체 둘러보기',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+                  const SizedBox(height: 16),
+
+                  // 메인 카테고리 칩
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _categories.map((cat) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(cat,
+                            style: TextStyle(fontWeight: FontWeight.w700, color: _selectedCategory == cat ? Colors.white : const Color(0xFF555555))),
+                          selected: _selectedCategory == cat,
+                          selectedColor: const Color(0xFFE60012),
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: _selectedCategory == cat ? const Color(0xFFE60012) : const Color(0xFFDDDDDD)),
+                          showCheckmark: false,
+                          onSelected: (selected) {
+                            if (selected) setState(() => _selectedCategory = cat);
+                          },
+                        ),
+                      )).toList(),
                     ),
                   ),
-                ),
-              ),
+                  const SizedBox(height: 12),
 
-              // AI 기반 맞춤 추천 배너
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEAF4FF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFBBDEFB)),
-                  ),
-                  child: Row(
+                  // 🚀 기획서 반영: 운영중 / 이스터에그 세부 필터
+                  Row(
                     children: [
-                      const Text('🤖', style: TextStyle(fontSize: 22)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'AI 기반 맞춤 추천',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1565C0)),
-                                ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  width: 7, height: 7,
-                                  decoration: const BoxDecoration(color: Color(0xFF4CAF50), shape: BoxShape.circle),
-                                ),
-                              ],
-                            ),
-                            const Text(
-                              '현재 혼잡도 + 날씨 + 선호도를 분석했어요',
-                              style: TextStyle(fontSize: 11, color: Color(0xFF1565C0)),
-                            ),
-                          ],
+                      FilterChip(
+                        label: const Text('✅ 운영중'),
+                        selected: _showOperatingOnly,
+                        onSelected: (val) => setState(() => _showOperatingOnly = val),
+                        backgroundColor: Colors.white,
+                        selectedColor: const Color(0xFFE60012).withOpacity(0.1),
+                        side: BorderSide(color: _showOperatingOnly ? const Color(0xFFE60012) : const Color(0xFFDDDDDD)),
+                        labelStyle: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _showOperatingOnly ? const Color(0xFFE60012) : const Color(0xFF888888)
                         ),
+                        showCheckmark: false,
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: const Text('✨ 이스터에그'),
+                        selected: _showEasterEggOnly,
+                        onSelected: (val) => setState(() => _showEasterEggOnly = val),
+                        backgroundColor: Colors.white,
+                        selectedColor: const Color(0xFFFFB800).withOpacity(0.15),
+                        side: BorderSide(color: _showEasterEggOnly ? const Color(0xFFFFB800) : const Color(0xFFDDDDDD)),
+                        labelStyle: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _showEasterEggOnly ? const Color(0xFFD49A00) : const Color(0xFF888888)
+                        ),
+                        showCheckmark: false,
                       ),
                     ],
                   ),
-                ),
-              ),
+                  const SizedBox(height: 16),
 
-              // 어트랙션 카드 리스트
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _AttractionCard(
-                    attraction: _filteredAttractions[index],
-                    onLike: () {
-                      setState(() {
-                        _filteredAttractions[index]['liked'] = !_filteredAttractions[index]['liked'];
-                      });
-                    },
-                  ),
-                  childCount: _filteredAttractions.length,
-                ),
+                  if (filteredAttractions.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Center(child: Text('해당 조건의 시설이 없습니다.', style: TextStyle(color: Colors.grey))),
+                    )
+                  else
+                    ...filteredAttractions.map((item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _AllAttractionCard(item: item),
+                    )),
+                ],
               ),
-            ],
-
-            if (_topTab == '추천 코스') ...[
-              // AI 코스 추천 헤더
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text('🗺️', style: TextStyle(fontSize: 20)),
-                          SizedBox(width: 8),
-                          Text(
-                            'AI가 최적의 동선으로\n코스를 짜드려요!',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 코스 카드 리스트
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _CourseCard(course: _courses[index]),
-                  childCount: _courses.length,
-                ),
-              ),
-            ],
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
-        ),
       ),
     );
   }
 }
 
-// ─── 탭 버튼 ───────────────────────────────────────────────
-class _TopTab extends StatelessWidget {
-  final String icon, label;
-  final bool isActive;
-  final Color activeColor;
-  final VoidCallback onTap;
+// ----------------------------------------------------
+// UI 위젯들
+// ----------------------------------------------------
 
-  const _TopTab({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.activeColor,
-    required this.onTap,
-  });
+class _HeaderRow extends StatelessWidget {
+  final VoidCallback onRefresh;
+  final VoidCallback onChangeCondition;
+
+  const _HeaderRow({required this.onRefresh, required this.onChangeCondition});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isActive ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isActive ? activeColor : const Color(0xFFE0E0E0)),
-        ),
-        child: Row(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: isActive ? Colors.white : const Color(0xFF555555),
-              ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: Row(
+        children: [
+          const Icon(Icons.auto_awesome_rounded, color: Color(0xFFE60012), size: 22),
+          const SizedBox(width: 6),
+          const Text('맞춤 추천', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFE60012))),
+          const Spacer(),
+          TextButton(
+            onPressed: onChangeCondition,
+            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), minimumSize: Size.zero),
+            child: const Text('조건 변경', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+          ),
+          const SizedBox(width: 4),
+          OutlinedButton.icon(
+            onPressed: onRefresh,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('새로고침', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1E3158),
+              side: const BorderSide(color: Color(0xFFDDDDDD)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─── 어트랙션 카드 ─────────────────────────────────────────
+class _SummaryChips extends StatelessWidget {
+  final SurveyAnswers? answers;
+  const _SummaryChips({required this.answers});
+
+  @override
+  Widget build(BuildContext context) {
+    if (answers == null) return const Text('설문 응답 없음 — 기본 우선순위로 추천', style: TextStyle(color: Color(0xFF888888), fontSize: 12));
+    final a = answers!;
+    final memberText = MemberCategory.values.where((c) => a.count(c) > 0).map((c) => '${c.emoji}${a.count(c)}').join(' ');
+    final chips = <String>[
+      '👥 총 ${a.total}명',
+      if (memberText.isNotEmpty) memberText,
+      if (a.favoriteType != null) '🎯 ${a.favoriteType}',
+      if (a.purpose != null) '📍 ${a.purpose}',
+    ];
+    return Wrap(spacing: 6, runSpacing: 6, children: chips.map((t) => _Chip(text: t)).toList());
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String text;
+  const _Chip({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(99), border: Border.all(color: const Color(0xFFEEEEEE))),
+      child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1F1F1F))),
+    );
+  }
+}
+
 class _AttractionCard extends StatelessWidget {
-  final Map<String, dynamic> attraction;
-  final VoidCallback onLike;
+  final int index;
+  final Attraction item;
+  const _AttractionCard({required this.index, required this.item});
 
-  const _AttractionCard({required this.attraction, required this.onLike});
+  Color get _crowdColor {
+    switch (item.crowdLabel) {
+      case '여유': return const Color(0xFF4CAF50);
+      case '보통': return const Color(0xFFFFC107);
+      default: return const Color(0xFFE60012);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 상태 배지
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-            child: Row(
+          Container(width: 32, height: 32, decoration: const BoxDecoration(color: Color(0xFFE60012), shape: BoxShape.circle), alignment: Alignment.center, child: Text('$index', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900))),
+          const SizedBox(width: 12),
+          Container(width: 56, height: 56, decoration: BoxDecoration(color: const Color(0xFFE60012).withOpacity(0.08), borderRadius: BorderRadius.circular(14)), alignment: Alignment.center, child: Text(item.icon, style: const TextStyle(fontSize: 28))),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (attraction['statusColor'] as Color).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: (attraction['statusColor'] as Color).withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🎯', style: TextStyle(fontSize: 10)),
-                      const SizedBox(width: 4),
-                      Text(
-                        attraction['status'],
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: attraction['statusColor'] as Color,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Row(
+                Text(item.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+                const SizedBox(height: 4),
+                Text('${item.zone} · ${item.indoor ? '실내' : '실외'} · 스릴 ${item.thrillLevel}/5', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(
-                        color: attraction['statusColor'] as Color,
-                        shape: BoxShape.circle,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: _crowdColor.withOpacity(0.12), borderRadius: BorderRadius.circular(99)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 6, height: 6, decoration: BoxDecoration(color: _crowdColor, shape: BoxShape.circle)), const SizedBox(width: 4), Text(item.crowdLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _crowdColor))]),
                     ),
-                    const SizedBox(width: 5),
-                    Text(
-                      attraction['statusDetail'],
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: onLike,
-                      child: Icon(
-                        attraction['liked'] ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: attraction['liked'] ? const Color(0xFFE60012) : const Color(0xFFCCCCCC),
-                        size: 20,
-                      ),
-                    ),
+                    Text('⏱ 예상 ${item.waitMinutes}분', style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
+                    if (item.heightLimit > 0) Text('📏 ${item.heightLimit}cm+', style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
                   ],
-                ),
-              ],
-            ),
-          ),
-          // 이미지 + 정보
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 90, height: 90,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(attraction['icon'], style: const TextStyle(fontSize: 44)),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              attraction['name'],
-                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F)),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Text('바로가기 〉', style: TextStyle(fontSize: 12, color: Color(0xFFE60012), fontWeight: FontWeight.w600)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${attraction['rating']}',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F1F1F)),
-                          ),
-                          Text(
-                            ' (${attraction['reviewCount'].toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')})',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        attraction['desc'],
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF555555)),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        children: (attraction['tags'] as List<String>)
-                            .map((tag) => Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF5F5F5),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(tag, style: const TextStyle(fontSize: 10, color: Color(0xFF666666))),
-                                ))
-                            .toList(),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -537,95 +371,52 @@ class _AttractionCard extends StatelessWidget {
   }
 }
 
-// ─── 코스 카드 ─────────────────────────────────────────────
-class _CourseCard extends StatelessWidget {
-  final Map<String, dynamic> course;
-  const _CourseCard({required this.course});
+class _AllAttractionCard extends StatelessWidget {
+  final Attraction item;
+  const _AllAttractionCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
+        border: Border.all(color: const Color(0xFFEEEEEE)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Text(course['emoji'], style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 8),
-              Text(
-                course['name'],
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF888888)),
-              const SizedBox(width: 4),
-              Text('${course['duration']}', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
-              const Text(' · ', style: TextStyle(color: Color(0xFF888888))),
-              const Text('😊 ', style: TextStyle(fontSize: 12)),
-              Text('${course['attractionCount']}개 어트랙션', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // 경로 표시
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: course['routeColor'] as Color,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: (course['routeBorderColor'] as Color).withValues(alpha: 0.5)),
-            ),
-            child: Text(
-              course['route'],
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: course['routeTextColor'] as Color,
-              ),
-              textAlign: TextAlign.center,
+            width: 48, height: 48,
+            decoration: BoxDecoration(color: const Color(0xFFF0F4F8), borderRadius: BorderRadius.circular(12)),
+            alignment: Alignment.center,
+            child: Text(item.icon, style: const TextStyle(fontSize: 24)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F))),
+                const SizedBox(height: 4),
+                // 🚀 기획서 반영: 대기시간 및 구역 표시
+                Text('${item.zone} · ⏱ 예상 ${item.waitMinutes}분', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${course['name']} 코스를 시작합니다! 🚀'),
-                    backgroundColor: const Color(0xFF1E3158),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: course['routeBorderColor'] as Color),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                '이 코스로 시작하기 〉',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: course['routeTextColor'] as Color,
-                ),
+          // 🚀 기획서 반영: 이스터에그 보유 여부 뱃지 표시
+          if (item.hasEasterEgg)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(color: const Color(0xFFFFF7E6), borderRadius: BorderRadius.circular(8)),
+              child: const Row(
+                children: [
+                  Icon(Icons.stars_rounded, color: Color(0xFFFFB800), size: 14),
+                  SizedBox(width: 4),
+                  Text('이스터에그', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFFB800))),
+                ],
               ),
             ),
-          ),
         ],
       ),
     );

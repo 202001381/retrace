@@ -1,866 +1,1137 @@
 import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import '../models/spot_model.dart';
-import '../widgets/ai_scan_modal.dart';
-import '../widgets/spot_detail_sheet.dart';
-import '../screens/route_screen.dart';
+import 'package:latlong2/latlong.dart';
+
+import '../core/theme/app_colors.dart';
+import '../models/attraction.dart';
+import '../models/place_filter.dart';
+import '../models/route_response.dart';
+import '../widgets/design/stamp.dart';
+import 'all_attractions_screen.dart';
+import '../services/easter_egg_service.dart';
+import '../services/luna_recommendation_store.dart';
+import '../services/onboarding_service.dart';
+import '../services/route_service.dart';
+import '../widgets/attraction_detail_sheet.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final bool showMyLunaInitially;
+  const MapScreen({super.key, this.showMyLunaInitially = false});
+
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
+  // ── 지도 상수 ──────────────────────────────────────────────
+  // 서울랜드 실제 위치 — 경기 과천시 광명로 181 (막계동)
+  // rect 127.018,37.432,127.030,37.438 의 중심 부근으로 보정.
+  // 서울랜드 실제 좌표 — Naver/Google Maps 확인 (37.434327, 127.020105 근처).
+  static const LatLng _seoullandCenter = LatLng(37.4343, 127.0201);
+  static const LatLng _kGate = LatLng(37.4332, 127.0174); // 정문 (대공원역 진입)
+
+  // GPS 잡혀있으면 현재 위치, 아니면 정문을 출발점으로 사용.
+  LatLng get _currentOrigin => _myPosition ?? _kGate;
+
+  // ── 컨트롤 / 상태 ──────────────────────────────────────────
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionStream;
-  LatLng? _currentPosition;
-  bool _gpsEnabled = false;
-  bool _isLocating = false;
+  LatLng? _myPosition;
+
+  bool _gpsLoading = false;
   bool _showRoute = false;
 
-  // 필터
-  SpotCategory? _activeCategory;   // null = 전체
-  String _activeFilter = '전체';
-  bool _showEasterEgg = false;
+  // 장소 리스트 화면의 단일 필터 — 카테고리(단일 선택) + 운영중/내 이스터에그(토글).
+  PlaceFilterState _filter = PlaceFilterState.empty;
+  // 사용자가 수집한 이스터에그 어트랙션 id (영속화) — "내 이스터에그" 토글의 모집단.
+  Set<String> _discoveredEggs = const {};
 
-  // 선택된 스팟
-  Spot? _selectedSpot;
+  // 상단 검색바 — 이름 부분 일치, 대소문자 무시.
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
-  // 동선 추천 상태 (홈에서 설정한 값 사용)
-  final String _companionType = '가족';
-  final List<String> _preferences = ['스릴·액티비티'];
-  List<Spot> _recommendedRoute = [];
+  Attraction? _selectedAttraction;
+  Attraction? _navTarget;
+  int? _navWalkMin;
+  bool _navInProgress = false;
 
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnim;
+  // 동선 추천 상태
+  RouteResponse? _currentRoute;
+  bool _routeLoading = false;
+  SurveyAnswers? _onboardingAnswers;
+  LatLng? _lastRouteOrigin; // 100m 이상 이동 시 재요청용
 
-  static const LatLng _seoulLandCenter = LatLng(37.4279, 127.0247);
+  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  double _sheetSize = 0.08;
+  // 어트랙션 목록이 기본부터 보이도록 mid 로 시작.
+  static const double _kSheetMini = 0.12;
+  static const double _kSheetMid = 0.50;
+  static const double _kSheetMax = 0.92;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this, duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-    _buildRecommendedRoute();
+    // 마이 루나에 활성 추천이 있으면 진입 시 자동 ON.
+    _showRoute = widget.showMyLunaInitially ||
+        (LunaRecommendationStore.instance.current?.spots.isNotEmpty ?? false);
+    _sheetController.addListener(_onSheetChanged);
+    LunaRecommendationStore.instance.notifier.addListener(_onLunaStoreChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        _mapController.move(_seoullandCenter, 17.0);
+      } catch (_) {}
+    });
+    _loadRoute('initial');
+    _loadDiscoveredEggs();
+  }
+
+  void _onLunaStoreChanged() {
+    if (!mounted) return;
+    final hasRoute =
+        LunaRecommendationStore.instance.current?.spots.isNotEmpty ?? false;
+    setState(() {
+      // MyLuna 가 새 추천을 push 했고 사용자가 동선을 꺼둔 상태라면 자동 ON.
+      // (사용자가 명시적으로 끈 상태도 덮어쓰긴 하지만, 데모 의도 우선.)
+      if (hasRoute) _showRoute = true;
+    });
+  }
+
+  Future<void> _loadDiscoveredEggs() async {
+    final ids = await EasterEggService.discoveredAll();
+    if (!mounted) return;
+    setState(() => _discoveredEggs = ids);
+  }
+
+  Future<void> _loadRoute(String reason) async {
+    if (_routeLoading) return;
+    setState(() => _routeLoading = true);
+    try {
+      _onboardingAnswers ??= await OnboardingService.read();
+      final origin = _myPosition ?? _kGate;
+      final survey = _onboardingAnswers ??
+          const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
+      final req = RouteRequest(
+        uid: 'guest',
+        lat: origin.latitude,
+        lng: origin.longitude,
+        hasGps: _myPosition != null,
+        onboarding: survey,
+        completedIds: const {},
+        discoveredEggs: const {},
+        requestReason: reason,
+      );
+      final resp = await RouteService.instance.fetchRoute(req);
+      if (!mounted) return;
+      setState(() {
+        _currentRoute = resp;
+        _lastRouteOrigin = origin;
+      });
+    } catch (_) {
+      // 실패 시 마지막 캐시 유지 (이미 _currentRoute 에 들어있음)
+    } finally {
+      if (mounted) setState(() => _routeLoading = false);
+    }
+  }
+
+  void _onSheetChanged() {
+    if (!_sheetController.isAttached) return;
+    final s = _sheetController.size;
+    if ((s - _sheetSize).abs() > 0.005) {
+      setState(() => _sheetSize = s);
+    }
+  }
+
+  void _shrinkSheet() {
+    if (_sheetController.isAttached && _sheetController.size > _kSheetMini + 0.05) {
+      _sheetController.animateTo(_kSheetMini,
+          duration: const Duration(milliseconds: 240), curve: Curves.easeOutCubic);
+    }
+  }
+
+  void _expandSheet([double size = _kSheetMid]) {
+    if (_sheetController.isAttached) {
+      _sheetController.animateTo(size,
+          duration: const Duration(milliseconds: 240), curve: Curves.easeOutCubic);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.showMyLunaInitially && !oldWidget.showMyLunaInitially) {
+      setState(() => _showRoute = true);
+    }
   }
 
   @override
   void dispose() {
+    _sheetController.removeListener(_onSheetChanged);
+    _sheetController.dispose();
+    LunaRecommendationStore.instance.notifier
+        .removeListener(_onLunaStoreChanged);
     _positionStream?.cancel();
-    _pulseController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  void _buildRecommendedRoute() {
-    _recommendedRoute = SeoulLandSpots.recommendedRoute(
-      companionType: _companionType,
-      preferences: _preferences,
-      maxSpots: 8,
+  // ── GPS ──────────────────────────────────────────────────
+  Future<void> _moveToGps() async {
+    setState(() => _gpsLoading = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    LatLng target = _kGate;
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.always || perm == LocationPermission.whileInUse) {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        );
+        target = LatLng(pos.latitude, pos.longitude);
+        setState(() => _myPosition = target);
+        _startPositionStream();
+      }
+    } catch (_) {}
+    _mapController.move(target, 17.0);
+    if (mounted) setState(() => _gpsLoading = false);
+
+    // 100m 이상 이동했으면 동선 재요청
+    if (_lastRouteOrigin == null ||
+        _haversineMeters(_lastRouteOrigin!, target) >= 100) {
+      _loadRoute('gps_moved');
+    }
+  }
+
+  /// 권한 확보 후 1회만 구독 시작. 5m 이상 이동 시 콜백.
+  void _startPositionStream() {
+    if (_positionStream != null) return;
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen((pos) {
+      if (!mounted) return;
+      final next = LatLng(pos.latitude, pos.longitude);
+      setState(() => _myPosition = next);
+      // 100m 이상 이동했으면 동선 재요청 — 폭주 방지.
+      if (_lastRouteOrigin == null ||
+          _haversineMeters(_lastRouteOrigin!, next) >= 100) {
+        _loadRoute('gps_moved');
+      }
+      // 내비 중이면 도보 분 갱신.
+      if (_navTarget != null) {
+        final dist = _haversineMeters(next, _navTarget!.position);
+        setState(() => _navWalkMin = (dist / 66.67).ceil());
+      }
+    }, onError: (_) {});
+  }
+
+  // ── 동선 / 필터 ──────────────────────────────────────────
+  void _toggleRoute() {
+    setState(() => _showRoute = !_showRoute);
+    if (_showRoute) _shrinkSheet();
+  }
+
+  bool _matchesSearch(Attraction a) {
+    if (_searchQuery.isEmpty) return true;
+    return a.name.toLowerCase().contains(_searchQuery.toLowerCase());
+  }
+
+  /// 마커·시트 카드 양쪽에서 사용하는 단일 표시 리스트.
+  List<Attraction> get _visibleAttractions {
+    return _filter
+        .apply(kAttractions, _discoveredEggs)
+        .where(_matchesSearch)
+        .toList();
+  }
+
+  /// 마이 루나 동선 — store 가 우선, 비어있으면 자체 fetch 결과로 fallback.
+  /// store 는 MyLunaScreen 이 관리(데모 시나리오 선택 시 즉시 반영).
+  List<Attraction> get _routeAttractions {
+    final stored = LunaRecommendationStore.instance.current;
+    if (stored != null && stored.spots.isNotEmpty) {
+      return stored.spots;
+    }
+    final resp = _currentRoute;
+    if (resp == null) return const [];
+    final byId = {for (final a in kAttractions) a.id: a};
+    return resp.route
+        .map((s) => byId[s.id])
+        .whereType<Attraction>()
+        .toList();
+  }
+
+  /// 동선 메타(총 분·rationale) 도 store 우선.
+  ({int? totalMin, String? rationale}) get _routeMeta {
+    final stored = LunaRecommendationStore.instance.current;
+    if (stored != null && stored.spots.isNotEmpty) {
+      return (totalMin: stored.totalMin, rationale: stored.rationale);
+    }
+    final r = _currentRoute;
+    if (r == null) return (totalMin: null, rationale: null);
+    return (totalMin: r.totalMin, rationale: r.rationale);
+  }
+
+  String get _routeSummaryText {
+    final names = _routeAttractions.map((a) => a.name).join(' → ');
+    if (names.isEmpty) return '🗺️ 동선 준비 중…';
+    return '🗺️ $names';
+  }
+
+  /// 시트 카드 리스트가 빈 경우의 분기 — "내 이스터에그" 0건이 최우선.
+  Widget _buildEmptyState() {
+    if (_filter.onlyMyEasterEggs && _discoveredEggs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        child: Column(
+          children: [
+            Text('아직 수집한 이스터에그가 없어요',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                )),
+            SizedBox(height: 6),
+            Text('지도에서 ✨ 표시된 곳을 방문해보세요',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                )),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      child: Column(
+        children: [
+          const Text('조건에 맞는 장소가 없어요',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              )),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () =>
+                setState(() => _filter = PlaceFilterState.empty),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.ink900,
+              side: const BorderSide(color: AppColors.line),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+            child: const Text('필터 초기화',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                )),
+          ),
+        ],
+      ),
     );
   }
 
-  // GPS 위치 추적 시작/중지
-  Future<void> _toggleGps() async {
-    if (_gpsEnabled) {
-      await _positionStream?.cancel();
-      setState(() { _gpsEnabled = false; _currentPosition = null; });
-      return;
-    }
-
-    setState(() => _isLocating = true);
-
-    LocationPermission perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
-    }
-
-    if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
-      setState(() => _isLocating = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('📍 위치 권한이 필요합니다. 설정에서 허용해주세요.'),
-            backgroundColor: Color(0xFFE60012),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-
-    // 웹 환경에서는 실제 GPS 대신 서울랜드 내 시뮬레이션 위치 사용
-    try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-      ).timeout(const Duration(seconds: 5));
-
-      setState(() {
-        _currentPosition = LatLng(pos.latitude, pos.longitude);
-        _gpsEnabled = true;
-        _isLocating = false;
-      });
-      _mapController.move(_currentPosition!, 17.5);
-
-      // 실시간 스트림
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 5,
-        ),
-      ).listen((p) {
-        if (mounted) {
-          setState(() => _currentPosition = LatLng(p.latitude, p.longitude));
-        }
-      });
-
-    } catch (_) {
-      // 웹/에뮬레이터: 서울랜드 중심 시뮬레이션
-      setState(() {
-        _currentPosition = const LatLng(37.4279, 127.0247);
-        _gpsEnabled = true;
-        _isLocating = false;
-      });
-      _mapController.move(_currentPosition!, 17.5);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('📍 GPS 시뮬레이션 모드: 서울랜드 중심으로 위치 설정'),
-            backgroundColor: Color(0xFF1E3158),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
+  // ── 인터랙션 ─────────────────────────────────────────────
+  void _openDetail(Attraction a) {
+    setState(() => _selectedAttraction = a);
+    _shrinkSheet();
+    _mapController.move(a.position, 17.5);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AttractionDetailSheet(
+        attraction: a,
+        onNavigate: () => _startNavigation(a),
+        isNavigating: _navInProgress && _navTarget?.id == a.id,
+        walkMinutes: _navTarget?.id == a.id ? _navWalkMin : null,
+      ),
+    ).then((_) {
+      if (mounted) setState(() => _selectedAttraction = null);
+    });
   }
 
-  // 스팟 탭 핸들러
-  void _onSpotTap(Spot spot) {
-    setState(() => _selectedSpot = spot);
+  void _startNavigation(Attraction target) {
+    final origin = _currentOrigin;
+    final dist = _haversineMeters(origin, target.position);
+    final walkMin = (dist / 66.67).ceil(); // 4 km/h ≈ 66.67 m/min
+    setState(() {
+      _navTarget = target;
+      _navWalkMin = walkMin;
+      _navInProgress = true;
+    });
+    Navigator.of(context).maybePop();
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      final mid = LatLng(
+        (origin.latitude + target.position.latitude) / 2,
+        (origin.longitude + target.position.longitude) / 2,
+      );
+      _mapController.move(mid, 17);
+    });
+  }
 
-    if (spot.hasEasterEgg) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AiScanModal(
-          spotName: spot.name,
-          icon: spot.icon,
-          description: spot.description,
-          onCollect: () {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('📖 연대기(Chronicle)에 수집되었습니다!'),
-                backgroundColor: Color(0xFF1E3158),
-                behavior: SnackBarBehavior.floating,
+  static double _haversineMeters(LatLng a, LatLng b) {
+    const r = 6371000.0;
+    final p1 = a.latitude * math.pi / 180;
+    final p2 = b.latitude * math.pi / 180;
+    final dp = (b.latitude - a.latitude) * math.pi / 180;
+    final dl = (b.longitude - a.longitude) * math.pi / 180;
+    final h = math.sin(dp / 2) * math.sin(dp / 2) +
+        math.cos(p1) * math.cos(p2) * math.sin(dl / 2) * math.sin(dl / 2);
+    return 2 * r * math.atan2(math.sqrt(h), math.sqrt(1 - h));
+  }
+
+  // ── 마커 ─────────────────────────────────────────────────
+  // 기본은 단순 1-원 마커. 동선 ON 일 때 경로 스팟만 + 순번 배지 노출.
+  List<Marker> _buildMarkers() {
+    final routeOrder = <String, int>{};
+    if (_showRoute) {
+      final spots = _routeAttractions;
+      for (var i = 0; i < spots.length; i++) {
+        routeOrder[spots[i].id] = i + 1;
+      }
+    }
+
+    // 동선 ON: 경로 스팟만 노출 (필터/검색 무시 — 폴리라인과 정합).
+    // 동선 OFF: 필터/검색 결과 전체.
+    final Iterable<Attraction> source =
+        _showRoute ? _routeAttractions : _visibleAttractions;
+    final markers = source.map((a) {
+      final order = routeOrder[a.id];
+      final hasBadge = order != null;
+      // v3 디자인 — Stamp(2~3 글자 코드 + 톤) + 흰 테두리 ring.
+      final code = Stamp.codeFromName(a.name);
+      final tone = Stamp.toneFromHints(
+        category: a.category,
+        thrillLevel: a.thrillLevel,
+        hasEasterEgg: a.hasEasterEgg,
+      );
+      final dot = Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stamp(code: code, tone: tone, size: 33),
+      );
+
+      return Marker(
+        point: LatLng(a.lat, a.lng),
+        width: hasBadge ? 52 : 44,
+        height: hasBadge ? 52 : 44,
+        child: GestureDetector(
+          onTap: () => _onMarkerTap(a),
+          child: Opacity(
+            opacity: a.isOperating ? 1.0 : 0.4,
+            child: hasBadge
+                ? Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      dot,
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: AppColors.ink900,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$order',
+                            style: const TextStyle(
+                              color: AppColors.bgCard,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : dot,
+          ),
+        ),
+      );
+    }).toList();
+
+    if (_myPosition != null) {
+      markers.add(Marker(
+        point: _myPosition!,
+        width: 24, height: 24,
+        child: Center(
+          child: Container(
+            width: 18, height: 18,
+            decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.25), shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Container(
+              width: 12, height: 12,
+              decoration: BoxDecoration(
+                color: AppColors.blue,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
               ),
-            );
-          },
+            ),
+          ),
         ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => SpotDetailSheet(spot: spot),
-      );
+      ));
+    } else if (_showRoute || _navTarget != null) {
+      // GPS 가 없으면 동선/내비 출발점인 정문을 보여준다.
+      markers.add(Marker(
+        point: _kGate,
+        width: 32, height: 32,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.bgCard,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.ink900, width: 2),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 1)),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: const Text('🚪', style: TextStyle(fontSize: 16)),
+        ),
+      ));
     }
+    return markers;
   }
 
-  // 필터링된 스팟 목록
-  List<Spot> get _filteredSpots {
-    var spots = SeoulLandSpots.all;
-    if (_showEasterEgg) {
-      spots = spots.where((s) => s.hasEasterEgg).toList();
-    } else if (_activeCategory != null) {
-      spots = spots.where((s) => s.category == _activeCategory).toList();
-    }
-    return spots;
+  // ── 동선 폴리라인 ─────────────────────────────────────────
+  List<Polyline> _buildRoute() {
+    if (!_showRoute) return const [];
+    final spots = _routeAttractions;
+    if (spots.isEmpty) return const [];
+    // 출발점(현재 GPS or 정문)에서 첫 스팟까지 잇는 선을 포함.
+    final points = <LatLng>[
+      _currentOrigin,
+      ...spots.map((a) => LatLng(a.lat, a.lng)),
+    ];
+    return [
+      Polyline(
+        points: points,
+        strokeWidth: 3.0,
+        color: AppColors.red,
+        pattern: StrokePattern.dashed(segments: const [10, 5]),
+      ),
+    ];
   }
+
+  void _onMarkerTap(Attraction a) => _openDetail(a);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // ── 지도 ──────────────────────────────────────────
-            _buildMap(),
-
-            // ── 상단 검색바 + 필터 ───────────────────────────
-            Positioned(top: 0, left: 0, right: 0, child: _buildTopBar()),
-
-            // ── 우측 컨트롤 버튼 ────────────────────────────
-            Positioned(right: 12, bottom: 230, child: _buildMapControls()),
-
-            // ── 하단 시설 안내 시트 ─────────────────────────
-            Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomSheet()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─── 지도 위젯 ─────────────────────────────────────────────
-  Widget _buildMap() {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _seoulLandCenter,
-        initialZoom: 17.0,
-        minZoom: 15.0,
-        maxZoom: 19.0,
-        onTap: (_, __) => setState(() => _selectedSpot = null),
-      ),
-      children: [
-        // OSM 타일 레이어
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.seoulland.app',
-          maxZoom: 19,
-        ),
-
-        // 추천 동선 경로선
-        if (_showRoute && _recommendedRoute.length > 1)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: _recommendedRoute.map((s) => s.position).toList(),
-                color: const Color(0xFFE60012).withValues(alpha: 0.8),
-                strokeWidth: 3.5,
-                pattern: StrokePattern.dashed(segments: const [12, 6]),
-              ),
-            ],
-          ),
-
-        // 스팟 마커 레이어
-        MarkerLayer(
-          markers: _filteredSpots.map((spot) => _buildMarker(spot)).toList(),
-        ),
-
-        // 추천 동선 순서 번호
-        if (_showRoute)
-          MarkerLayer(
-            markers: _recommendedRoute.asMap().entries.map((e) =>
-              _buildRouteNumberMarker(e.key + 1, e.value.position)
-            ).toList(),
-          ),
-
-        // GPS 현재 위치 마커
-        if (_currentPosition != null)
-          MarkerLayer(
-            markers: [_buildGpsMarker(_currentPosition!)],
-          ),
-      ],
-    );
-  }
-
-  // ─── 마커 빌더 ─────────────────────────────────────────────
-  Marker _buildMarker(Spot spot) {
-    final isSelected = _selectedSpot?.id == spot.id;
-    final isInRoute = _showRoute && _recommendedRoute.any((s) => s.id == spot.id);
-
-    return Marker(
-      point: spot.position,
-      width: isSelected ? 90 : 72,
-      height: isSelected ? 62 : 52,
-      child: GestureDetector(
-        onTap: () => _onSpotTap(spot),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 라벨
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? _categoryColor(spot.category)
-                      : isInRoute
-                          ? const Color(0xFFE60012).withValues(alpha: 0.9)
-                          : Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected || isInRoute
-                        ? Colors.transparent
-                        : _categoryColor(spot.category).withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 6, offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  spot.name,
-                  style: TextStyle(
-                    fontSize: isSelected ? 10 : 9,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected || isInRoute
-                        ? Colors.white
-                        : const Color(0xFF1F1F1F),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 2),
-              // 아이콘 핀
-              Container(
-                width: isSelected ? 36 : 30,
-                height: isSelected ? 36 : 30,
-                decoration: BoxDecoration(
-                  color: spot.hasEasterEgg
-                      ? const Color(0xFFFFB300)
-                      : _categoryColor(spot.category),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: isSelected ? 2.5 : 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _categoryColor(spot.category).withValues(alpha: 0.4),
-                      blurRadius: isSelected ? 10 : 6,
-                      spreadRadius: isSelected ? 2 : 0,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    spot.icon,
-                    style: TextStyle(fontSize: isSelected ? 18 : 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 동선 순서 번호 마커
-  Marker _buildRouteNumberMarker(int num, LatLng pos) {
-    return Marker(
-      point: pos,
-      width: 22,
-      height: 22,
-      alignment: const Alignment(1.8, -1.8),
-      child: Container(
-        width: 20, height: 20,
-        decoration: BoxDecoration(
-          color: const Color(0xFFE60012),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 1.5),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4)],
-        ),
-        child: Center(
-          child: Text(
-            '$num',
-            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // GPS 마커 (파란 점 + 펄스)
-  Marker _buildGpsMarker(LatLng pos) {
-    return Marker(
-      point: pos,
-      width: 60, height: 60,
-      child: AnimatedBuilder(
-        animation: _pulseAnim,
-        builder: (_, __) => Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 40 * _pulseAnim.value,
-                height: 40 * _pulseAnim.value,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3).withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              Container(
-                width: 16, height: 16,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2.5),
-                  boxShadow: [
-                    BoxShadow(color: const Color(0xFF2196F3).withValues(alpha: 0.5), blurRadius: 8),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _categoryColor(SpotCategory cat) {
-    switch (cat) {
-      case SpotCategory.attraction: return const Color(0xFFE60012);
-      case SpotCategory.food:       return const Color(0xFFFF6D00);
-      case SpotCategory.photo:      return const Color(0xFF8E24AA);
-    }
-  }
-
-  // ─── 상단 검색바 + 필터 ────────────────────────────────────
-  Widget _buildTopBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 8)],
-      ),
-      child: Column(
+    return ColoredBox(
+      color: AppColors.bgPage,
+      child: Stack(
         children: [
-          // 검색바
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          Positioned.fill(
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _seoullandCenter,
+                initialZoom: 17.0,
+                minZoom: 15.0,
+                maxZoom: 19.0,
+                onTap: (tapPosition, point) {
+                  // 지도 탭 시 패널 미니로
+                  _sheetController.animateTo(
+                    0.08,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                },
+              ),
+              children: [
+                TileLayer(
+                  // VWorld (한국 국토교통부) 정밀 지도 타일. 한국 내부 사설 시설
+                  // 윤곽까지 잡아주므로 OSM 의 회색 영역 문제 해소.
+                  // 키는 --dart-define=VWORLD_KEY=... 로 주입. 빌드시 미지정이면
+                  // 기존 키로 폴백 (정식 출시 전 키 회전 + 도메인 제한 필요).
+                  urlTemplate:
+                      'https://api.vworld.kr/req/wmts/1.0.0/{apiKey}/Base/{z}/{y}/{x}.png',
+                  additionalOptions: const {
+                    'apiKey': String.fromEnvironment(
+                      'VWORLD_KEY',
+                      defaultValue: '9783E3A8-A564-37C0-A9DC-42D67CAA8112',
+                    ),
+                  },
+                  userAgentPackageName: 'com.seoulland.app',
+                ),
+                MarkerLayer(markers: _buildMarkers()),
+                if (_showRoute) PolylineLayer(polylines: _buildRoute()),
+                if (_navTarget != null)
+                  PolylineLayer(polylines: [
+                    Polyline(
+                      points: [_currentOrigin, _navTarget!.position],
+                      color: AppColors.red,
+                      strokeWidth: 4.5,
+                    ),
+                  ]),
+              ],
+            ),
+          ),
+          _TopBar(
+            routeOn: _showRoute,
+            gpsLoading: _gpsLoading,
+            searchController: _searchCtrl,
+            onSearchChanged: (q) => setState(() => _searchQuery = q),
+            onToggleRoute: _toggleRoute,
+            onGps: _moveToGps,
+          ),
+          if (_showRoute || _navTarget != null)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 80,
+              left: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_showRoute)
+                    _StatusBadge(color: AppColors.red, text: '마이 루나 동선'),
+                  if (_showRoute && _navTarget != null) const SizedBox(height: 8),
+                  if (_navTarget != null)
+                    _StatusBadge(
+                      color: AppColors.red,
+                      text: '➜ ${_navTarget!.name} (도보 ${_navWalkMin ?? 0}분)',
+                      onClose: () => setState(() {
+                        _navTarget = null;
+                        _navWalkMin = null;
+                        _navInProgress = false;
+                      }),
+                    ),
+                ],
+              ),
+            ),
+          // ── 하단 시트 ──────────────────────────────────────
+          DraggableScrollableSheet(
+            controller: _sheetController,
+            // 어트랙션 목록이 첫 화면부터 보이도록 mid 위치로 시작.
+            initialChildSize: _kSheetMid,
+            minChildSize: _kSheetMini,
+            maxChildSize: _kSheetMax,
+            snap: true,
+            snapSizes: const [_kSheetMini, _kSheetMid, _kSheetMax],
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black12)],
+                ),
+                child: Column(
+                  children: [
+                    // 핸들 (탭하면 mid 로 확장)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _sheetSize < 0.20 ? _expandSheet() : _shrinkSheet(),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Center(
+                          child: Container(
+                            width: 40, height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        physics: const ClampingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          0, 0, 0,
+                          16 + MediaQuery.of(context).padding.bottom,
+                        ),
+                        children: [
+                          // 동선 요약 (ON 일 때만)
+                          if (_showRoute)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _routeSummaryText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.ink900,
+                                          ),
+                                        ),
+                                      ),
+                                      if (_routeLoading)
+                                        const Padding(
+                                          padding: EdgeInsets.only(right: 6),
+                                          child: SizedBox(
+                                            width: 12, height: 12,
+                                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.ink900),
+                                          ),
+                                        ),
+                                      GestureDetector(
+                                        onTap: () => _loadRoute('manual_refresh'),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.red,
+                                            borderRadius: BorderRadius.circular(99),
+                                          ),
+                                          child: const Text('다시 추천',
+                                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (_routeMeta.totalMin != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '총 ${_routeMeta.totalMin}분 · ${_routeMeta.rationale ?? ''}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          // 헤더 — 필터 활성 시 "전체" 단어 제거, 결과 N곳. 탭 시 풀스크린 리스트.
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const AllAttractionsScreen(),
+                                ),
+                              ),
+                              behavior: HitTestBehavior.opaque,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _filter.isAnyActive
+                                        ? '결과 ${_visibleAttractions.length}곳'
+                                        : '전체 ${_visibleAttractions.length}곳',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.chevron_right_rounded,
+                                      size: 18, color: AppColors.ink400),
+                                  const Spacer(),
+                                  _PulseDot(),
+                                  const SizedBox(width: 4),
+                                  const Text('실시간 연동 중',
+                                      style: TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          // 카테고리 칩 — 둥근 pill, 단일 선택. "전체" 포함 5개.
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                            child: SizedBox(
+                              height: 32,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: PlaceCategory.values.length + 1,
+                                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                                itemBuilder: (_, i) {
+                                  final isAll = i == 0;
+                                  final cat = isAll ? null : PlaceCategory.values[i - 1];
+                                  final label = isAll ? '전체' : cat!.label;
+                                  final active = _filter.category == cat;
+                                  return GestureDetector(
+                                    onTap: () => setState(() {
+                                      _filter = isAll
+                                          ? _filter.copyWith(clearCategory: true)
+                                          : _filter.copyWith(category: cat);
+                                    }),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: active ? AppColors.ink900 : Colors.white,
+                                        borderRadius: BorderRadius.circular(99),
+                                        border: Border.all(color: active ? AppColors.ink900 : AppColors.line),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(label,
+                                          style: TextStyle(
+                                            color: active ? Colors.white : AppColors.textPrimary,
+                                            fontSize: 12, fontWeight: FontWeight.w800,
+                                          )),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          // 상태 필터 — 카테고리 칩과 다른 인터랙션 문법(스위치)으로 분리.
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: AppColors.line),
+                          _FilterToggleRow(
+                            label: '운영중만 보기',
+                            value: _filter.onlyOperating,
+                            onChanged: (v) => setState(
+                                () => _filter = _filter.copyWith(onlyOperating: v)),
+                          ),
+                          const Divider(height: 1, color: AppColors.line, indent: 20, endIndent: 20),
+                          _FilterToggleRow(
+                            label: '✨ 내 이스터에그',
+                            value: _filter.onlyMyEasterEggs,
+                            onChanged: (v) => setState(
+                                () => _filter = _filter.copyWith(onlyMyEasterEggs: v)),
+                          ),
+                          const Divider(height: 1, color: AppColors.line),
+                          const SizedBox(height: 8),
+                          // 카드 리스트 — 이중 빈 상태 분기.
+                          if (_visibleAttractions.isEmpty)
+                            _buildEmptyState()
+                          else
+                            ..._visibleAttractions.map((a) => Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                                  child: _AttractionCard(
+                                    attraction: a,
+                                    dim: !a.isOperating,
+                                    onTap: () => _openDetail(a),
+                                  ),
+                                )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── 상단 바 ───────────────────────────────────────────────
+class _TopBar extends StatelessWidget {
+  final bool routeOn;
+  final bool gpsLoading;
+  final TextEditingController searchController;
+  final void Function(String) onSearchChanged;
+  final VoidCallback onToggleRoute;
+  final VoidCallback onGps;
+  const _TopBar({
+    required this.routeOn,
+    required this.gpsLoading,
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.onToggleRoute,
+    required this.onGps,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 0, left: 0, right: 0,
+      child: Material(
+        color: AppColors.bgCard,
+        elevation: 2,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
                     height: 42,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.bgPage,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: AppColors.line),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        SizedBox(width: 12),
-                        Icon(Icons.search_rounded, color: Color(0xFF9E9E9E), size: 18),
-                        SizedBox(width: 8),
-                        Text('어트랙션, 음식점, 포토스팟',
-                            style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 13)),
+                        const Icon(Icons.search, size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: searchController,
+                            onChanged: onSearchChanged,
+                            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                            decoration: const InputDecoration(
+                              isCollapsed: true,
+                              border: InputBorder.none,
+                              hintText: '어트랙션, 음식점',
+                              hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                        if (searchController.text.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              searchController.clear();
+                              onSearchChanged('');
+                            },
+                            child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
+                          ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 동선 보기 토글
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _showRoute = !_showRoute);
-                    if (_showRoute) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('🗺️ $_companionType 맞춤 동선 ${_recommendedRoute.length}곳 표시 중'),
-                          backgroundColor: const Color(0xFFE60012),
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _showRoute ? const Color(0xFFE60012) : const Color(0xFF1E3158),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _showRoute ? Icons.route_rounded : Icons.assistant_direction_rounded,
-                          color: Colors.white, size: 16,
-                        ),
-                        Text(
-                          _showRoute ? '동선ON' : '동선',
-                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
-                        ),
-                      ],
-                    ),
-                  ),
+                _IconLabelButton(
+                  label: '🗺️ 동선',
+                  active: routeOn,
+                  activeColor: AppColors.ink900,
+                  onTap: onToggleRoute,
                 ),
                 const SizedBox(width: 6),
-                // GPS 버튼
-                GestureDetector(
-                  onTap: _toggleGps,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _gpsEnabled
-                          ? const Color(0xFF2196F3)
-                          : _isLocating
-                              ? const Color(0xFFFFB300)
-                              : const Color(0xFF555555),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _isLocating
-                            ? const SizedBox(
-                                width: 16, height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white,
-                                ),
-                              )
-                            : Icon(
-                                _gpsEnabled ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
-                                color: Colors.white, size: 16,
-                              ),
-                        Text(
-                          _gpsEnabled ? 'GPS ON' : 'GPS',
-                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
-                        ),
-                      ],
-                    ),
-                  ),
+                _IconLabelButton(
+                  label: '📍 GPS',
+                  active: false,
+                  activeColor: AppColors.mint,
+                  loading: gpsLoading,
+                  onTap: onGps,
                 ),
               ],
             ),
           ),
-
-          // 카테고리 필터 칩
-          SizedBox(
-            height: 36,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                _filterChip('전체', null, Icons.apps_rounded),
-                const SizedBox(width: 6),
-                _filterChip('어트랙션', SpotCategory.attraction, Icons.local_activity_rounded),
-                const SizedBox(width: 6),
-                _filterChip('음식점', SpotCategory.food, Icons.restaurant_rounded),
-                const SizedBox(width: 6),
-                _filterChip('포토스팟', SpotCategory.photo, Icons.photo_camera_rounded),
-                const SizedBox(width: 6),
-                _easterEggChip(),
-                const SizedBox(width: 12),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterChip(String label, SpotCategory? cat, IconData icon) {
-    final isActive = _activeCategory == cat && !_showEasterEgg;
-    final color = cat == null
-        ? const Color(0xFF1F1F1F)
-        : _categoryColor(cat);
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _activeCategory = cat;
-          _showEasterEgg = false;
-          _activeFilter = label;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive ? color : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isActive ? color : const Color(0xFFE0E0E0)),
-          boxShadow: isActive ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 6)] : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: isActive ? Colors.white : color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : const Color(0xFF555555),
-              ),
-            ),
-          ],
         ),
       ),
-    );
-  }
-
-  Widget _easterEggChip() {
-    return GestureDetector(
-      onTap: () => setState(() {
-        _showEasterEgg = !_showEasterEgg;
-        if (_showEasterEgg) _activeCategory = null;
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: _showEasterEgg ? const Color(0xFFFFB300) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: _showEasterEgg ? const Color(0xFFFFB300) : const Color(0xFFE0E0E0),
-          ),
-          boxShadow: _showEasterEgg
-              ? [BoxShadow(color: const Color(0xFFFFB300).withValues(alpha: 0.4), blurRadius: 6)]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🥚', style: TextStyle(fontSize: 13)),
-            const SizedBox(width: 5),
-            Text(
-              '이스터에그 숨겨진 곳',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _showEasterEgg ? Colors.white : const Color(0xFF555555),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─── 우측 컨트롤 버튼 ──────────────────────────────────────
-  Widget _buildMapControls() {
-    return Column(
-      children: [
-        // 내 위치로 이동
-        _mapBtn(
-          icon: Icons.my_location_rounded,
-          color: const Color(0xFF2196F3),
-          onTap: () {
-            if (_currentPosition != null) {
-              _mapController.move(_currentPosition!, 17.5);
-            } else {
-              _toggleGps();
-            }
-          },
-        ),
-        const SizedBox(height: 8),
-        // 서울랜드 중심으로
-        _mapBtn(
-          icon: Icons.home_rounded,
-          color: const Color(0xFFE60012),
-          onTap: () => _mapController.move(_seoulLandCenter, 17.0),
-        ),
-        const SizedBox(height: 8),
-        // 동선 추천 화면
-        _mapBtn(
-          icon: Icons.directions_rounded,
-          color: const Color(0xFF1E3158),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => RouteScreen(
-                companionType: _companionType,
-                preferences: _preferences,
-                recommendedRoute: _recommendedRoute,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _mapBtn({required IconData icon, required Color color, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42, height: 42,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 2))],
-        ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-    );
-  }
-
-  // ─── 하단 시설 안내 바텀시트 ───────────────────────────────
-  Widget _buildBottomSheet() {
-    final counts = {
-      SpotCategory.attraction: SeoulLandSpots.byCategory(SpotCategory.attraction).length,
-      SpotCategory.food:       SeoulLandSpots.byCategory(SpotCategory.food).length,
-      SpotCategory.photo:      SeoulLandSpots.byCategory(SpotCategory.photo).length,
-    };
-
-    final displaySpots = _filteredSpots.take(6).toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, -4))],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 드래그 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 8, bottom: 6),
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(2)),
-          ),
-
-          // 헤더
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Text('시설안내', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F))),
-                const SizedBox(width: 10),
-                // 스팟 수 배지들
-                _countBadge('🎢 ${counts[SpotCategory.attraction]}', const Color(0xFFE60012)),
-                const SizedBox(width: 5),
-                _countBadge('🍽️ ${counts[SpotCategory.food]}', const Color(0xFFFF6D00)),
-                const SizedBox(width: 5),
-                _countBadge('📸 ${counts[SpotCategory.photo]}', const Color(0xFF8E24AA)),
-                const Spacer(),
-                // 혼잡도 실시간
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3F3),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFFFCDD2)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.circle, size: 7, color: Color(0xFFE60012)),
-                      SizedBox(width: 4),
-                      Text('실시간 연동 중', style: TextStyle(fontSize: 10, color: Color(0xFFE60012), fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // 스팟 가로 스크롤 카드
-          SizedBox(
-            height: 88,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: displaySpots.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) => _SpotMiniCard(
-                spot: displaySpots[i],
-                isSelected: _selectedSpot?.id == displaySpots[i].id,
-                onTap: () {
-                  _mapController.move(displaySpots[i].position, 18.0);
-                  _onSpotTap(displaySpots[i]);
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
-    );
-  }
-
-  Widget _countBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(text, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w700)),
     );
   }
 }
 
-// ─── 미니 스팟 카드 ────────────────────────────────────────
-class _SpotMiniCard extends StatelessWidget {
-  final Spot spot;
-  final bool isSelected;
+class _IconLabelButton extends StatelessWidget {
+  final String label;
+  final bool active;
+  final Color activeColor;
+  final bool loading;
   final VoidCallback onTap;
-
-  const _SpotMiniCard({required this.spot, required this.isSelected, required this.onTap});
-
-  Color get _catColor {
-    switch (spot.category) {
-      case SpotCategory.attraction: return const Color(0xFFE60012);
-      case SpotCategory.food:       return const Color(0xFFFF6D00);
-      case SpotCategory.photo:      return const Color(0xFF8E24AA);
-    }
-  }
+  const _IconLabelButton({
+    required this.label,
+    required this.active,
+    required this.activeColor,
+    this.loading = false,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 110,
-        padding: const EdgeInsets.all(10),
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? _catColor.withValues(alpha: 0.08) : const Color(0xFFF8F8F8),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? _catColor : Colors.transparent,
-            width: isSelected ? 1.5 : 1,
-          ),
+          color: active ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: active ? activeColor : AppColors.line),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(spot.icon, style: const TextStyle(fontSize: 20)),
-                if (spot.hasEasterEgg) const Text(' ✨', style: TextStyle(fontSize: 10)),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Text(
-              spot.name,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1F1F1F)),
-              maxLines: 1, overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 3),
-            if (spot.waitTime != null)
-              Row(children: [
-                Container(width: 6, height: 6,
-                  decoration: BoxDecoration(
-                    color: spot.waitTime == '없음' ? const Color(0xFF4CAF50) : const Color(0xFFFFB300),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text('대기 ${spot.waitTime}', style: const TextStyle(fontSize: 10, color: Color(0xFF888888))),
-              ])
-            else if (spot.priceRange != null)
-              Text(spot.priceRange!, style: TextStyle(fontSize: 10, color: _catColor, fontWeight: FontWeight.w600))
-            else if (spot.photoTip != null)
-              const Text('📸 포토스팟', style: TextStyle(fontSize: 10, color: Color(0xFF8E24AA), fontWeight: FontWeight.w600)),
+        alignment: Alignment.center,
+        child: loading
+            ? const SizedBox(
+                width: 14, height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink900),
+              )
+            : Text(label,
+                style: TextStyle(
+                  color: active ? Colors.white : AppColors.textPrimary,
+                  fontSize: 13, fontWeight: FontWeight.w800,
+                )),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final Color color;
+  final String text;
+  final VoidCallback? onClose;
+  const _StatusBadge({required this.color, required this.text, this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(99),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6, offset: const Offset(0, 2))],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+          if (onClose != null) ...[
+            const SizedBox(width: 6),
+            GestureDetector(onTap: onClose, child: const Icon(Icons.close, size: 14, color: Colors.white)),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PulseDot extends StatefulWidget {
+  @override
+  State<_PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+  @override
+  void dispose() { _c.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween(begin: 0.4, end: 1.0).animate(_c),
+      child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.red, shape: BoxShape.circle)),
+    );
+  }
+}
+
+/// 카테고리 칩(둥근 pill, 단일 선택)과 시각·인터랙션 문법을 분리하기 위한
+/// 상태 필터 한 줄. 라벨 + Spacer + Switch.
+class _FilterToggleRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _FilterToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 2, 12, 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                )),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.ink900,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttractionCard extends StatelessWidget {
+  final Attraction attraction;
+  final bool dim;
+  final VoidCallback onTap;
+  const _AttractionCard({
+    required this.attraction,
+    required this.dim,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: dim ? 0.4 : 1.0,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.bgCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: attraction.hasEasterEgg ? AppColors.grape : AppColors.line,
+            ),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+          ),
+          child: Row(
+            children: [
+              Stamp(
+                code: Stamp.codeFromName(attraction.name),
+                tone: Stamp.toneFromHints(
+                  category: attraction.category,
+                  thrillLevel: attraction.thrillLevel,
+                  hasEasterEgg: attraction.hasEasterEgg,
+                ),
+                size: 40,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(attraction.name,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        if (attraction.hasEasterEgg)
+                          const Padding(padding: EdgeInsets.only(left: 4), child: Text('🥚', style: TextStyle(fontSize: 12))),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${attraction.category} · ${attraction.zone}${attraction.category == '어트랙션' ? ' · 대기 ${attraction.waitMinutes}분' : ''}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+            ],
+          ),
         ),
       ),
     );
