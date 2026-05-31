@@ -49,11 +49,9 @@ const Map<String, String> _kSeasonEng = {
   '겨울': 'WINTER',
 };
 
-/// 아카이브 본문 공용 폰트 — 앱 전체 통일을 위해 Pretendard (theme default).
-/// _kSerif*는 상수만 유지(다수 호출처 호환). 실제 폰트는 'Pretendard'.
-const String _kSerif = 'Pretendard';
-const List<String> _kSerifFallback = <String>[];
-
+/// 아카이브 본문 공용 텍스트 헬퍼 — theme default (Pretendard fallback system sans)
+/// 를 그대로 inherit. fontFamily 명시는 절대 금지 (기기에 번들 안 된 폰트 명시 →
+/// iOS 가 Times 류 세리프 폴백 골라 톤 깨짐).
 TextStyle _serif({
   double size = 14,
   FontWeight weight = FontWeight.w500,
@@ -63,8 +61,6 @@ TextStyle _serif({
   FontStyle? style,
 }) =>
     TextStyle(
-      fontFamily: _kSerif,
-      fontFamilyFallback: _kSerifFallback,
       fontSize: size,
       fontWeight: weight,
       color: color,
@@ -736,8 +732,6 @@ class _Header extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.clip,
                                   style: TextStyle(
-                                    fontFamily: _kSerif,
-                                    fontFamilyFallback: _kSerifFallback,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: active
@@ -843,8 +837,6 @@ class _Bookshelf extends StatelessWidget {
                     Text(
                       'CHAPTER · ${_kSeasonEng[config.label] ?? config.label.toUpperCase()}',
                       style: TextStyle(
-                        fontFamily: _kSerif,
-                        fontFamilyFallback: _kSerifFallback,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: config.accentColor,
@@ -855,8 +847,6 @@ class _Bookshelf extends StatelessWidget {
                     Text(
                       config.tagline,
                       style: TextStyle(
-                        fontFamily: _kSerif,
-                        fontFamilyFallback: _kSerifFallback,
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF111111),
@@ -1162,8 +1152,6 @@ class _BookSpine extends StatelessWidget {
                         Text(
                           ch,
                           style: TextStyle(
-                            fontFamily: _kSerif,
-                            fontFamilyFallback: _kSerifFallback,
                             color: palette.text,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
