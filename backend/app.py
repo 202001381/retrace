@@ -191,4 +191,8 @@ def create_app() -> Flask:
 
 
 if __name__ == "__main__":
-    create_app().run(host="0.0.0.0", port=5000, debug=False)
+    # 기본 5001 — macOS Monterey+ 의 AirPlay Receiver 가 5000 점유.
+    # 다른 포트 쓰려면 `PORT=8000 python -m backend.app`
+    import os
+    port = int(os.environ.get("PORT", "5001"))
+    create_app().run(host="0.0.0.0", port=port, debug=False)
