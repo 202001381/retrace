@@ -22,6 +22,7 @@ from .narrative import generate_narrative
 from .pipeline import run_pipeline
 from .predictor import predict_one, to_crowd_level
 from .revisit_push import run_revisit_push
+from .route import RouteRequest as RouteReq, recommend_route
 from .scheduler import shutdown_scheduler, start_scheduler
 
 logging.basicConfig(
@@ -33,7 +34,9 @@ logger = logging.getLogger(__name__)
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    CORS(app)
+    # CORS — config.CORS_ORIGINS 이 "*" 면 전체 허용 (dev), 리스트면 화이트리스트 (prod).
+    CORS(app, resources={r"/api/*": {"origins": config.CORS_ORIGINS},
+                          r"/healthz": {"origins": "*"}})
 
     @app.get("/healthz")
     def healthz():
@@ -137,6 +140,37 @@ def create_app() -> Flask:
             attraction_name=out.attraction_name,
             narrative=out.narrative,
         )
+
+    @app.post("/api/route")
+    def api_route():
+        """동선 추천 — RouteRequest JSON → RouteResponse JSON.
+
+        predictor 가 사용 가능하면 시점 혼잡도(low/mid/high)로 어트랙션 wait
+        보정. 모델 파일 없거나 predict 실패 시 정적 wait 으로 fallback.
+        """
+        body = request.get_json(force=True, silent=True) or {}
+        try:
+            req = RouteReq.from_json(body)
+        except (KeyError, ValueError, TypeError) as e:
+            return jsonify(error=f"invalid request: {e}"), 400
+
+        # AI hook — 현재 시점 혼잡도 예측 (선택). 실패는 silently fallback.
+        predicted_level: str | None = None
+        pred_features = body.get("features") if isinstance(body, dict) else None
+        if isinstance(pred_features, dict):
+            try:
+                features = {k: pred_features[k] for k in config.FEATURE_ORDER}
+                pred = predict_one(features)
+                predicted_level = pred.crowd_level
+            except (KeyError, ValueError, FileNotFoundError) as e:
+                logger.info("route predictor fallback: %s", e)
+
+        try:
+            resp = recommend_route(req, predicted_crowd_level=predicted_level)
+        except Exception as e:
+            logger.exception("route recommendation failed")
+            return jsonify(error=str(e)), 500
+        return jsonify(resp.to_dict())
 
     @app.post("/api/revisit-push/run")
     def api_revisit_push_run():

@@ -10,6 +10,8 @@ import '../core/theme/app_colors.dart';
 import '../models/attraction.dart';
 import '../models/place_filter.dart';
 import '../models/route_response.dart';
+import '../widgets/design/stamp.dart';
+import 'all_attractions_screen.dart';
 import '../services/easter_egg_service.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
@@ -65,7 +67,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   final DraggableScrollableController _sheetController = DraggableScrollableController();
   double _sheetSize = 0.08;
-  static const double _kSheetMini = 0.08;
+  // 어트랙션 목록이 기본부터 보이도록 mid 로 시작.
+  static const double _kSheetMini = 0.12;
   static const double _kSheetMid = 0.50;
   static const double _kSheetMax = 0.92;
 
@@ -234,21 +237,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   void _toggleRoute() {
     setState(() => _showRoute = !_showRoute);
     if (_showRoute) _shrinkSheet();
-  }
-
-  Color _categoryColor(String c) {
-    switch (c) {
-      case '어트랙션':
-        return AppColors.red;
-      case '음식점':
-        return AppColors.yellow;
-      case '카페':
-        return AppColors.ink700;
-      case '포토스팟':
-        return AppColors.blush;
-      default:
-        return AppColors.textSecondary;
-    }
   }
 
   bool _matchesSearch(Attraction a) {
@@ -424,25 +412,28 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final markers = source.map((a) {
       final order = routeOrder[a.id];
       final hasBadge = order != null;
+      // v3 디자인 — Stamp(2~3 글자 코드 + 톤) + 흰 테두리 ring.
+      final code = Stamp.codeFromName(a.name);
+      final tone = Stamp.toneFromHints(
+        category: a.category,
+        thrillLevel: a.thrillLevel,
+        hasEasterEgg: a.hasEasterEgg,
+      );
       final dot = Container(
-        width: 44,
-        height: 44,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
-          color: _getMarkerColor(a.category),
           shape: BoxShape.circle,
-          border: Border.all(
-            color: a.hasEasterEgg ? AppColors.grape : Colors.white,
-            width: a.hasEasterEgg ? 3 : 2,
-          ),
+          border: Border.all(color: Colors.white, width: 2.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.22),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Center(child: Text(a.icon, style: const TextStyle(fontSize: 20))),
+        child: Stamp(code: code, tone: tone, size: 33),
       );
 
       return Marker(
@@ -552,16 +543,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     ];
   }
 
-  Color _getMarkerColor(String category) {
-    switch (category) {
-      case '어트랙션': return AppColors.red;
-      case '음식점':   return AppColors.yellow;
-      case '카페':     return AppColors.ink700;
-      case '포토스팟': return AppColors.blush;
-      default:         return AppColors.textSecondary;
-    }
-  }
-
   void _onMarkerTap(Attraction a) => _openDetail(a);
 
   @override
@@ -650,7 +631,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           // ── 하단 시트 ──────────────────────────────────────
           DraggableScrollableSheet(
             controller: _sheetController,
-            initialChildSize: _kSheetMini,
+            // 어트랙션 목록이 첫 화면부터 보이도록 mid 위치로 시작.
+            initialChildSize: _kSheetMid,
             minChildSize: _kSheetMini,
             maxChildSize: _kSheetMax,
             snap: true,
@@ -746,27 +728,38 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                          // 헤더 — 필터 활성 시 "전체" 단어 제거, 결과 N곳.
+                          // 헤더 — 필터 활성 시 "전체" 단어 제거, 결과 N곳. 탭 시 풀스크린 리스트.
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _filter.isAnyActive
-                                      ? '결과 ${_visibleAttractions.length}곳'
-                                      : '전체 ${_visibleAttractions.length}곳',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textPrimary,
-                                  ),
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const AllAttractionsScreen(),
                                 ),
-                                const Spacer(),
-                                _PulseDot(),
-                                const SizedBox(width: 4),
-                                const Text('실시간 연동 중',
-                                    style: TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
-                              ],
+                              ),
+                              behavior: HitTestBehavior.opaque,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _filter.isAnyActive
+                                        ? '결과 ${_visibleAttractions.length}곳'
+                                        : '전체 ${_visibleAttractions.length}곳',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.chevron_right_rounded,
+                                      size: 18, color: AppColors.ink400),
+                                  const Spacer(),
+                                  _PulseDot(),
+                                  const SizedBox(width: 4),
+                                  const Text('실시간 연동 중',
+                                      style: TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
                             ),
                           ),
                           const Divider(height: 1, color: AppColors.line),
@@ -835,7 +828,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                                   child: _AttractionCard(
                                     attraction: a,
-                                    catColor: _categoryColor(a.category),
                                     dim: !a.isOperating,
                                     onTap: () => _openDetail(a),
                                   ),
@@ -886,9 +878,13 @@ class _TopBar extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    height: 40,
+                    height: 42,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(color: AppColors.bgPage, borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgPage,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: AppColors.line),
+                    ),
                     child: Row(
                       children: [
                         const Icon(Icons.search, size: 16, color: AppColors.textSecondary),
@@ -961,11 +957,11 @@ class _IconLabelButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: active ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(99),
           border: Border.all(color: active ? activeColor : AppColors.line),
         ),
         alignment: Alignment.center,
@@ -1073,12 +1069,10 @@ class _FilterToggleRow extends StatelessWidget {
 
 class _AttractionCard extends StatelessWidget {
   final Attraction attraction;
-  final Color catColor;
   final bool dim;
   final VoidCallback onTap;
   const _AttractionCard({
     required this.attraction,
-    required this.catColor,
     required this.dim,
     required this.onTap,
   });
@@ -1101,14 +1095,14 @@ class _AttractionCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: catColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              Stamp(
+                code: Stamp.codeFromName(attraction.name),
+                tone: Stamp.toneFromHints(
+                  category: attraction.category,
+                  thrillLevel: attraction.thrillLevel,
+                  hasEasterEgg: attraction.hasEasterEgg,
                 ),
-                alignment: Alignment.center,
-                child: Text(attraction.icon, style: const TextStyle(fontSize: 22)),
+                size: 40,
               ),
               const SizedBox(width: 12),
               Expanded(

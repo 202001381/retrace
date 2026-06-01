@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 
 import '../../models/user_preferences.dart';
 import '../../services/preferences_service.dart';
+import '../../widgets/design/v3_sub_header.dart';
 import 'marketing_consent_modal.dart';
 
 /// 알림 설정 — 한국 법규 분리 요건에 맞춰 3개 섹션 (서비스 / 한산 / 마케팅).
@@ -82,18 +83,14 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     final s = _state;
     return Scaffold(
-      backgroundColor: AppColors.bgPage,
-      appBar: AppBar(
-        title: const Text('알림 설정',
-            style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgCard,
-        elevation: 0.5,
-        centerTitle: false,
-        foregroundColor: AppColors.textPrimary,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            const V3SubHeader(eyebrow: 'SETTINGS · NOTIFY', title: '알림 설정'),
+            const SizedBox(height: 8),
           // ── 서비스 알림 ─────────────────────────────────────
           _SectionCard(
             title: '서비스 알림',
@@ -202,6 +199,7 @@ class _NotificationSettingsScreenState
             ),
           ),
         ],
+      ),
       ),
     );
   }

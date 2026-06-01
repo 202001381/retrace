@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../models/user_preferences.dart';
 import '../../services/preferences_service.dart';
+import '../../widgets/design/v3_sub_header.dart';
 
 /// 위치 정보 화면 — OS 권한과 앱 토글 양방향 동기화.
 /// OS 권한 거부 시 토글 자동 OFF + "설정 열기" 안내.
@@ -92,20 +93,16 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgPage,
-      appBar: AppBar(
-        title: const Text('위치 정보',
-            style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: AppColors.bgCard,
-        elevation: 0.5,
-        centerTitle: false,
-        foregroundColor: AppColors.textPrimary,
-      ),
-      body: _loading
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+        bottom: false,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               children: [
+                const V3SubHeader(eyebrow: 'SETTINGS · GPS', title: '위치 정보'),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -195,6 +192,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                 ),
               ],
             ),
+      ),
     );
   }
 }

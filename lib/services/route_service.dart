@@ -1,81 +1,106 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:math' as math;
+
+import 'package:http/http.dart' as http;
 
 import '../models/attraction.dart';
 import '../models/route_response.dart';
 import 'onboarding_service.dart';
 
-/// 동선 추천 서비스. 현재는 목업 — 백엔드 URL 확정 시 `_useMock=false` + HTTP 구현 추가.
+/// 동선 추천 서비스 — 백엔드 `POST /api/route` 호출, 미설정·실패 시 mock fallback.
+///
+/// baseUrl 주입: 빌드 시 `--dart-define=API_BASE_URL=http://localhost:5000` 으로
+/// 환경별 분리. 빈 문자열이면 mock 모드.
 class RouteService {
   RouteService._();
   static final RouteService instance = RouteService._();
 
-  // 백엔드 붙으면 false 로 전환.
-  static const bool _useMock = true;
+  /// 환경별 백엔드 baseUrl. dart-define 으로 주입.
+  ///   flutter run --dart-define=API_BASE_URL=http://localhost:5000
+  static const String _baseUrl = String.fromEnvironment('API_BASE_URL');
 
-  // 단순 메모리 캐시 — 같은 cache_key 면 재사용.
+  /// baseUrl 비어있으면 mock 모드. const String.isEmpty 는 const eval 불가하여
+  /// length 비교로 우회.
+  static const bool _useMock = _baseUrl.length == 0;
+
+  /// 단순 메모리 캐시 — 같은 cache_key 면 재사용.
   RouteResponse? _cached;
   String? _cachedKey;
 
+  /// HTTP 호출 timeout. 백엔드 predict 가 첫 호출 시 모델 로드 ~2s 들 수 있어 넉넉히.
+  static const Duration _timeout = Duration(seconds: 8);
+
   Future<RouteResponse> fetchRoute(RouteRequest req) async {
     if (_useMock) return _generateMock(req);
-    // TODO: HTTP — http.post('$baseUrl/api/route', body: jsonEncode(req.toJson()))
-    throw UnimplementedError('백엔드 URL 미설정');
+    try {
+      final resp = await _fetchFromBackend(req).timeout(_timeout);
+      _cached = resp;
+      _cachedKey = resp.cacheKey;
+      return resp;
+    } catch (e, st) {
+      // 네트워크·타임아웃·5xx — mock 으로 graceful fallback.
+      developer.log(
+        'route backend failed, falling back to mock',
+        error: e,
+        stackTrace: st,
+        name: 'RouteService',
+      );
+      return _generateMock(req);
+    }
   }
 
   RouteResponse? get cached => _cached;
 
-  // ── 목업 ────────────────────────────────────────────────
+  // ── HTTP ────────────────────────────────────────────────
+  Future<RouteResponse> _fetchFromBackend(RouteRequest req) async {
+    final uri = Uri.parse('$_baseUrl/api/route');
+    final resp = await http.post(
+      uri,
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode(req.toJson()),
+    );
+    if (resp.statusCode >= 400) {
+      throw HttpException('route api ${resp.statusCode}: ${resp.body}');
+    }
+    final body = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, Object?>;
+    return RouteResponse.fromJson(body);
+  }
+
+  // ── 목업 (백엔드 없을 때 fallback) ──────────────────────
   Future<RouteResponse> _generateMock(RouteRequest req) async {
     await Future.delayed(const Duration(milliseconds: 350));
 
-    // 1) 운영중 + 미완료 어트랙션만
     Iterable<Attraction> pool = kAttractions
         .where((a) => a.isOperating)
         .where((a) => !req.completedIds.contains(a.id));
 
-    // 2) 유아 동반 → 키 제한 어트랙션 제외
     if (req.onboarding.hasInfant) {
       pool = pool.where((a) => a.heightLimit == 0);
     }
 
-    // 3) 스코어링
     final scored = pool.map((a) {
       double score = 0;
-
-      // 혼잡도 (대기 짧을수록 높음, 음식점·카페·포토는 0이라 영향 적음)
       score += (60 - a.waitMinutes).clamp(-20, 60).toDouble();
-
-      // 거리 (현재 위치에서 가까울수록 +)
       final dist = _hav(req.lat, req.lng, a.lat, a.lng);
       score += ((1200 - dist) / 80).clamp(-10, 15);
-
-      // 미발견 이스터에그 보너스
       if (a.hasEasterEgg && !req.discoveredEggs.contains(a.id)) score += 25;
-
-      // 선호 어트랙션 가중
       if (a.category == '어트랙션') {
         if (req.onboarding.favoriteType == FavoriteType.thrill && a.thrillLevel >= 4) score += 25;
         if (req.onboarding.favoriteType == FavoriteType.family && a.thrillLevel <= 2) score += 25;
       }
-
-      // 어린이 동반 시 저스릴 어트랙션 우대
       if (req.onboarding.hasChild && a.category == '어트랙션' && a.thrillLevel <= 2) {
         score += 15;
       }
-
-      // 평점 (음식·카페·포토 분류에 더 큰 영향)
       score += a.rating * (a.category == '어트랙션' ? 1.5 : 4);
-
       return (a: a, score: score);
     }).toList()
       ..sort((x, y) => y.score.compareTo(x.score));
 
-    // 4) 동선 길이 — purpose 따라
     final N = _routeLength(req.onboarding.purpose);
-
-    // 5) 카테고리 다양성 — 어트랙션 60%, 나머지는 카페/포토/음식점 각 1
-    final attractionCount = (N * 0.6).ceil().clamp(2, N - 2);
+    final upper = (N - 1).clamp(2, N);
+    final attractionCount = (N * 0.6).ceil().clamp(2, upper);
     final picked = <Attraction>[];
     picked.addAll(scored.where((s) => s.a.category == '어트랙션').take(attractionCount).map((s) => s.a));
     final addedCafe = scored.where((s) => s.a.category == '카페').take(1).toList();
@@ -86,17 +111,15 @@ class RouteService {
       picked.add(s.a);
     }
 
-    // 6) Nearest-neighbor 순서
     final ordered = _nearestNeighbor(picked, req.lat, req.lng);
 
-    // 7) ETA / total
     final stops = <RouteStop>[];
     double prevLat = req.lat, prevLng = req.lng;
     int totalMin = 0;
     for (var i = 0; i < ordered.length; i++) {
       final a = ordered[i];
       final dist = _hav(prevLat, prevLng, a.lat, a.lng);
-      final walkMin = (dist / 66.67).ceil(); // 4 km/h
+      final walkMin = (dist / 66.67).ceil();
       final eta = walkMin + a.waitMinutes;
       stops.add(RouteStop(id: a.id, order: i + 1, etaMinFromPrev: eta));
       totalMin += eta;
@@ -104,10 +127,7 @@ class RouteService {
       prevLng = a.lng;
     }
 
-    // 8) Mock rationale
     final rationale = _mockRationale(req, ordered);
-
-    // 9) cache key
     final cacheKey = '${req.lat.toStringAsFixed(3)}_${req.lng.toStringAsFixed(3)}_'
         '${req.completedIds.length}_${req.onboarding.purpose ?? ''}_${req.requestReason}';
 
@@ -184,4 +204,11 @@ class RouteService {
         math.cos(p1) * math.cos(p2) * math.sin(dl / 2) * math.sin(dl / 2);
     return 2 * r * math.atan2(math.sqrt(h), math.sqrt(1 - h));
   }
+}
+
+class HttpException implements Exception {
+  final String message;
+  const HttpException(this.message);
+  @override
+  String toString() => 'HttpException: $message';
 }

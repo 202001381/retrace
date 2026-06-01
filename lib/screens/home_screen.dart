@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,9 +13,14 @@ import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
 import '../services/visit_history_service.dart';
 import '../widgets/companion_bottom_sheet.dart';
+import '../widgets/design/condition_pip.dart';
+import '../widgets/design/logo.dart';
+import '../widgets/design/stamp.dart';
 import '../widgets/discount_cause_label.dart';
 import '../widgets/discount_countdown.dart';
+import '../widgets/notification_sheet.dart';
 import '../widgets/price_display.dart';
+import 'all_attractions_screen.dart';
 import 'checkout_screen.dart';
 
 /// 홈 탭 — "방문 전" 전용 화면. 방문 결정 → 티켓 구매까지만 담당.
@@ -38,8 +44,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // ── Mock 시나리오 (API 연동 전 하드코딩) ─────────────────
-  static const int _visitScore = 78;
-
   // 날씨 / 혼잡도 mock
   static const String _weatherIcon = '☁️';
   static const String _weatherShort = '흐림 18°C';
@@ -149,8 +153,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_routeLoading) return;
     setState(() => _routeLoading = true);
     try {
-      final survey = _survey ??
-          (await OnboardingService.read()) ??
+      // survey 읽기 자체가 실패해도(예: macOS dev 환경의 prefs init 지연)
+      // mock route 는 빈 survey 로도 동작하므로 fallback 진행.
+      SurveyAnswers? survey = _survey;
+      if (survey == null) {
+        try {
+          survey = await OnboardingService.read();
+        } catch (_) {
+          // prefs 미가용 → 빈 survey 로 mock 호출 (홈 카드가 영영 안 뜨는 것 방지).
+        }
+      }
+      survey ??=
           const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
       // 홈 화면은 GPS 없이 정문 기준
       const gateLat = 37.4332, gateLng = 127.0174;
@@ -167,8 +180,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final resp = await RouteService.instance.fetchRoute(req);
       if (!mounted) return;
       setState(() => _route = resp);
-    } catch (_) {
-      // 캐시 유지
+    } catch (e, st) {
+      // mock RouteService 가 throw 하는 건 사실상 백엔드 전환 후 시나리오지만,
+      // 디버깅을 위해 analytics 에는 남기고 카드는 placeholder 로.
+      AnalyticsService.instance
+          .logScreenView('home_route_error: ${e.runtimeType}');
+      assert(() {
+        debugPrint('[home _loadRoute] $e\n$st');
+        return true;
+      }());
     } finally {
       if (mounted) setState(() => _routeLoading = false);
     }
@@ -204,7 +224,12 @@ class _HomeScreenState extends State<HomeScreen> {
           final crowd = _crowdLabel(a);
           return _RouteItem(
             name: a.name,
-            emoji: a.icon,
+            code: Stamp.codeFromName(a.name),
+            tone: Stamp.toneFromHints(
+              category: a.category,
+              thrillLevel: a.thrillLevel,
+              hasEasterEgg: a.hasEasterEgg,
+            ),
             type: _typeLabel(a),
             waitMin: a.waitMinutes,
             crowd: crowd.$1,
@@ -234,6 +259,18 @@ class _HomeScreenState extends State<HomeScreen> {
     if (a.waitMinutes <= 10) return ('여유', AppColors.mint);
     if (a.waitMinutes <= 25) return ('보통', AppColors.yellowDeep);
     return ('혼잡', AppColors.red);
+  }
+
+  void _openSearch() {
+    AnalyticsService.instance.logScreenView('home_search');
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AllAttractionsScreen()),
+    );
+  }
+
+  void _openNotifications() {
+    AnalyticsService.instance.logScreenView('home_notifications');
+    NotificationSheet.show(context);
   }
 
   void _onLogoTap() {
@@ -328,12 +365,13 @@ class _HomeScreenState extends State<HomeScreen> {
             _Header(
               onLogoTap: _onLogoTap,
               onProfileTap: widget.onOpenMyPage,
+              onSearchTap: _openSearch,
+              onNotifyTap: _openNotifications,
+              hasUnread: true, // mock — 백엔드 연동 시 unread count 기반
             ),
-            const SizedBox(height: 16),
-            // 2. 방문 가치 카드 (날씨·혼잡도·할인·비수기 알림 통합)
-            _VisitValueCard(
-              score: _visitScore,
-              pricing: _pricing,
+            const SizedBox(height: 10),
+            // 2. 컨디션 strip — 날씨/혼잡/대기 (탭 시 상세)
+            _ConditionStrip(
               weatherIcon: _weatherIcon,
               weatherShort: _weatherShort,
               crowdShort: _crowdShort,
@@ -377,7 +415,16 @@ class _HomeScreenState extends State<HomeScreen> {
 class _Header extends StatelessWidget {
   final VoidCallback? onLogoTap;
   final VoidCallback? onProfileTap;
-  const _Header({this.onLogoTap, this.onProfileTap});
+  final VoidCallback? onSearchTap;
+  final VoidCallback? onNotifyTap;
+  final bool hasUnread;
+  const _Header({
+    this.onLogoTap,
+    this.onProfileTap,
+    this.onSearchTap,
+    this.onNotifyTap,
+    this.hasUnread = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -388,46 +435,36 @@ class _Header extends StatelessWidget {
           GestureDetector(
             onTap: onLogoTap,
             behavior: HitTestBehavior.opaque,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '서울랜드',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.2),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('RE-TRACE',
-                        style: TextStyle(color: AppColors.red, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.red, borderRadius: BorderRadius.circular(4)),
-                      child: const Text('BETA',
-                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            child: const RetraceLogo(size: 24, showBeta: true),
           ),
           const Spacer(),
-          // 마이페이지 진입점 — 44x44 tap target (Apple HIG).
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: IconButton(
-              onPressed: onProfileTap,
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.account_circle_outlined,
-                size: 28,
-                color: AppColors.textPrimary,
+          _PillIcon(
+              icon: Icons.search_rounded, onTap: onSearchTap ?? () {}),
+          const SizedBox(width: 8),
+          _PillIcon(
+              icon: Icons.notifications_none_rounded,
+              dot: hasUnread,
+              onTap: onNotifyTap ?? () {}),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onProfileTap,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: AppColors.ink900,
+                shape: BoxShape.circle,
               ),
-              tooltip: '마이페이지',
+              child: const Text(
+                'G',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
         ],
@@ -436,88 +473,83 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── 방문 가치 카드 — 단일 상태 row, 점수 숫자 비노출 ──────────
-class _VisitValueCard extends StatelessWidget {
-  final int score;              // 내부 헤드라인 분기용 — UI 노출 X
-  final PricingState? pricing;  // 할인율은 PricingState 가 진실
+class _PillIcon extends StatelessWidget {
+  final IconData icon;
+  final bool dot;
+  final VoidCallback onTap;
+  const _PillIcon({required this.icon, required this.onTap, this.dot = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.bgCard,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Icon(icon, size: 18, color: AppColors.ink700),
+          ),
+          if (dot)
+            Positioned(
+              top: 8,
+              right: 9,
+              child: Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: AppColors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.bgCard, width: 1.5),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── 컨디션 strip — 작은 컬러 pill 3개 ─────────────────────
+class _ConditionStrip extends StatelessWidget {
   final String weatherIcon;
   final String weatherShort;
   final String crowdShort;
   final VoidCallback onTap;
-  const _VisitValueCard({
-    required this.score,
-    required this.pricing,
+  const _ConditionStrip({
     required this.weatherIcon,
     required this.weatherShort,
     required this.crowdShort,
     required this.onTap,
   });
 
-  String get _headline {
-    if (score >= 85) return '지금 가시면 대기 거의 없어요';
-    if (score >= 80) return '오늘 방문 강추!';
-    if (score >= 50) return '방문하기 좋은 날';
-    return '오늘은 한산해요';
-  }
-
-  String get _subline {
-    final base = '$weatherShort · $crowdShort';
-    if (pricing == null) return base;
-    return '$base · ${pricing!.discountPercent}% 할인';
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.bgCard,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-          child: Row(
-            children: [
-              Text(weatherIcon, style: const TextStyle(fontSize: 28)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_headline,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
-                        )),
-                    const SizedBox(height: 2),
-                    Text(
-                      _subline,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Text('자세히',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w700,
-                  )),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 18, color: AppColors.textSecondary),
-            ],
-          ),
-        ),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          ConditionPip(icon: Icons.cloud_outlined, label: weatherShort, tint: PipTint.sky),
+          ConditionPip(icon: Icons.directions_walk_rounded, label: crowdShort, tint: PipTint.sun),
+          const ConditionPip(icon: Icons.access_time_rounded, label: '대기 7분', tint: PipTint.mint),
+        ],
       ),
     );
   }
 }
+
+// (legacy) — 통합 컨디션은 _ConditionStrip 으로 분리됨.
 
 // ─── 방문 가치 상세 바텀 시트 ───────────────────────────────
 class _VisitDetailSheet extends StatelessWidget {
@@ -636,7 +668,7 @@ class _SheetSection extends StatelessWidget {
   }
 }
 
-// ─── 루나 프라이싱 카드 — 인과 라벨 + 가격 + 카운트다운 ────────
+// ─── 루나 프라이싱 Hero 카드 — 레드 그라디언트 + 초승달 ─────
 class _LunaPricingCard extends StatelessWidget {
   final PricingState pricing;
   final VoidCallback onTap;
@@ -647,65 +679,232 @@ class _LunaPricingCard extends StatelessWidget {
     required this.onExpired,
   });
 
+  static String _fmt(int n) => n.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},',
+      );
+
+  static (String, String) _heroLines(DiscountReason r) {
+    switch (r) {
+      case DiscountReason.weather:
+        return ('흐려서', '한산해요.');
+      case DiscountReason.weekday:
+        return ('평일이라', '한산해요.');
+      case DiscountReason.lowDemand:
+        return ('오늘은', '여유로워요.');
+      case DiscountReason.event:
+        return ('오늘은', '특가에요.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.ink900,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+    final base = pricing.basePrice;
+    final discounted = pricing.finalPrice;
+    final pct = pricing.discountPercent;
+    final (line1, line2) = _heroLines(pricing.reason);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.red, AppColors.redDeep],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.red.withValues(alpha: 0.32),
+              blurRadius: 40,
+              offset: const Offset(0, 18),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.yellow,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text('💰 루나 프라이싱',
-                    style: TextStyle(
-                      color: AppColors.textOnDark,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    )),
+              // 배경 별
+              Positioned.fill(
+                child: CustomPaint(painter: _SparklePainter()),
               ),
-              const SizedBox(height: 14),
-              // 인과 라벨 ("🌥 흐려서 한산 → 15% 할인")
-              DiscountCauseLabel(state: pricing, dark: true),
-              const SizedBox(height: 10),
-              // 정가·할인가 표시 (PriceDisplay compact — 네이비 배경에 pricing 강조).
-              PriceDisplay(
-                state: pricing,
-                accentColor: AppColors.yellow,
-              ),
-              const SizedBox(height: 14),
-              // 카운트다운 + CTA
-              Row(
-                children: [
-                  DiscountCountdown(
-                    validUntil: pricing.validUntil,
-                    onExpired: onExpired,
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppColors.red,
-                      borderRadius: BorderRadius.circular(8),
+              // 큰 크레센트 (오른쪽 위 글로우)
+              Positioned(
+                top: -40,
+                right: -30,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      center: Alignment(-0.3, -0.3),
+                      colors: [
+                        Colors.white,
+                        AppColors.yellow,
+                        Colors.transparent,
+                      ],
+                      stops: [0.0, 0.55, 0.78],
                     ),
-                    child: const Text('루나 티켓 받기 →',
-                        style: TextStyle(
-                          color: AppColors.bgCard,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        )),
+                    backgroundBlendMode: BlendMode.plus,
                   ),
-                ],
+                  foregroundDecoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.0),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 라벨
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: AppColors.yellow,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'LUNA PRICING · 오늘만',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // 큰 헤드라인
+                    Text.rich(
+                      TextSpan(
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.0,
+                          height: 1.15,
+                        ),
+                        children: [
+                          TextSpan(text: '$line1\n'),
+                          TextSpan(
+                            text: line2,
+                            style: const TextStyle(color: AppColors.yellow),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    // 가격 row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '₩${_fmt(base)}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.65),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.white.withValues(alpha: 0.65),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '₩${_fmt(discounted)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.0,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.yellow,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '−$pct%',
+                              style: const TextStyle(
+                                color: AppColors.ink900,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // 카운트다운 + CTA
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 14,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                        const SizedBox(width: 5),
+                        DiscountCountdown(
+                          validUntil: pricing.validUntil,
+                          onExpired: onExpired,
+                          defaultColor: Colors.white.withValues(alpha: 0.85),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '티켓 받기',
+                                style: TextStyle(
+                                  color: AppColors.ink900,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.chevron_right_rounded,
+                                  size: 16, color: AppColors.ink900),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -713,6 +912,41 @@ class _LunaPricingCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 디자인 시안의 반짝이 별 5개 — radial pattern.
+class _SparklePainter extends CustomPainter {
+  static const _stars = [
+    [0.16, 0.10, 4.0],
+    [0.78, 0.13, 3.0],
+    [0.72, 0.50, 5.0],
+    [0.10, 0.58, 3.0],
+    [0.86, 0.67, 4.0],
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = const Color(0xFFFFF5C7).withValues(alpha: 0.70);
+    for (final s in _stars) {
+      final cx = s[0] * size.width;
+      final cy = s[1] * size.height;
+      final r = s[2];
+      final path = Path()
+        ..moveTo(cx, cy - r * 2)
+        ..lineTo(cx + r * 0.4, cy - r * 0.4)
+        ..lineTo(cx + r * 2, cy)
+        ..lineTo(cx + r * 0.4, cy + r * 0.4)
+        ..lineTo(cx, cy + r * 2)
+        ..lineTo(cx - r * 0.4, cy + r * 0.4)
+        ..lineTo(cx - r * 2, cy)
+        ..lineTo(cx - r * 0.4, cy - r * 0.4)
+        ..close();
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SparklePainter o) => false;
 }
 
 // ─── 루나 프라이싱 상세 시트 ───────────────────────────────
@@ -779,13 +1013,23 @@ class _LunaPricingSheet extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '오늘 루나가 ${pricing.discountPercent}%\n드리는 이유',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
+                child: Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.ink900,
+                      height: 1.25,
+                      letterSpacing: -0.6,
+                    ),
+                    children: [
+                      const TextSpan(text: '오늘 루나가 '),
+                      TextSpan(
+                        text: '${pricing.discountPercent}%',
+                        style: const TextStyle(color: AppColors.red),
+                      ),
+                      const TextSpan(text: '\n드리는 이유'),
+                    ],
                   ),
                 ),
               ),
@@ -848,7 +1092,7 @@ class _LunaPricingSheet extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 54,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
@@ -857,8 +1101,9 @@ class _LunaPricingSheet extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.red,
                 foregroundColor: Colors.white,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(99)),
               ),
               child: Text('루나 티켓 ${_fmt(saved)}원 아끼기',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
@@ -879,12 +1124,14 @@ class _LunaPricingSheet extends StatelessWidget {
 
 // ─── 마이 루나 카드 ────────────────────────────────────────
 class _RouteItem {
-  final String name, emoji, type, crowd;
+  final String name, code, type, crowd;
+  final StampTone tone;
   final int waitMin;
   final Color crowdColor;
   const _RouteItem({
     required this.name,
-    required this.emoji,
+    required this.code,
+    required this.tone,
     required this.type,
     required this.waitMin,
     required this.crowd,
@@ -924,12 +1171,20 @@ class _MyLunaCard extends StatelessWidget {
       child: InkWell(
         // 카드 전체가 탭 영역 — 마이 루나 화면으로 진입.
         onTap: onOpenMap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.ink900, width: 1.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.line, width: 1),
+            color: AppColors.bgCard,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -937,19 +1192,38 @@ class _MyLunaCard extends StatelessWidget {
             children: [
           Row(
             children: [
-              const Text('🌙', style: TextStyle(fontSize: 20)),
-              const SizedBox(width: 6),
-              const Text('마이 루나',
-                  style: TextStyle(color: AppColors.ink900, fontSize: 16, fontWeight: FontWeight.w900)),
-              const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.ink900.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(99),
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.blueTint,
+                  shape: BoxShape.circle,
                 ),
-                child: const Text('AI 맞춤 동선',
-                    style: TextStyle(color: AppColors.ink900, fontSize: 11, fontWeight: FontWeight.w700)),
+                child: const MoonMark(size: 16, color: AppColors.blue, filled: true),
+              ),
+              const SizedBox(width: 8),
+              const Text('마이 루나',
+                  style: TextStyle(
+                    color: AppColors.ink900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  )),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.blueTint,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text('AI',
+                    style: TextStyle(
+                      color: AppColors.blue,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    )),
               ),
               const Spacer(),
               InkWell(
@@ -1022,11 +1296,45 @@ class _MyLunaCard extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           if (items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
-                child: Text('동선을 불러오는 중…',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+                child: loading
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 1.5, color: AppColors.blue)),
+                          SizedBox(width: 8),
+                          Text('동선을 그리고 있어요…',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          const Text('동선을 불러오지 못했어요',
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: onRefresh,
+                            behavior: HitTestBehavior.opaque,
+                            child: const Text('다시 시도 ↻',
+                                style: TextStyle(
+                                    color: AppColors.red,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800)),
+                          ),
+                        ],
+                      ),
               ),
             )
           else
@@ -1075,15 +1383,24 @@ class _RouteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 24, height: 24,
-          decoration: const BoxDecoration(color: AppColors.ink900, shape: BoxShape.circle),
-          alignment: Alignment.center,
-          child: Text('$index',
-              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+        // 모노타입 2자리 순번 — Stamp 와 시각 무게 분리.
+        SizedBox(
+          width: 18,
+          child: Text(
+            index.toString().padLeft(2, '0'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.ink400,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
         ),
+        const SizedBox(width: 10),
+        Stamp(code: item.code, tone: item.tone, size: 34),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -1098,8 +1415,13 @@ class _RouteRow extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            '${item.emoji} ${item.name}',
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                            item.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink900,
+                              letterSpacing: -0.2,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -1108,7 +1430,7 @@ class _RouteRow extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(4)),
                           child: Text(item.type,
-                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                              style: const TextStyle(fontSize: 10, color: AppColors.ink500, fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
@@ -1150,12 +1472,29 @@ class _TodayEventsSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: const [
-            Text('오늘의 이벤트',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Eyebrow('TODAY · EVENTS'),
+                SizedBox(height: 4),
+                Text(
+                  '오늘의 이벤트',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.ink900,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+              ],
+            ),
             Spacer(),
-            Text('전체보기', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
-            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textSecondary),
+            Text('전체보기',
+                style: TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
+            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
           ],
         ),
         const SizedBox(height: 12),
