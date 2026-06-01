@@ -125,7 +125,18 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
     } catch (_) {/* 정문 fallback */}
   }
 
-  LatLng get _origin => _myPos ?? _kGate;
+  // GPS 가 서울랜드 정문에서 1.5km 이상 떨어지면 "아직 도착 전" 으로 간주,
+  // 출발점을 정문으로 강제. 실제 서울랜드 내부(반경 ~500m)면 GPS 그대로 사용.
+  static const double _kRemoteThresholdM = 1500;
+
+  LatLng get _origin {
+    final p = _myPos;
+    if (p == null) return _kGate;
+    return _haversineMeters(p, _kGate) <= _kRemoteThresholdM ? p : _kGate;
+  }
+
+  bool get _gpsRemote =>
+      _myPos != null && _haversineMeters(_myPos!, _kGate) > _kRemoteThresholdM;
 
   /// `_rec` 갱신과 store 동기화를 한 곳에서 — 맵 탭이 자동 반영.
   void _setRec(LunaRecommendation? next) {
@@ -163,7 +174,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
         uid: 'guest',
         lat: origin.latitude,
         lng: origin.longitude,
-        hasGps: _myPos != null,
+        hasGps: _myPos != null && !_gpsRemote,
         onboarding: survey,
         completedIds: const {},
         discoveredEggs: _discoveredEggs,

@@ -101,17 +101,23 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
     }
   }
 
+  // GPS 가 정문에서 1.5km 이상 떨어지면 "도착 전" → 정문 기준으로 안내.
+  static const double _kRemoteThresholdM = 1500;
+
   void _fitCamera() {
-    final me = _myPos;
-    if (me == null) return;
+    final from = _origin;
     final mid = LatLng(
-      (me.latitude + widget.target.position.latitude) / 2,
-      (me.longitude + widget.target.position.longitude) / 2,
+      (from.latitude + widget.target.position.latitude) / 2,
+      (from.longitude + widget.target.position.longitude) / 2,
     );
     _mapCtrl.move(mid, 17);
   }
 
-  LatLng get _origin => _myPos ?? _kGate;
+  LatLng get _origin {
+    final p = _myPos;
+    if (p == null) return _kGate;
+    return _haversineMeters(p, _kGate) <= _kRemoteThresholdM ? p : _kGate;
+  }
 
   double get _distMeters =>
       _haversineMeters(_origin, widget.target.position);

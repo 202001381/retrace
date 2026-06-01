@@ -180,10 +180,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   // ── GPS ──────────────────────────────────────────────────
+  // 정문에서 1.5km 이상 떨어진 GPS 는 "도착 전" 으로 보고 카메라/출발점을
+  // 서울랜드 중심으로 스냅. 실제 입장하면 자동으로 GPS 따라감.
+  static const double _kRemoteThresholdM = 1500;
+
   Future<void> _moveToGps() async {
     setState(() => _gpsLoading = true);
     await Future.delayed(const Duration(milliseconds: 500));
     LatLng target = _kGate;
+    bool remote = false;
     try {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -193,15 +198,34 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         final pos = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
         );
-        target = LatLng(pos.latitude, pos.longitude);
-        setState(() => _myPosition = target);
-        _startPositionStream();
+        final actual = LatLng(pos.latitude, pos.longitude);
+        remote = _haversineMeters(actual, _kGate) > _kRemoteThresholdM;
+        if (remote) {
+          // 서울랜드 밖 — 내 위치 마커는 표시하지 않고 카메라만 파크 중심으로.
+          setState(() => _myPosition = null);
+          target = _seoullandCenter;
+        } else {
+          target = actual;
+          setState(() => _myPosition = actual);
+          _startPositionStream();
+        }
       }
     } catch (_) {}
     _mapController.move(target, 17.0);
     if (mounted) setState(() => _gpsLoading = false);
 
-    // 100m 이상 이동했으면 동선 재요청
+    if (remote && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(20, 0, 20, 40),
+          duration: Duration(seconds: 3),
+          content: Text('서울랜드 도착 전이에요 — 정문 기준으로 안내해요 📍'),
+        ),
+      );
+    }
+
+    // 100m 이상 이동했으면 동선 재요청 (remote 면 정문 기준 그대로)
     if (_lastRouteOrigin == null ||
         _haversineMeters(_lastRouteOrigin!, target) >= 100) {
       _loadRoute('gps_moved');
@@ -219,6 +243,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     ).listen((pos) {
       if (!mounted) return;
       final next = LatLng(pos.latitude, pos.longitude);
+      // 파크 밖으로 벗어나면 추적 중단 — 정문 기준 안내로 회귀.
+      if (_haversineMeters(next, _kGate) > _kRemoteThresholdM) {
+        setState(() => _myPosition = null);
+        return;
+      }
       setState(() => _myPosition = next);
       // 100m 이상 이동했으면 동선 재요청 — 폭주 방지.
       if (_lastRouteOrigin == null ||
