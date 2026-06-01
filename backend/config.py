@@ -52,3 +52,15 @@ FCM_TOPIC = os.getenv("FCM_TOPIC", "all_users")
 # ── Scheduler ────────────────────────────────────────────────
 SCHEDULER_TIMEZONE = os.getenv("SCHEDULER_TIMEZONE", "Asia/Seoul")
 SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "1") == "1"
+
+
+# ── CORS ─────────────────────────────────────────────────────
+# 환경별 화이트리스트.
+#   dev: 빈 문자열(기본) → 전체 허용 (Flutter localhost / 실기기 LAN).
+#   prod: 쉼표 구분 origin 목록 — 예: "https://retrace.app,https://www.retrace.app"
+CORS_ORIGINS_RAW = os.getenv("CORS_ORIGINS", "")
+CORS_ORIGINS = (
+    [o.strip() for o in CORS_ORIGINS_RAW.split(",") if o.strip()]
+    if CORS_ORIGINS_RAW
+    else "*"
+)

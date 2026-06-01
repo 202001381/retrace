@@ -1,4 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 위치: 마이 루나 동선 추천 / 이스터에그 위치 검증용 (geolocator). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- FCM 푸시 — Android 13+ 부터 런타임 권한 필요. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 카메라 / 갤러리 — Archive 사진 첨부 (image_picker). -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- 네트워크 (백엔드 API 호출). 기본 부여지만 명시. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
         android:label="seoul_land_app"
         android:name="${applicationName}"

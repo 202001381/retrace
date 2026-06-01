@@ -1,0 +1,46 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - 'scripts/extract_attractions.py'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Train stub model (synthetic)
+        # 실 데이터 swap 전까지는 합성 stub 모델로 CI 가 돌아감.
+        run: python backend/train_stub.py
+
+      - name: Run pytest
+        run: python -m pytest backend/ -v --tb=short
+
+      - name: Smoke check — app boots
+        env:
+          SCHEDULER_ENABLED: '0'
+          KMA_SERVICE_KEY: 'ci-stub'
+        run: |
+          python -c "from backend.app import create_app; app = create_app(); print('app boots')"

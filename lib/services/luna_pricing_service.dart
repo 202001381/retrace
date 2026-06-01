@@ -1,18 +1,82 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+
+import 'package:http/http.dart' as http;
+
 import '../models/pricing_state.dart';
 
-/// 루나 프라이싱 데이터 source. 현재는 mock — 백엔드 XGBoost 엔드포인트 붙으면
-/// `current()` 내부만 HTTP 로 교체.
+/// 루나 프라이싱 — 백엔드 `POST /api/discount` 호출, 미설정·실패 시 mock fallback.
+///
+/// baseUrl 주입: `--dart-define=API_BASE_URL=http://localhost:5000`
+/// 빈 문자열이면 mock (15% 자정까지 유효).
 class LunaPricingService {
   LunaPricingService._();
   static final LunaPricingService instance = LunaPricingService._();
 
-  /// 현재 시점의 프라이싱 상태. 자정까지 유효한 15% 할인을 mock 반환.
-  Future<PricingState> current() async {
-    await Future.delayed(const Duration(milliseconds: 120));
+  static const String _baseUrl = String.fromEnvironment('API_BASE_URL');
+  static const bool _useMock = _baseUrl.length == 0;
+  static const Duration _timeout = Duration(seconds: 5);
+  static const int _basePrice = 35000;
+
+  /// 현재 시점의 프라이싱 상태. 백엔드 응답을 PricingState 로 매핑.
+  Future<PricingState> current({
+    String crowdLevel = '하',
+    double rainProb = 30,
+  }) async {
+    if (_useMock) return _mockPricing();
+    try {
+      final pct = await _fetchDiscountPct(crowdLevel, rainProb).timeout(_timeout);
+      return _buildState(pct, _reasonForBackend(crowdLevel, rainProb));
+    } catch (e, st) {
+      developer.log(
+        'pricing backend failed, falling back to mock',
+        error: e,
+        stackTrace: st,
+        name: 'LunaPricingService',
+      );
+      return _mockPricing();
+    }
+  }
+
+  Future<int> _fetchDiscountPct(String crowdLevel, double rainProb) async {
+    final uri = Uri.parse('$_baseUrl/api/discount');
+    final resp = await http.post(
+      uri,
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'crowd_level': crowdLevel, 'rain_prob': rainProb}),
+    );
+    if (resp.statusCode >= 400) {
+      throw HttpException('discount api ${resp.statusCode}: ${resp.body}');
+    }
+    final body = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, Object?>;
+    return (body['discount_pct'] as num).toInt();
+  }
+
+  PricingState _buildState(int discountPct, DiscountReason reason) {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    final discountAmount = (_basePrice * discountPct / 100).round();
+    return PricingState(
+      basePrice: _basePrice,
+      discountAmount: discountAmount,
+      discountPercent: discountPct,
+      reason: reason,
+      validUntil: midnight,
+    );
+  }
+
+  /// 백엔드 crowd_level + rain_prob 조합 → 사유 라벨.
+  DiscountReason _reasonForBackend(String crowdLevel, double rainProb) {
+    if (rainProb >= 50) return DiscountReason.weather;
+    if (crowdLevel == '하') return DiscountReason.lowDemand;
+    return DiscountReason.weekday;
+  }
+
+  PricingState _mockPricing() {
     final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day + 1);
     return PricingState(
-      basePrice: 35000,
+      basePrice: _basePrice,
       discountAmount: 5250,
       discountPercent: 15,
       reason: DiscountReason.weather,
@@ -42,10 +106,16 @@ class LunaPricingService {
       );
 
   static String _fmtTime(DateTime t) {
-    // "오늘 22:00" 또는 "오늘 24:00" 등. 자정은 24:00 표기.
     final isMidnight = t.hour == 0 && t.minute == 0;
     final h = isMidnight ? 24 : t.hour;
     final m = t.minute.toString().padLeft(2, '0');
     return '오늘 $h:$m';
   }
+}
+
+class HttpException implements Exception {
+  final String message;
+  const HttpException(this.message);
+  @override
+  String toString() => 'HttpException: $message';
 }
