@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../services/onboarding_service.dart';
 import '../widgets/design/condition_pip.dart';
 import '../widgets/design/logo.dart';
@@ -183,33 +184,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             _IntroExplainPage(
               icon: '🌙',
-              title: '마이 루나란?',
-              cards: const [
-                (icon: '🗺️', title: '당신만을 위한 서울랜드 코스', desc: '혼잡도, 날씨, 동행자를 분석해 최적의 동선을 만들어드려요'),
-                (icon: '🔄', title: '언제든 새로운 코스', desc: 'RE-TRACE를 찾아주실 때마다 새로운 코스를 만들어드릴게요'),
+              title: AppL10n.of(context)!.onboarding_my_luna_what,
+              cards: [
+                (icon: '🗺️', title: AppL10n.of(context)!.onboarding_for_you, desc: AppL10n.of(context)!.onboarding_personalized_desc),
+                (icon: '🔄', title: AppL10n.of(context)!.onboarding_anytime_new_course, desc: AppL10n.of(context)!.onboarding_personalized_desc),
               ],
-              ctaLabel: '다음',
+              ctaLabel: AppL10n.of(context)!.common_next,
               onBack: _back,
               onSkip: _skipFromIntro,
               onNext: () => _goTo(2),
             ),
             _IntroExplainPage(
               icon: '💰',
-              title: '루나 프라이싱이란?',
-              cards: const [
-                (icon: '⏰', title: '실시간 할인', desc: '혼잡도와 날씨에 따라 입장권 가격이 달라져요. 한산한 날엔 최대 25% 할인!'),
-                (icon: '🔔', title: '선제적 알림', desc: '방문 전날 밤, 내일 한산할 것 같으면 루나가 먼저 알려드려요'),
+              title: AppL10n.of(context)!.onboarding_luna_pricing_what,
+              cards: [
+                (icon: '⏰', title: AppL10n.of(context)!.onboarding_realtime_discount, desc: AppL10n.of(context)!.onboarding_pricing_desc),
+                (icon: '🔔', title: AppL10n.of(context)!.onboarding_proactive_notif, desc: AppL10n.of(context)!.onboarding_notif_desc),
               ],
-              ctaLabel: '다음',
+              ctaLabel: AppL10n.of(context)!.common_next,
               onBack: _back,
               onSkip: _skipFromIntro,
               onNext: () => _goTo(3),
             ),
             _IntroDarkCenterPage(
               icon: '✨',
-              title: '마이 루나를 만들기 위해\n몇 가지 여쭤볼게요',
-              subtitle: '딱 3가지만 물어볼게요 🙂',
-              ctaLabel: '시작하기',
+              title: AppL10n.of(context)!.onboarding_make_my_luna,
+              subtitle: AppL10n.of(context)!.onboarding_just_3,
+              ctaLabel: AppL10n.of(context)!.onboarding_start,
               showBack: _showBack,
               showSkip: _showSkip,
               onBack: _back,
@@ -225,11 +226,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             _SingleChoiceSurveyPage(
               progress: 2,
-              title: '어떤 놀이기구를\n더 좋아하세요?',
-              options: const [
-                (emoji: '🎢', title: '스릴 어트랙션 위주', desc: '빠르고 짜릿한 걸 좋아해요', value: FavoriteType.thrill),
-                (emoji: '🎠', title: '가족·어린이 위주', desc: '함께 탈 수 있는 걸 좋아해요', value: FavoriteType.family),
-                (emoji: '✨', title: '둘 다 괜찮아요', desc: '상황에 따라 달라요', value: FavoriteType.both),
+              title: AppL10n.of(context)!.onboarding_q_favorite,
+              options: [
+                (emoji: '🎢', title: AppL10n.of(context)!.fav_thrill, desc: AppL10n.of(context)!.onboarding_thrill_fast, value: FavoriteType.thrill),
+                (emoji: '🎠', title: AppL10n.of(context)!.fav_family, desc: AppL10n.of(context)!.onboarding_family_together, value: FavoriteType.family),
+                (emoji: '✨', title: AppL10n.of(context)!.fav_either, desc: AppL10n.of(context)!.onboarding_either_ok, value: FavoriteType.both),
               ],
               selected: _favoriteType,
               onSelect: (v) => setState(() => _favoriteType = v),
@@ -238,12 +239,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             _SingleChoiceSurveyPage(
               progress: 3,
-              title: '오늘 방문 목적은\n무엇인가요?',
-              options: const [
-                (emoji: '🎡', title: '놀이기구 즐기기', desc: null, value: VisitPurpose.rides),
-                (emoji: '🌿', title: '나들이·피크닉', desc: null, value: VisitPurpose.picnic),
-                (emoji: '👶', title: '아이 데리고 나들이', desc: null, value: VisitPurpose.kidsOuting),
-                (emoji: '💑', title: '데이트', desc: null, value: VisitPurpose.date),
+              title: AppL10n.of(context)!.onboarding_q_purpose,
+              options: [
+                (emoji: '🎡', title: AppL10n.of(context)!.purpose_rides, desc: null, value: VisitPurpose.rides),
+                (emoji: '🌿', title: AppL10n.of(context)!.purpose_picnic, desc: null, value: VisitPurpose.picnic),
+                (emoji: '👶', title: AppL10n.of(context)!.purpose_kids_outing, desc: null, value: VisitPurpose.kidsOuting),
+                (emoji: '💑', title: AppL10n.of(context)!.purpose_date, desc: null, value: VisitPurpose.date),
               ],
               selected: _purpose,
               onSelect: (v) => setState(() => _purpose = v),
@@ -312,36 +313,27 @@ class _IntroWelcomePage extends StatelessWidget {
               children: [
                 _OnboardingTopBar(showBack: false, onBack: null, onSkip: onSkip, darkMode: true),
                 const Spacer(),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Eyebrow('WELCOME', color: Colors.white, size: 11),
-                      SizedBox(height: 16),
-                      Text.rich(
-                        TextSpan(
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 44,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1.4,
-                            height: 1.15,
-                          ),
-                          children: [
-                            TextSpan(text: '오늘의 발자국을\n'),
-                            TextSpan(
-                              text: 'luna',
-                              style: TextStyle(color: Color(0xFFFFC700)),
-                            ),
-                            TextSpan(text: '가\n그려둘게요.'),
-                          ],
+                      const Eyebrow('WELCOME', color: Colors.white, size: 11),
+                      const SizedBox(height: 16),
+                      Text(
+                        AppL10n.of(context)!.onboarding_welcome_title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 44,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.4,
+                          height: 1.15,
                         ),
                       ),
-                      SizedBox(height: 18),
+                      const SizedBox(height: 18),
                       Text(
-                        '서울랜드를 다시, 새롭게.\n취향과 동선을 기억해\n매번 다른 하루를 추천해요.',
-                        style: TextStyle(
+                        AppL10n.of(context)!.onboarding_intro_title,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -359,7 +351,7 @@ class _IntroWelcomePage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _BranchButton(
-                          label: '시작하기',
+                          label: AppL10n.of(context)!.onboarding_start,
                           bg: Colors.white,
                           fg: AppColors.ink900,
                           onTap: onFirstTime,
@@ -368,7 +360,7 @@ class _IntroWelcomePage extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _BranchButton(
-                          label: '둘러보기',
+                          label: AppL10n.of(context)!.onboarding_browse,
                           bg: Colors.white.withValues(alpha: 0.16),
                           fg: Colors.white,
                           border: Colors.white.withValues(alpha: 0.4),
@@ -711,10 +703,10 @@ class _ResultPage extends StatelessWidget {
                 // ── 상단: 마이 루나 완성 메시지 ──
                 const Text('🌙', style: TextStyle(fontSize: 56)),
                 const SizedBox(height: 20),
-                const Text(
-                  '마이 루나가 준비됐어요!',
+                Text(
+                  AppL10n.of(context)!.onboarding_ready,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
@@ -863,32 +855,26 @@ class _MembersSurveyPage extends StatelessWidget {
         _OnboardingTopBar(showBack: true, onBack: onBack, onSkip: null, darkMode: false),
         _SurveyProgress(current: 1, total: 3),
         const SizedBox(height: 22),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 22),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Eyebrow('STEP 01 · WHO', color: AppColors.red),
-              SizedBox(height: 8),
-              Text.rich(
-                TextSpan(
-                  style: TextStyle(
-                    color: AppColors.ink900,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    height: 1.25,
-                    letterSpacing: -0.8,
-                  ),
-                  children: [
-                    TextSpan(text: '오늘은 '),
-                    TextSpan(text: '몇 명', style: TextStyle(color: AppColors.red)),
-                    TextSpan(text: '이서\n오셨나요?'),
-                  ],
+              const Eyebrow('STEP 01 · WHO', color: AppColors.red),
+              const SizedBox(height: 8),
+              Text(
+                AppL10n.of(context)!.onboarding_q_party,
+                style: const TextStyle(
+                  color: AppColors.ink900,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  height: 1.25,
+                  letterSpacing: -0.8,
                 ),
               ),
-              SizedBox(height: 6),
-              Text('인원에 맞게 동선을 짤게요',
-                  style: TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 6),
+              Text(AppL10n.of(context)!.onboarding_party_count_msg,
+                  style: const TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -921,10 +907,10 @@ class _MembersSurveyPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Text('총 인원',
-                      style: TextStyle(color: _kMuted, fontSize: 13, fontWeight: FontWeight.w700)),
+                  Text(AppL10n.of(context)!.onboarding_party_total,
+                      style: const TextStyle(color: _kMuted, fontSize: 13, fontWeight: FontWeight.w700)),
                   const Spacer(),
-                  Text('$total명',
+                  Text('$total',
                       style: TextStyle(
                         color: total > 0 ? _kAccent : _kMuted,
                         fontSize: 18,
@@ -934,7 +920,7 @@ class _MembersSurveyPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _PrimaryCta(
-                label: '다음',
+                label: AppL10n.of(context)!.common_next,
                 onTap: onNext,
                 color: _kAccent,
                 fg: Colors.white,
@@ -1084,8 +1070,8 @@ class _SingleChoiceSurveyPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text('최대한 정확히 골라주세요',
-                  style: TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(AppL10n.of(context)!.onboarding_pick_accurate,
+                  style: const TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -1139,7 +1125,7 @@ class _SingleChoiceSurveyPage extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: _PrimaryCta(label: '다음', onTap: onNext, color: _kAccent, fg: Colors.white),
+          child: _PrimaryCta(label: AppL10n.of(context)!.common_next, onTap: onNext, color: _kAccent, fg: Colors.white),
         ),
       ],
     );
@@ -1177,7 +1163,7 @@ class _OnboardingTopBar extends StatelessWidget {
           if (onSkip != null)
             TextButton(
               onPressed: onSkip,
-              child: Text('건너뛰기',
+              child: Text(AppL10n.of(context)!.onboarding_skip,
                   style: TextStyle(
                     color: color.withValues(alpha: 0.75),
                     fontSize: 13,

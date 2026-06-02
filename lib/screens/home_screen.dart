@@ -697,25 +697,25 @@ class _LunaPricingCard extends StatelessWidget {
         (m) => '${m[1]},',
       );
 
-  static (String, String) _heroLines(DiscountReason r) {
+  static (String, String) _heroLines(DiscountReason r, AppL10n l) {
     switch (r) {
       case DiscountReason.weather:
-        return ('흐려서', '한산해요.');
       case DiscountReason.weekday:
-        return ('평일이라', '한산해요.');
+        return (l.home_today_park_is, l.home_park_is_calm);
       case DiscountReason.lowDemand:
-        return ('오늘은', '여유로워요.');
+        return (l.home_today_park_is, l.home_park_is_chill);
       case DiscountReason.event:
-        return ('오늘은', '특가에요.');
+        return (l.home_today_park_is, l.home_park_is_special);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     final base = pricing.basePrice;
     final discounted = pricing.finalPrice;
     final pct = pricing.discountPercent;
-    final (line1, line2) = _heroLines(pricing.reason);
+    final (line1, line2) = _heroLines(pricing.reason, l);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -896,20 +896,20 @@ class _LunaPricingCard extends StatelessWidget {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(99),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                '티켓 받기',
-                                style: TextStyle(
+                                l.home_get_ticket,
+                                style: const TextStyle(
                                   color: AppColors.ink900,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.2,
                                 ),
                               ),
-                              SizedBox(width: 4),
-                              Icon(Icons.chevron_right_rounded,
+                              const SizedBox(width: 4),
+                              const Icon(Icons.chevron_right_rounded,
                                   size: 16, color: AppColors.ink900),
                             ],
                           ),
@@ -1178,6 +1178,7 @@ class _MyLunaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     return Material(
       color: AppColors.bgCard,
       borderRadius: BorderRadius.circular(16),
@@ -1261,13 +1262,13 @@ class _MyLunaCard extends StatelessWidget {
                     border: Border.all(color: AppColors.line),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune, size: 14, color: AppColors.textSecondary),
-                      SizedBox(width: 4),
-                      Text('조건 변경',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                      const Icon(Icons.tune, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(l.home_change_conditions,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
                     ],
                   ),
                 ),
@@ -1278,8 +1279,8 @@ class _MyLunaCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Text('온보딩 답변',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.6)),
+                Text(l.home_onboarding_answers,
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.6)),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(surveyLabel!,
@@ -1299,12 +1300,12 @@ class _MyLunaCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            rationale ?? '오늘의 추천 동선을 준비하고 있어요 🌙',
+            rationale ?? l.home_route_preparing,
             style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w900),
           ),
           if (totalMin != null) ...[
             const SizedBox(height: 4),
-            Text('예상 소요 약 $totalMin분',
+            Text(l.home_route_total_min(totalMin!),
                 style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
           const SizedBox(height: 16),
@@ -1315,15 +1316,15 @@ class _MyLunaCard extends StatelessWidget {
                 child: loading
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          SizedBox(
+                        children: [
+                          const SizedBox(
                               width: 14,
                               height: 14,
                               child: CircularProgressIndicator(
                                   strokeWidth: 1.5, color: AppColors.blue)),
-                          SizedBox(width: 8),
-                          Text('동선을 그리고 있어요…',
-                              style: TextStyle(
+                          const SizedBox(width: 8),
+                          Text(l.home_drawing_route,
+                              style: const TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600)),
@@ -1331,8 +1332,8 @@ class _MyLunaCard extends StatelessWidget {
                       )
                     : Column(
                         children: [
-                          const Text('동선을 불러오지 못했어요',
-                              style: TextStyle(
+                          Text(l.home_route_load_failed,
+                              style: const TextStyle(
                                   color: AppColors.textPrimary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800)),
@@ -1340,7 +1341,7 @@ class _MyLunaCard extends StatelessWidget {
                           GestureDetector(
                             onTap: onRefresh,
                             behavior: HitTestBehavior.opaque,
-                            child: const Text('다시 시도 ↻',
+                            child: Text(l.home_retry,
                                 style: TextStyle(
                                     color: AppColors.red,
                                     fontSize: 12,
@@ -1357,10 +1358,10 @@ class _MyLunaCard extends StatelessWidget {
                 )),
           const SizedBox(height: 14),
           // 인라인 텍스트 링크 — CTA 버튼 대체 (카드 전체 탭과 중복 제거).
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
-            child: Text('전체 동선 보기 →',
-                style: TextStyle(
+            child: Text(l.home_view_full_route,
+                style: const TextStyle(
                   color: AppColors.ink900,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -1523,7 +1524,7 @@ class _TodayEventsSection extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text(AppL10n.of(context)!.home_view_more,
+              Text(AppL10n.of(context)!.home_view_all,
                   style: const TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
               const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
             ],

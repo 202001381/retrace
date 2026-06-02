@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/walk_speed.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/design/logo.dart';
 import '../../widgets/design/stamp.dart';
 
@@ -366,8 +367,8 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                       if (_rec!.spots.length > 1) ...[
                         _SectionTitle(
                           _activeScenario != null
-                              ? '코스 (총 ${_rec!.spots.length}곳)'
-                              : '다음 후보',
+                              ? AppL10n.of(context)!.myluna_course_count(_rec!.spots.length)
+                              : AppL10n.of(context)!.myluna_next_candidate,
                         ),
                         const SizedBox(height: 8),
                         // 데모 시나리오 = 전체 노출, 기본 = 2개 미리보기.
@@ -439,9 +440,9 @@ class _MetaHeader extends StatelessWidget {
                     size: 16, color: AppColors.blue, filled: true),
               ),
               const SizedBox(width: 8),
-              const Text(
-                '마이 루나',
-                style: TextStyle(
+              Text(
+                AppL10n.of(context)!.navMyLuna,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: AppColors.ink900,
@@ -468,7 +469,7 @@ class _MetaHeader extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onChangeConditions,
                 icon: const Icon(Icons.tune, size: 14),
-                label: const Text('조건'),
+                label: Text(AppL10n.of(context)!.myluna_condition),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 6),
@@ -487,8 +488,8 @@ class _MetaHeader extends StatelessWidget {
             Text(
               [
                 surveyLabel!,
-                if (missingEggs > 0) '못 찾은 에그 $missingEggs',
-                if (totalMin != null) '총 $totalMin분',
+                if (missingEggs > 0) AppL10n.of(context)!.myluna_missing_eggs(missingEggs),
+                if (totalMin != null) AppL10n.of(context)!.myluna_total_min(totalMin!),
               ].join(' · '),
               style: const TextStyle(
                 fontSize: 12,
@@ -554,7 +555,7 @@ class _HeroNextCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '다음 추천',
+                    AppL10n.of(context)!.myluna_next,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 11,
@@ -648,7 +649,7 @@ class _HeroNextCard extends StatelessWidget {
                             onPressed: onNavigate,
                             icon: const Icon(Icons.directions_walk_rounded,
                                 size: 18),
-                            label: const Text('길 안내 시작'),
+                            label: Text(AppL10n.of(context)!.myluna_navigate_start),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.red,
                               foregroundColor: Colors.white,
@@ -891,7 +892,7 @@ class _RefreshInlineButton extends StatelessWidget {
       child: TextButton.icon(
         onPressed: onTap,
         icon: const Text('💫', style: TextStyle(fontSize: 14)),
-        label: const Text('새 추천 보기'),
+        label: Text(AppL10n.of(context)!.myluna_get_new_rec),
         style: TextButton.styleFrom(
           foregroundColor: AppColors.ink900,
           textStyle:
@@ -938,8 +939,8 @@ class _LoadingHero extends StatelessWidget {
       child: Center(
         child: loading
             ? const CircularProgressIndicator()
-            : const Text('추천을 불러오는 중…',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+            : Text(AppL10n.of(context)!.myluna_loading_recs,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
       ),
     );
   }
@@ -967,7 +968,7 @@ class _ErrorBlock extends StatelessWidget {
                 color: AppColors.textSecondary,
               )),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+          OutlinedButton(onPressed: onRetry, child: Text(AppL10n.of(context)!.common_retry)),
         ],
       ),
     );
@@ -1007,9 +1008,9 @@ class _DemoScenarioPicker extends StatelessWidget {
                       children: [
                         const Text('🌙', style: TextStyle(fontSize: 14)),
                         const SizedBox(width: 6),
-                        const Text(
-                          '샘플 코스 미리 보기',
-                          style: TextStyle(
+                        Text(
+                          AppL10n.of(context)!.myluna_sample_preview,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w900,
@@ -1051,9 +1052,9 @@ class _DemoScenarioPicker extends StatelessWidget {
               padding: const EdgeInsets.only(left: 20, top: 4, right: 6),
               child: GestureDetector(
                 onTap: () => onSelect(null),
-                child: const Text(
-                  '샘플 그만 보기',
-                  style: TextStyle(
+                child: Text(
+                  AppL10n.of(context)!.myluna_stop_sample,
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.ink900,
                     fontWeight: FontWeight.w800,
@@ -1149,17 +1150,17 @@ class _SkipBlockedEmptyState extends StatelessWidget {
           const Text('🌙',
               style: TextStyle(fontSize: 36)),
           const SizedBox(height: 12),
-          const Text('조건을 바꿔보시겠어요?',
-              style: TextStyle(
+          Text(AppL10n.of(context)!.myluna_change_conditions_prompt,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 color: AppColors.textPrimary,
               )),
           const SizedBox(height: 6),
-          const Text(
-            '여러 번 건너뛰셨네요. 다른 조건으로 새 추천을 받아보세요.',
+          Text(
+            AppL10n.of(context)!.myluna_skipped_too_many,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -1170,7 +1171,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onChangeConditions,
             icon: const Icon(Icons.tune, size: 16),
-            label: const Text('조건 변경'),
+            label: Text(AppL10n.of(context)!.myluna_change_conditions),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.red,
               foregroundColor: Colors.white,

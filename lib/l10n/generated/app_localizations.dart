@@ -143,6 +143,109 @@ abstract class AppL10n {
   String get error_network;
   String get error_unknown;
   String get error_load_failed;
+
+  String get cat_attraction;
+  String get cat_food;
+  String get cat_restaurant;
+  String get cat_cafe;
+  String get cat_photo;
+  String get cat_photo_spot;
+  String get label_thrill;
+  String get label_activity;
+  String get label_family;
+  String get label_date;
+  String get label_thrill_activity;
+
+  String wait_short(int min);
+  String wait_expected(int min);
+  String get walk_short;
+  String get wait_label;
+
+  String get home_first_visit_welcome;
+  String get home_today_park_is;
+  String get home_park_is_chill;
+  String get home_park_is_special;
+  String get home_park_is_calm;
+  String get home_today_chill_day;
+  String get home_weather_cloudy_18;
+  String get home_weather_detail_today;
+  String get home_weather_rain_detail;
+  String get home_crowd_mid_label;
+  String get home_crowd_recommend_morning;
+  String get home_drawing_route;
+  String get home_route_load_failed;
+  String get home_retry;
+  String home_route_total_min(int min);
+  String get home_change_conditions;
+  String home_uncollected_eggs(int count);
+  String get home_route_preparing;
+  String get home_view_full_route;
+  String get home_onboarding_answers;
+  String get home_view_all;
+
+  String get myluna_loading_recs;
+  String get myluna_load_failed;
+  String get myluna_change_conditions;
+  String get myluna_condition;
+  String get myluna_next;
+  String get myluna_next_candidate;
+  String get myluna_change_conditions_prompt;
+  String get myluna_skipped_too_many;
+  String get myluna_get_new_rec;
+  String get myluna_sample_preview;
+  String get myluna_stop_sample;
+  String get myluna_navigate_start;
+  String myluna_total_min(int min);
+  String myluna_course_count(int count);
+  String myluna_missing_eggs(int count);
+
+  String get map_route_realtime;
+  String get map_no_eggs_collected;
+  String get map_visit_starred;
+  String get map_filter_reset;
+  String get map_operating_only;
+  String get map_no_match;
+  String map_total_count(int count);
+  String map_result_count(int count);
+  String get map_rerecommend;
+
+  String get onboarding_intro_title;
+  String get onboarding_make_my_luna;
+  String get onboarding_just_3;
+  String get onboarding_q_purpose;
+  String get onboarding_q_favorite;
+  String get onboarding_q_party;
+  String get onboarding_pick_accurate;
+  String get onboarding_party_count_msg;
+  String get onboarding_party_total;
+  String get onboarding_party_count;
+  String get onboarding_skip;
+  String get onboarding_browse;
+  String get onboarding_for_you;
+  String get onboarding_ready;
+  String get onboarding_my_luna_what;
+  String get onboarding_luna_pricing_what;
+  String get onboarding_proactive_notif;
+  String get onboarding_realtime_discount;
+  String get onboarding_anytime_new_course;
+  String get onboarding_pricing_desc;
+  String get onboarding_notif_desc;
+  String get onboarding_personalized_desc;
+  String get onboarding_thrill_course;
+  String get onboarding_family_course;
+  String get onboarding_date_course;
+  String get onboarding_custom_course;
+  String get onboarding_thrill_fast;
+  String get onboarding_family_together;
+  String get onboarding_either_ok;
+
+  String get fav_thrill;
+  String get fav_family;
+  String get fav_either;
+  String get purpose_rides;
+  String get purpose_picnic;
+  String get purpose_kids_outing;
+  String get purpose_date;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
