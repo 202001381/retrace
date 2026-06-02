@@ -343,5 +343,25 @@
   "search_no_results": "No results",
   "search_hint_all": "Search attractions, food, zones",
   "no_survey_default": "No survey — default priority",
-  "no_facility_match": "No facility matches the filter."
+  "no_facility_match": "No facility matches the filter.",
+
+  "demo_payment_prompt": "Pay and your custom course begins",
+  "demo_family_title": "Family 4h",
+  "demo_family_sub": "Kid-friendly, lower thrill",
+  "demo_date_title": "Date 4h",
+  "demo_date_sub": "Photo spots + meals + night view",
+  "demo_thrill_title": "Thrill 4h",
+  "demo_thrill_sub": "Coasters + activities focus",
+
+  "mypage_stat_visits": "Visits",
+  "mypage_stat_eggs": "Easter eggs",
+  "mypage_stat_avg_route": "Avg route",
+  "mypage_guest": "Guest",
+  "mypage_egg_progress": "Easter egg progress",
+
+  "map_btn_route": "Route",
+  "map_btn_gps": "GPS",
+
+  "survey_headcount": "{n} people",
+  "@survey_headcount": { "placeholders": { "n": { "type": "int" } } }
 }

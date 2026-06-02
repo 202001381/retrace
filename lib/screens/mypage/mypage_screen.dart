@@ -45,13 +45,32 @@ class _MypageScreenState extends State<MypageScreen> {
     });
   }
 
-  String? get _surveySummary {
+  String? _surveySummaryLocalized(AppL10n l) {
     final s = _survey;
     if (s == null || s.total == 0) return null;
-    final parts = <String>['${s.total}명'];
-    if (s.purpose != null) parts.add(s.purpose!);
-    if (s.favoriteType != null) parts.add(s.favoriteType!);
+    final parts = <String>[l.survey_headcount(s.total)];
+    if (s.purpose != null) parts.add(_purposeDisplay(l, s.purpose!));
+    if (s.favoriteType != null) parts.add(_favoriteDisplay(l, s.favoriteType!));
     return parts.join(' · ');
+  }
+
+  static String _purposeDisplay(AppL10n l, String c) {
+    switch (c) {
+      case '놀이기구 즐기기': return l.purpose_rides;
+      case '나들이·피크닉': return l.purpose_picnic;
+      case '아이 데리고 나들이': return l.purpose_kids_outing;
+      case '데이트': return l.purpose_date;
+    }
+    return c;
+  }
+
+  static String _favoriteDisplay(AppL10n l, String c) {
+    switch (c) {
+      case '스릴 어트랙션 위주': return l.fav_thrill;
+      case '가족·어린이 위주': return l.fav_family;
+      case '둘 다 괜찮아요': return l.fav_either;
+    }
+    return c;
   }
 
   void _push(Widget screen) {
@@ -182,7 +201,7 @@ class _MypageScreenState extends State<MypageScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
             child: _ProfileGradientCard(
-              surveySummary: _surveySummary,
+              surveySummary: _surveySummaryLocalized(AppL10n.of(context)!),
               eggsDiscovered: _discoveredEggs,
               eggsTotal: _kTotalEggCount,
               avgMinLabel: avgMin,
@@ -400,9 +419,9 @@ class _ProfileGradientCard extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Text(
-                                  '게스트',
-                                  style: TextStyle(
+                                Text(
+                                  AppL10n.of(context)!.mypage_guest,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
@@ -452,18 +471,21 @@ class _ProfileGradientCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(child: _Stat(value: '${partyCount == 0 ? '—' : 3}', label: '누적 방문')),
-                      Container(
-                          width: 1, height: 32, color: Colors.white.withValues(alpha: 0.18)),
-                      Expanded(
-                          child: _Stat(value: '$eggsDiscovered / $eggsTotal', label: '이스터에그')),
-                      Container(
-                          width: 1, height: 32, color: Colors.white.withValues(alpha: 0.18)),
-                      Expanded(child: _Stat(value: avgMinLabel, label: '평균 동선')),
-                    ],
-                  ),
+                  Builder(builder: (context) {
+                    final l = AppL10n.of(context)!;
+                    return Row(
+                      children: [
+                        Expanded(child: _Stat(value: '${partyCount == 0 ? '—' : 3}', label: l.mypage_stat_visits)),
+                        Container(
+                            width: 1, height: 32, color: Colors.white.withValues(alpha: 0.18)),
+                        Expanded(
+                            child: _Stat(value: '$eggsDiscovered / $eggsTotal', label: l.mypage_stat_eggs)),
+                        Container(
+                            width: 1, height: 32, color: Colors.white.withValues(alpha: 0.18)),
+                        Expanded(child: _Stat(value: avgMinLabel, label: l.mypage_stat_avg_route)),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),
@@ -551,7 +573,7 @@ class _EggProgressCard extends StatelessWidget {
               const RetraceGlyph(name: 'egg', size: 18, color: Color(0xFF8A6300), strokeWidth: 2),
               const SizedBox(width: 8),
               Text(
-                AppL10n.of(context)!.common_easter_egg,
+                AppL10n.of(context)!.mypage_egg_progress,
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

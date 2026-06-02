@@ -351,6 +351,25 @@ abstract class AppL10n {
   String get search_hint_all;
   String get no_survey_default;
   String get no_facility_match;
+
+  String get demo_payment_prompt;
+  String get demo_family_title;
+  String get demo_family_sub;
+  String get demo_date_title;
+  String get demo_date_sub;
+  String get demo_thrill_title;
+  String get demo_thrill_sub;
+
+  String get mypage_stat_visits;
+  String get mypage_stat_eggs;
+  String get mypage_stat_avg_route;
+  String get mypage_guest;
+  String get mypage_egg_progress;
+
+  String get map_btn_route;
+  String get map_btn_gps;
+
+  String survey_headcount(int n);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

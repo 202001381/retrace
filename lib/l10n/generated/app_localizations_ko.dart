@@ -319,4 +319,23 @@ class AppL10nKo extends AppL10n {
   @override String get search_hint_all => '어트랙션, 음식점, 구역 검색';
   @override String get no_survey_default => '설문 응답 없음 — 기본 우선순위로 추천';
   @override String get no_facility_match => '해당 조건의 시설이 없습니다.';
+
+  @override String get demo_payment_prompt => '결제하면 맞춤 코스가 시작돼요';
+  @override String get demo_family_title => '가족 4시간';
+  @override String get demo_family_sub => '어린이 동반, 저강도 위주';
+  @override String get demo_date_title => '데이트 4시간';
+  @override String get demo_date_sub => '포토스팟 + 식사 + 야경';
+  @override String get demo_thrill_title => '스릴 4시간';
+  @override String get demo_thrill_sub => '롤러코스터 + 액티비티 집중';
+
+  @override String get mypage_stat_visits => '누적 방문';
+  @override String get mypage_stat_eggs => '이스터에그';
+  @override String get mypage_stat_avg_route => '평균 동선';
+  @override String get mypage_guest => '게스트';
+  @override String get mypage_egg_progress => '이스터에그 진행';
+
+  @override String get map_btn_route => '동선';
+  @override String get map_btn_gps => 'GPS';
+
+  @override String survey_headcount(int n) => '$n명';
 }

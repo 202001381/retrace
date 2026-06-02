@@ -258,6 +258,9 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
             _companion = c;
             _style = s;
             _survey = newSurvey;
+            // 데모 시나리오 활성 시 _fetch 가 백엔드 우회하므로 새 survey 가 무시됨.
+            // 사용자가 조건을 명시적으로 바꿨으므로 데모 모드 해제.
+            _activeScenario = null;
             _consecutiveSkips = 0;
             _skipBlocked = false;
           });
@@ -349,13 +352,32 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
     return a.waitMinutes;
   }
 
-  String? get _surveyLabel {
+  String? _surveyLabelLocalized(AppL10n l) {
     final s = _survey;
     if (s == null || s.total == 0) return null;
-    final parts = <String>['${s.total}명'];
-    if (s.purpose != null) parts.add(s.purpose!);
-    if (s.favoriteType != null) parts.add(s.favoriteType!);
+    final parts = <String>[l.survey_headcount(s.total)];
+    if (s.purpose != null) parts.add(_purposeDisplay(l, s.purpose!));
+    if (s.favoriteType != null) parts.add(_favoriteDisplay(l, s.favoriteType!));
     return parts.join(' · ');
+  }
+
+  static String _purposeDisplay(AppL10n l, String canonical) {
+    switch (canonical) {
+      case '놀이기구 즐기기': return l.purpose_rides;
+      case '나들이·피크닉': return l.purpose_picnic;
+      case '아이 데리고 나들이': return l.purpose_kids_outing;
+      case '데이트': return l.purpose_date;
+    }
+    return canonical;
+  }
+
+  static String _favoriteDisplay(AppL10n l, String canonical) {
+    switch (canonical) {
+      case '스릴 어트랙션 위주': return l.fav_thrill;
+      case '가족·어린이 위주': return l.fav_family;
+      case '둘 다 괜찮아요': return l.fav_either;
+    }
+    return canonical;
   }
 
   int get _missingEggCount {
@@ -391,7 +413,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                       const SizedBox(height: 12),
                     ],
                     _MetaHeader(
-                      surveyLabel: _surveyLabel,
+                      surveyLabel: _surveyLabelLocalized(AppL10n.of(context)!),
                       missingEggs: _missingEggCount,
                       totalMin: _rec?.totalMin,
                       onChangeConditions: _openCompanionSheet,
@@ -1073,11 +1095,11 @@ class _DemoScenarioPicker extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 20),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
                       child: Text(
-                        '결제하면 맞춤 코스가 시작돼요',
-                        style: TextStyle(
+                        AppL10n.of(context)!.demo_payment_prompt,
+                        style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -1153,7 +1175,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                             Text(s.emoji,
                                 style: const TextStyle(fontSize: 14)),
                             const SizedBox(width: 4),
-                            Text(s.title,
+                            Text(s.localizedTitle(AppL10n.of(context)!),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
@@ -1164,7 +1186,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(s.subtitle,
+                        Text(s.localizedSubtitle(AppL10n.of(context)!),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

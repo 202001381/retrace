@@ -319,4 +319,23 @@ class AppL10nEn extends AppL10n {
   @override String get search_hint_all => 'Search attractions, food, zones';
   @override String get no_survey_default => 'No survey — default priority';
   @override String get no_facility_match => 'No facility matches the filter.';
+
+  @override String get demo_payment_prompt => 'Pay and your custom course begins';
+  @override String get demo_family_title => 'Family 4h';
+  @override String get demo_family_sub => 'Kid-friendly, lower thrill';
+  @override String get demo_date_title => 'Date 4h';
+  @override String get demo_date_sub => 'Photo spots + meals + night view';
+  @override String get demo_thrill_title => 'Thrill 4h';
+  @override String get demo_thrill_sub => 'Coasters + activities focus';
+
+  @override String get mypage_stat_visits => 'Visits';
+  @override String get mypage_stat_eggs => 'Easter eggs';
+  @override String get mypage_stat_avg_route => 'Avg route';
+  @override String get mypage_guest => 'Guest';
+  @override String get mypage_egg_progress => 'Easter egg progress';
+
+  @override String get map_btn_route => 'Route';
+  @override String get map_btn_gps => 'GPS';
+
+  @override String survey_headcount(int n) => '$n people';
 }

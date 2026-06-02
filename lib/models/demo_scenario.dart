@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../core/walk_speed.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'attraction.dart';
 import 'luna_recommendation.dart';
 
@@ -82,6 +83,22 @@ enum DemoScenario {
     required this.rationale,
     required this.stopIds,
   });
+
+  String localizedTitle(AppL10n l) {
+    switch (this) {
+      case DemoScenario.family: return l.demo_family_title;
+      case DemoScenario.date: return l.demo_date_title;
+      case DemoScenario.thrill: return l.demo_thrill_title;
+    }
+  }
+
+  String localizedSubtitle(AppL10n l) {
+    switch (this) {
+      case DemoScenario.family: return l.demo_family_sub;
+      case DemoScenario.date: return l.demo_date_sub;
+      case DemoScenario.thrill: return l.demo_thrill_sub;
+    }
+  }
 
   /// id → Attraction 해석. 누락된 id 는 건너뜀.
   List<Attraction> resolveStops() {

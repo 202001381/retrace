@@ -344,5 +344,25 @@
   "search_no_results": "검색 결과가 없어요",
   "search_hint_all": "어트랙션, 음식점, 구역 검색",
   "no_survey_default": "설문 응답 없음 — 기본 우선순위로 추천",
-  "no_facility_match": "해당 조건의 시설이 없습니다."
+  "no_facility_match": "해당 조건의 시설이 없습니다.",
+
+  "demo_payment_prompt": "결제하면 맞춤 코스가 시작돼요",
+  "demo_family_title": "가족 4시간",
+  "demo_family_sub": "어린이 동반, 저강도 위주",
+  "demo_date_title": "데이트 4시간",
+  "demo_date_sub": "포토스팟 + 식사 + 야경",
+  "demo_thrill_title": "스릴 4시간",
+  "demo_thrill_sub": "롤러코스터 + 액티비티 집중",
+
+  "mypage_stat_visits": "누적 방문",
+  "mypage_stat_eggs": "이스터에그",
+  "mypage_stat_avg_route": "평균 동선",
+  "mypage_guest": "게스트",
+  "mypage_egg_progress": "이스터에그 진행",
+
+  "map_btn_route": "동선",
+  "map_btn_gps": "GPS",
+
+  "survey_headcount": "{n}명",
+  "@survey_headcount": { "placeholders": { "n": { "type": "int" } } }
 }

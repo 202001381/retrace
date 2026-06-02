@@ -948,14 +948,14 @@ class _TopBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _IconLabelButton(
-                  label: '🗺️ 동선',
+                  label: '🗺️ ${AppL10n.of(context)!.map_btn_route}',
                   active: routeOn,
                   activeColor: AppColors.ink900,
                   onTap: onToggleRoute,
                 ),
                 const SizedBox(width: 6),
                 _IconLabelButton(
-                  label: '📍 GPS',
+                  label: '📍 ${AppL10n.of(context)!.map_btn_gps}',
                   active: false,
                   activeColor: AppColors.mint,
                   loading: gpsLoading,
