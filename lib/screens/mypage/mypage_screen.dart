@@ -7,6 +7,7 @@ import '../../services/easter_egg_service.dart';
 import '../../services/locale_service.dart';
 import '../../services/onboarding_service.dart';
 import '../../widgets/design/condition_pip.dart';
+import '../../widgets/design/retrace_glyph.dart';
 import 'app_info_screen.dart';
 import 'location_settings_screen.dart';
 import 'notification_settings_screen.dart';
@@ -205,7 +206,7 @@ class _MypageScreenState extends State<MypageScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: _SettingsCard(rows: [
                 _SettingsRow(
-                  icon: Icons.refresh_rounded,
+                  glyph: 'refresh',
                   label: l.mypage_reset_onboarding,
                   sub: l.mypage_replay_onboarding_sub,
                   tint: _IconTint.red,
@@ -217,40 +218,40 @@ class _MypageScreenState extends State<MypageScreen> {
                         },
                 ),
                 _SettingsRow(
-                  icon: Icons.language_rounded,
+                  glyph: 'language',
                   label: l.mypage_language,
                   sub: _localeLabel(context),
                   tint: _IconTint.grape,
                   onTap: _showLanguageSheet,
                 ),
                 _SettingsRow(
-                  icon: Icons.notifications_none_rounded,
+                  glyph: 'bell',
                   label: l.mypage_notification,
                   tint: _IconTint.blue,
                   onTap: () => _push(const NotificationSettingsScreen()),
                 ),
                 _SettingsRow(
-                  icon: Icons.location_on_outlined,
+                  glyph: 'pin',
                   label: l.mypage_location,
                   tint: _IconTint.mint,
                   onTap: () => _push(const LocationSettingsScreen()),
                 ),
                 _SettingsRow(
-                  icon: Icons.credit_card_rounded,
+                  glyph: 'card',
                   label: l.mypage_settings_payment,
                   badge: l.mypage_coming_soon,
                   tint: _IconTint.yellow,
                   onTap: () => _snack(l.mypage_settings_payment),
                 ),
                 _SettingsRow(
-                  icon: Icons.description_outlined,
+                  glyph: 'scroll',
                   label: l.mypage_settings_terms,
                   badge: l.mypage_coming_soon,
                   tint: _IconTint.grape,
                   onTap: () => _snack(l.mypage_settings_terms),
                 ),
                 _SettingsRow(
-                  icon: Icons.info_outline_rounded,
+                  glyph: 'info',
                   label: l.mypage_app_info,
                   sub: 'v1.2.0 · build 0528',
                   tint: _IconTint.blush,
@@ -547,12 +548,11 @@ class _EggProgressCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.egg_outlined,
-                  size: 18, color: Color(0xFF8A6300)),
+              const RetraceGlyph(name: 'egg', size: 18, color: Color(0xFF8A6300), strokeWidth: 2),
               const SizedBox(width: 8),
-              const Text(
-                '이스터에그 진행',
-                style: TextStyle(
+              Text(
+                AppL10n.of(context)!.common_easter_egg,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: AppColors.ink900,
@@ -655,14 +655,14 @@ class _SettingsCard extends StatelessWidget {
 }
 
 class _SettingsRow extends StatelessWidget {
-  final IconData icon;
+  final String glyph;
   final String label;
   final String? sub;
   final String? badge;
   final _IconTint tint;
   final VoidCallback? onTap;
   const _SettingsRow({
-    required this.icon,
+    required this.glyph,
     required this.label,
     required this.tint,
     this.sub,
@@ -704,7 +704,7 @@ class _SettingsRow extends StatelessWidget {
                 color: c.bg,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: c.fg),
+              child: RetraceGlyph(name: glyph, size: 16, color: c.fg, strokeWidth: 2),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -753,8 +753,7 @@ class _SettingsRow extends StatelessWidget {
               ),
               const SizedBox(width: 8),
             ],
-            const Icon(Icons.chevron_right_rounded,
-                size: 16, color: AppColors.ink300),
+            const RetraceGlyph(name: 'chevron', size: 14, color: AppColors.ink300, strokeWidth: 2),
           ],
         ),
       ),
@@ -780,8 +779,7 @@ class _DashedButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.auto_awesome_outlined,
-                  size: 14, color: AppColors.red),
+              const RetraceGlyph(name: 'sparkle', size: 14, color: AppColors.red, strokeWidth: 2),
               const SizedBox(width: 8),
               Text(
                 label,
