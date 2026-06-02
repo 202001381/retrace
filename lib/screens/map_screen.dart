@@ -222,7 +222,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
           duration: const Duration(seconds: 3),
-          content: Text(AppL10n.of(context).map_gps_remote_snackbar),
+          content: Text(AppL10n.of(context)!.map_gps_remote_snackbar),
         ),
       );
     }
@@ -928,7 +928,7 @@ class _TopBar extends StatelessWidget {
                             decoration: InputDecoration(
                               isCollapsed: true,
                               border: InputBorder.none,
-                              hintText: AppL10n.of(context).map_search_hint,
+                              hintText: AppL10n.of(context)!.map_search_hint,
                               hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           ),

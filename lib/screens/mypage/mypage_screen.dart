@@ -63,7 +63,7 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   String _localeLabel(BuildContext context) {
-    final l = AppL10n.of(context);
+    final l = AppL10n.of(context)!;
     final current = LocaleService.instance.locale.value;
     if (current == null) return l.mypage_language_system;
     return current.languageCode == 'en'
@@ -72,7 +72,7 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   Future<void> _showLanguageSheet() async {
-    final l = AppL10n.of(context);
+    final l = AppL10n.of(context)!;
     final current = LocaleService.instance.locale.value;
     // 'system' / 'ko' / 'en' — dismissed 면 null 로 들어와서 변경 없음.
     final code = await showModalBottomSheet<String>(
@@ -211,7 +211,7 @@ class _MypageScreenState extends State<MypageScreen> {
               ),
               _SettingsRow(
                 icon: Icons.language_rounded,
-                label: AppL10n.of(context).mypage_language,
+                label: AppL10n.of(context)!.mypage_language,
                 sub: _localeLabel(context),
                 tint: _IconTint.grape,
                 onTap: _showLanguageSheet,

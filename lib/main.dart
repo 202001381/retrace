@@ -243,7 +243,7 @@ class _MainScreenState extends State<MainScreen> {
         child: SizedBox(
           height: 68,
           child: Builder(builder: (context) {
-            final l = AppL10n.of(context);
+            final l = AppL10n.of(context)!;
             return Row(
               children: [
                 _navItem(0, Icons.home_rounded, l.navHome),
