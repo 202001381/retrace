@@ -1,0 +1,111 @@
+{
+  "@@locale": "en",
+
+  "appName": "Re-Trace",
+
+  "navHome": "Home",
+  "navMap": "Map",
+  "navMyLuna": "My Luna",
+  "navArchive": "Archive",
+  "navMyPage": "Me",
+
+  "common_ok": "OK",
+  "common_cancel": "Cancel",
+  "common_close": "Close",
+  "common_retry": "Retry",
+  "common_loading": "Loading...",
+  "common_error": "Something went wrong",
+  "common_save": "Save",
+  "common_done": "Done",
+  "common_next": "Next",
+  "common_back": "Back",
+  "common_min_short": "min",
+  "common_meter_short": "m",
+  "common_kilometer_short": "km",
+
+  "home_greeting_morning": "Good morning",
+  "home_greeting_afternoon": "Have a good day",
+  "home_greeting_evening": "Wind down well",
+  "home_search_hint": "Search attractions & food",
+  "home_notifications": "Notifications",
+  "home_today_route": "Today's recommended route",
+  "home_view_all_route": "View full route",
+  "home_view_more": "View more",
+  "home_weather_title": "Weather",
+  "home_crowd_title": "Crowd level",
+  "home_crowd_low": "Light",
+  "home_crowd_mid": "Moderate",
+  "home_crowd_high": "Crowded",
+
+  "map_route_on": "My Luna Route",
+  "map_gps_label": "My location",
+  "map_gps_remote_snackbar": "You're not at Seoul Land yet — using the front gate as origin 📍",
+  "map_ai_scan": "AI Scan",
+  "map_filter_all": "All",
+  "map_filter_attraction": "Rides",
+  "map_filter_food": "Food",
+  "map_filter_photo": "Photo",
+  "map_search_hint": "Search places",
+
+  "myluna_title": "My Luna",
+  "myluna_subtitle": "Today's personalized route",
+  "myluna_refresh": "Refresh",
+  "myluna_skip": "Skip",
+  "myluna_start_now": "Start now",
+  "myluna_empty_title": "Try different settings",
+  "myluna_empty_subtitle": "Change companion or preference to see a new course",
+  "myluna_change_profile": "Change profile",
+  "myluna_loading_route": "Computing the best route...",
+  "myluna_walking_minutes": "{min} min",
+  "@myluna_walking_minutes": {
+    "placeholders": { "min": { "type": "int" } }
+  },
+  "myluna_total_time": "Total {min} min",
+  "@myluna_total_time": {
+    "placeholders": { "min": { "type": "int" } }
+  },
+
+  "archive_title": "Memory Shelf",
+  "archive_season_spring": "Spring",
+  "archive_season_summer": "Summer",
+  "archive_season_autumn": "Autumn",
+  "archive_season_winter": "Winter",
+  "archive_empty_slot": "Empty slot",
+  "archive_book_collected": "{count}/{total} collected",
+  "@archive_book_collected": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "mypage_title": "Me",
+  "mypage_section_profile": "Profile",
+  "mypage_section_preferences": "Preferences",
+  "mypage_section_legal": "Legal",
+  "mypage_section_app": "App",
+  "mypage_language": "Language",
+  "mypage_language_korean": "한국어",
+  "mypage_language_english": "English",
+  "mypage_language_system": "System default",
+  "mypage_notification": "Notifications",
+  "mypage_location": "Location",
+  "mypage_marketing_consent": "Marketing consent",
+  "mypage_reset_onboarding": "Replay onboarding",
+  "mypage_app_version": "App version",
+  "mypage_app_info": "App info",
+  "mypage_terms": "Terms of Service",
+  "mypage_privacy": "Privacy Policy",
+
+  "onboarding_welcome_title": "Your Seoul Land,\ntailored for you",
+  "onboarding_welcome_subtitle": "Tell us your companion and preferences\nand we'll plan today better",
+  "onboarding_start": "Get started",
+  "onboarding_companion_title": "Who's with you today?",
+  "onboarding_purpose_title": "What would you like to do?",
+  "onboarding_favorite_title": "What do you prefer?",
+  "onboarding_done_title": "All set!",
+
+  "error_network": "Please check your network",
+  "error_unknown": "An unknown error occurred",
+  "error_load_failed": "Failed to load"
+}

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../core/walk_speed.dart';
 import 'attraction.dart';
 import 'luna_recommendation.dart';
 
@@ -105,16 +106,12 @@ enum DemoScenario {
   }
 }
 
-// 평균 도보 속도 80m/min (MyLunaScreen 과 동일 기준).
-// TODO: RouteService(66.67m/min)와 거리 계산식 통일 검토 필요.
-const double _kWalkSpeedMpm = 80;
-
 int _computeTotalMin(double oLat, double oLng, List<Attraction> spots) {
   double total = 0;
   double prevLat = oLat;
   double prevLng = oLng;
   for (final s in spots) {
-    total += _haversine(prevLat, prevLng, s.lat, s.lng) / _kWalkSpeedMpm;
+    total += _haversine(prevLat, prevLng, s.lat, s.lng) / kWalkSpeedMpm;
     total += _activityMinutes(s);
     prevLat = s.lat;
     prevLng = s.lng;

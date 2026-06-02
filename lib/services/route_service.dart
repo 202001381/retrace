@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
 
+import '../core/walk_speed.dart';
 import '../models/attraction.dart';
 import '../models/route_response.dart';
 import 'onboarding_service.dart';
@@ -119,7 +120,7 @@ class RouteService {
     for (var i = 0; i < ordered.length; i++) {
       final a = ordered[i];
       final dist = _hav(prevLat, prevLng, a.lat, a.lng);
-      final walkMin = (dist / 66.67).ceil();
+      final walkMin = (dist / kWalkSpeedMpm).ceil();
       final eta = walkMin + a.waitMinutes;
       stops.add(RouteStop(id: a.id, order: i + 1, etaMinFromPrev: eta));
       totalMin += eta;

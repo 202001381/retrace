@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/walk_speed.dart';
 import '../../models/attraction.dart';
 
 /// "지금 출발" 모드 — 전체 화면 지도 + 큰 폰트 거리·방향.
@@ -21,9 +22,6 @@ class MyLunaNavigateScreen extends StatefulWidget {
 
 class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
   static const double _kArrivalRadiusM = 50;
-  // 평균 도보 속도 80m/min.
-  // TODO: RouteService(66.67m/min)와 거리 계산식 통일 검토 필요.
-  static const double _kWalkSpeedMpm = 80;
   static const LatLng _kGate = LatLng(37.4332, 127.0174);
 
   final MapController _mapCtrl = MapController();
@@ -122,7 +120,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
   double get _distMeters =>
       _haversineMeters(_origin, widget.target.position);
 
-  int get _walkMin => (_distMeters / _kWalkSpeedMpm).ceil();
+  int get _walkMin => (_distMeters / kWalkSpeedMpm).ceil();
 
   String get _bearingLabel {
     final from = _origin;

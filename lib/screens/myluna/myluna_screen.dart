@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/walk_speed.dart';
 import '../../widgets/design/logo.dart';
 import '../../widgets/design/stamp.dart';
 
@@ -34,9 +35,7 @@ class MyLunaScreen extends StatefulWidget {
 class _MyLunaScreenState extends State<MyLunaScreen> {
   // ── 출발점 ───────────────────────────────────────────────
   static const LatLng _kGate = LatLng(37.4332, 127.0174);
-  // 평균 도보 속도 80m/min — 명세 기준.
-  // TODO: RouteService(66.67m/min)와 거리 계산식 통일 검토 필요.
-  static const double _kWalkSpeedMpm = 80;
+  // 도보 속도는 core/walk_speed.dart 의 kWalkSpeedMpm 단일 진실 사용.
 
   // 무한 skip 방지 — 같은 세션에서 N회 연속 시 자동 fetch 멈춤.
   static const int _kMaxConsecutiveSkips = 3;
@@ -287,7 +286,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
 
   int _walkMinutesTo(Attraction a) {
     final m = _haversineMeters(_origin, a.position);
-    return (m / _kWalkSpeedMpm).ceil();
+    return (m / kWalkSpeedMpm).ceil();
   }
 
   int _arrivalWaitMinutes(Attraction a) {

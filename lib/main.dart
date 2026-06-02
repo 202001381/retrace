@@ -1,14 +1,17 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_colors.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'screens/archive_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/myluna/myluna_screen.dart';
 import 'screens/mypage/mypage_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/locale_service.dart';
 import 'services/onboarding_service.dart';
 
 void main() async {
@@ -20,6 +23,7 @@ void main() async {
       statusBarBrightness: Brightness.light,
     ),
   );
+  await LocaleService.instance.load();
   try {
     await Firebase.initializeApp();
   } catch (_) {/* config 미완료 — Firestore/FCM 의존 기능은 비활성 */}
@@ -31,48 +35,61 @@ class SeoulLandApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SeoulLand',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // 'Pretendard' 미번들 상태에서 명시하면 iOS/macOS 가 무거운 한글
-        // weight 를 명조(세리프) 로 폴백시킴 (특히 w800/w900 헤드라인).
-        // 폰트 번들 전까지는 platform default sans-serif (Apple SD Gothic
-        // Neo / Noto Sans CJK) 를 그대로 받기 위해 명시 제거.
-        // TODO: assets/fonts/Pretendard*.otf 번들 + pubspec 등록 후
-        //       fontFamily: 'Pretendard' 복구.
-        useMaterial3: true,
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: AppColors.bgPage,
-        canvasColor: AppColors.bgPage,
-        dialogBackgroundColor: AppColors.bgCard,
-        colorScheme: const ColorScheme.light(
-          primary: AppColors.red,
-          onPrimary: AppColors.textOnDark,
-          secondary: AppColors.ink900,
-          onSecondary: AppColors.textOnDark,
-          tertiary: AppColors.yellow,
-          onTertiary: AppColors.textPrimary,
-          surface: AppColors.bgCard,
-          onSurface: AppColors.textPrimary,
-          surfaceContainerHighest: AppColors.bgCardWarm,
-          error: AppColors.red,
-          onError: AppColors.textOnDark,
-          outline: AppColors.textSecondary,
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: LocaleService.instance.locale,
+      builder: (context, locale, _) => MaterialApp(
+        title: 'Re-Trace',
+        debugShowCheckedModeBanner: false,
+        locale: locale,
+        supportedLocales: LocaleService.supported,
+        localizationsDelegates: const [
+          AppL10n.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        localeResolutionCallback: (deviceLocale, supported) {
+          if (deviceLocale != null) {
+            for (final s in supported) {
+              if (s.languageCode == deviceLocale.languageCode) return s;
+            }
+          }
+          return const Locale('ko'); // 기본 한국어
+        },
+        theme: ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: AppColors.bgPage,
+          canvasColor: AppColors.bgPage,
+          dialogBackgroundColor: AppColors.bgCard,
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.red,
+            onPrimary: AppColors.textOnDark,
+            secondary: AppColors.ink900,
+            onSecondary: AppColors.textOnDark,
+            tertiary: AppColors.yellow,
+            onTertiary: AppColors.textPrimary,
+            surface: AppColors.bgCard,
+            onSurface: AppColors.textPrimary,
+            surfaceContainerHighest: AppColors.bgCardWarm,
+            error: AppColors.red,
+            onError: AppColors.textOnDark,
+            outline: AppColors.textSecondary,
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: AppColors.bgCard,
+            foregroundColor: AppColors.textPrimary,
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+          ),
+          dividerColor: AppColors.line,
+          textTheme: const TextTheme().apply(
+            bodyColor: AppColors.textPrimary,
+            displayColor: AppColors.textPrimary,
+          ),
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.bgCard,
-          foregroundColor: AppColors.textPrimary,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-        ),
-        dividerColor: AppColors.line,
-        textTheme: const TextTheme().apply(
-          bodyColor: AppColors.textPrimary,
-          displayColor: AppColors.textPrimary,
-        ),
+        home: const _AppGate(),
       ),
-      home: const _AppGate(),
     );
   }
 }
@@ -225,15 +242,18 @@ class _MainScreenState extends State<MainScreen> {
         top: false,
         child: SizedBox(
           height: 68,
-          child: Row(
-            children: [
-              _navItem(0, Icons.home_rounded, '홈'),
-              _navItem(1, Icons.map_outlined, '지도'),
-              _centerNavItem(2, '마이 루나'),
-              _navItem(3, Icons.menu_book_outlined, 'Archive'),
-              _navItem(4, Icons.person_outline_rounded, '마이'),
-            ],
-          ),
+          child: Builder(builder: (context) {
+            final l = AppL10n.of(context);
+            return Row(
+              children: [
+                _navItem(0, Icons.home_rounded, l.navHome),
+                _navItem(1, Icons.map_outlined, l.navMap),
+                _centerNavItem(2, l.navMyLuna),
+                _navItem(3, Icons.menu_book_outlined, l.navArchive),
+                _navItem(4, Icons.person_outline_rounded, l.navMyPage),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -243,27 +263,32 @@ class _MainScreenState extends State<MainScreen> {
     final isActive = _currentIndex == index;
     final color = isActive ? AppColors.ink900 : AppColors.ink400;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() {
-          _currentIndex = index;
-          if (index == 1) _mapMyLuna = true;
-        }),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                letterSpacing: -0.1,
-                fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        label: label,
+        child: GestureDetector(
+          onTap: () => setState(() {
+            _currentIndex = index;
+            if (index == 1) _mapMyLuna = true;
+          }),
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  letterSpacing: -0.1,
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -274,10 +299,14 @@ class _MainScreenState extends State<MainScreen> {
     final isActive = _currentIndex == index;
     final color = isActive ? AppColors.ink900 : AppColors.ink400;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _currentIndex = index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        label: label,
+        child: GestureDetector(
+          onTap: () => setState(() => _currentIndex = index),
+          behavior: HitTestBehavior.opaque,
+          child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Transform.translate(
@@ -308,19 +337,20 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             ),
-            Transform.translate(
-              offset: const Offset(0, -8),
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10,
-                  letterSpacing: -0.1,
-                  fontWeight: FontWeight.w800,
+              Transform.translate(
+                offset: const Offset(0, -8),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10,
+                    letterSpacing: -0.1,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

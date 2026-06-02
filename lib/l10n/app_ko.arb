@@ -1,0 +1,112 @@
+{
+  "@@locale": "ko",
+
+  "appName": "Re-Trace",
+  "@appName": {},
+
+  "navHome": "홈",
+  "navMap": "지도",
+  "navMyLuna": "마이 루나",
+  "navArchive": "Archive",
+  "navMyPage": "마이",
+
+  "common_ok": "확인",
+  "common_cancel": "취소",
+  "common_close": "닫기",
+  "common_retry": "다시 시도",
+  "common_loading": "불러오는 중...",
+  "common_error": "문제가 생겼어요",
+  "common_save": "저장",
+  "common_done": "완료",
+  "common_next": "다음",
+  "common_back": "이전",
+  "common_min_short": "분",
+  "common_meter_short": "m",
+  "common_kilometer_short": "km",
+
+  "home_greeting_morning": "좋은 아침이에요",
+  "home_greeting_afternoon": "오늘 하루도 좋아요",
+  "home_greeting_evening": "오늘 마무리 잘 해요",
+  "home_search_hint": "어트랙션·음식 검색",
+  "home_notifications": "알림",
+  "home_today_route": "오늘의 추천 동선",
+  "home_view_all_route": "전체 동선 보기",
+  "home_view_more": "더 보기",
+  "home_weather_title": "오늘 날씨",
+  "home_crowd_title": "혼잡도",
+  "home_crowd_low": "여유",
+  "home_crowd_mid": "보통",
+  "home_crowd_high": "혼잡",
+
+  "map_route_on": "마이 루나 동선",
+  "map_gps_label": "내 위치",
+  "map_gps_remote_snackbar": "서울랜드 도착 전이에요 — 정문 기준으로 안내해요 📍",
+  "map_ai_scan": "AI 스캔",
+  "map_filter_all": "전체",
+  "map_filter_attraction": "어트랙션",
+  "map_filter_food": "음식",
+  "map_filter_photo": "포토",
+  "map_search_hint": "장소 검색",
+
+  "myluna_title": "마이 루나",
+  "myluna_subtitle": "오늘의 맞춤 동선",
+  "myluna_refresh": "새로고침",
+  "myluna_skip": "건너뛰기",
+  "myluna_start_now": "지금 출발",
+  "myluna_empty_title": "조건을 바꿔보세요",
+  "myluna_empty_subtitle": "동행·취향을 바꾸면 새 코스를 보여드려요",
+  "myluna_change_profile": "프로필 변경",
+  "myluna_loading_route": "최적 동선 계산 중...",
+  "myluna_walking_minutes": "{min}분",
+  "@myluna_walking_minutes": {
+    "placeholders": { "min": { "type": "int" } }
+  },
+  "myluna_total_time": "총 {min}분",
+  "@myluna_total_time": {
+    "placeholders": { "min": { "type": "int" } }
+  },
+
+  "archive_title": "기억의 책장",
+  "archive_season_spring": "봄",
+  "archive_season_summer": "여름",
+  "archive_season_autumn": "가을",
+  "archive_season_winter": "겨울",
+  "archive_empty_slot": "아직 비어 있어요",
+  "archive_book_collected": "{count}/{total} 수집",
+  "@archive_book_collected": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "mypage_title": "마이",
+  "mypage_section_profile": "프로필",
+  "mypage_section_preferences": "환경설정",
+  "mypage_section_legal": "이용 정보",
+  "mypage_section_app": "앱 정보",
+  "mypage_language": "언어",
+  "mypage_language_korean": "한국어",
+  "mypage_language_english": "English",
+  "mypage_language_system": "시스템 설정",
+  "mypage_notification": "알림 설정",
+  "mypage_location": "위치 설정",
+  "mypage_marketing_consent": "마케팅 정보 수신",
+  "mypage_reset_onboarding": "온보딩 다시 보기",
+  "mypage_app_version": "앱 버전",
+  "mypage_app_info": "앱 정보",
+  "mypage_terms": "이용약관",
+  "mypage_privacy": "개인정보 처리방침",
+
+  "onboarding_welcome_title": "함께 만드는\n나의 서울랜드",
+  "onboarding_welcome_subtitle": "동행과 취향을 알려주시면\n오늘 하루를 더 알차게 짜드려요",
+  "onboarding_start": "시작하기",
+  "onboarding_companion_title": "누구와 함께 오셨어요?",
+  "onboarding_purpose_title": "오늘 무엇을 하고 싶으세요?",
+  "onboarding_favorite_title": "어떤 걸 더 좋아하세요?",
+  "onboarding_done_title": "준비 완료!",
+
+  "error_network": "네트워크 연결을 확인해주세요",
+  "error_unknown": "알 수 없는 오류가 발생했어요",
+  "error_load_failed": "불러오지 못했어요"
+}

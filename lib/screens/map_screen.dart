@@ -7,6 +7,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/walk_speed.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 import '../models/place_filter.dart';
 import '../models/route_response.dart';
@@ -216,11 +218,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
     if (remote && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.fromLTRB(20, 0, 20, 40),
-          duration: Duration(seconds: 3),
-          content: Text('서울랜드 도착 전이에요 — 정문 기준으로 안내해요 📍'),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+          duration: const Duration(seconds: 3),
+          content: Text(AppL10n.of(context).map_gps_remote_snackbar),
         ),
       );
     }
@@ -257,7 +259,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       // 내비 중이면 도보 분 갱신.
       if (_navTarget != null) {
         final dist = _haversineMeters(next, _navTarget!.position);
-        setState(() => _navWalkMin = (dist / 66.67).ceil());
+        setState(() => _navWalkMin = (dist / kWalkSpeedMpm).ceil());
       }
     }, onError: (_) {});
   }
@@ -395,7 +397,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   void _startNavigation(Attraction target) {
     final origin = _currentOrigin;
     final dist = _haversineMeters(origin, target.position);
-    final walkMin = (dist / 66.67).ceil(); // 4 km/h ≈ 66.67 m/min
+    final walkMin = (dist / kWalkSpeedMpm).ceil();
     setState(() {
       _navTarget = target;
       _navWalkMin = walkMin;
@@ -923,11 +925,11 @@ class _TopBar extends StatelessWidget {
                             controller: searchController,
                             onChanged: onSearchChanged,
                             style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               isCollapsed: true,
                               border: InputBorder.none,
-                              hintText: '어트랙션, 음식점',
-                              hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                              hintText: AppL10n.of(context).map_search_hint,
+                              hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           ),
                         ),
@@ -983,27 +985,33 @@ class _IconLabelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: active ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: active ? activeColor : AppColors.line),
+    return Semantics(
+      button: true,
+      enabled: !loading,
+      selected: active,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: active ? activeColor : Colors.white,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: active ? activeColor : AppColors.line),
+          ),
+          alignment: Alignment.center,
+          child: loading
+              ? const SizedBox(
+                  width: 14, height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink900),
+                )
+              : Text(label,
+                  style: TextStyle(
+                    color: active ? Colors.white : AppColors.textPrimary,
+                    fontSize: 13, fontWeight: FontWeight.w800,
+                  )),
         ),
-        alignment: Alignment.center,
-        child: loading
-            ? const SizedBox(
-                width: 14, height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink900),
-              )
-            : Text(label,
-                style: TextStyle(
-                  color: active ? Colors.white : AppColors.textPrimary,
-                  fontSize: 13, fontWeight: FontWeight.w800,
-                )),
       ),
     );
   }

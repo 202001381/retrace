@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 import '../../services/easter_egg_service.dart';
+import '../../services/locale_service.dart';
 import '../../services/onboarding_service.dart';
 import '../../widgets/design/condition_pip.dart';
 import 'app_info_screen.dart';
@@ -58,6 +60,85 @@ class _MypageScreenState extends State<MypageScreen> {
 
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  String _localeLabel(BuildContext context) {
+    final l = AppL10n.of(context);
+    final current = LocaleService.instance.locale.value;
+    if (current == null) return l.mypage_language_system;
+    return current.languageCode == 'en'
+        ? l.mypage_language_english
+        : l.mypage_language_korean;
+  }
+
+  Future<void> _showLanguageSheet() async {
+    final l = AppL10n.of(context);
+    final current = LocaleService.instance.locale.value;
+    // 'system' / 'ko' / 'en' — dismissed 면 null 로 들어와서 변경 없음.
+    final code = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        Widget tile(String label, String value, bool isSelected) => ListTile(
+              title: Text(label,
+                  style: TextStyle(
+                    fontWeight:
+                        isSelected ? FontWeight.w800 : FontWeight.w500,
+                    color: AppColors.ink900,
+                  )),
+              trailing: isSelected
+                  ? const Icon(Icons.check_rounded, color: AppColors.red)
+                  : null,
+              onTap: () => Navigator.of(sheetCtx).pop(value),
+            );
+
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.ink400.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 8, 22, 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l.mypage_language,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: AppColors.ink900,
+                    ),
+                  ),
+                ),
+              ),
+              tile(l.mypage_language_system, 'system', current == null),
+              tile(l.mypage_language_korean, 'ko',
+                  current?.languageCode == 'ko'),
+              tile(l.mypage_language_english, 'en',
+                  current?.languageCode == 'en'),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+    if (code == null) return;
+    final next = code == 'system' ? null : Locale(code);
+    await LocaleService.instance.setLocale(next);
+    if (mounted) setState(() {});
   }
 
   @override
@@ -127,6 +208,13 @@ class _MypageScreenState extends State<MypageScreen> {
                         Navigator.of(context).pop();
                         widget.onResetOnboarding!();
                       },
+              ),
+              _SettingsRow(
+                icon: Icons.language_rounded,
+                label: AppL10n.of(context).mypage_language,
+                sub: _localeLabel(context),
+                tint: _IconTint.grape,
+                onTap: _showLanguageSheet,
               ),
               _SettingsRow(
                 icon: Icons.notifications_none_rounded,
