@@ -366,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
               20,
               12,
               20,
-              100 + MediaQuery.of(context).viewPadding.bottom,
+              140 + MediaQuery.of(context).viewPadding.bottom,
             ),
             children: [
             // 1. 앱바
@@ -1471,44 +1471,63 @@ class _RouteRow extends StatelessWidget {
 }
 
 // ─── 오늘의 이벤트 ─────────────────────────────────────────
+class _Event {
+  final String tag;
+  final Color bg;
+  final String name;
+  final String time;
+  const _Event({required this.tag, required this.bg, required this.name, required this.time});
+}
+
+const List<_Event> _kTodayEvents = [
+  _Event(tag: '[D-DAY]', bg: AppColors.red, name: '🎭 퍼레이드', time: '오후 2:00'),
+  _Event(tag: '[인기]', bg: AppColors.ink900, name: '🎪 서커스쇼', time: '오후 4:30'),
+  _Event(tag: '[신규]', bg: AppColors.grape, name: '✨ 불빛 쇼', time: '오후 8:00'),
+  _Event(tag: '[야간]', bg: AppColors.blue, name: '🎆 불꽃놀이', time: '오후 9:30'),
+  _Event(tag: '[주말]', bg: AppColors.mint, name: '🎵 야외 콘서트', time: '오후 6:00'),
+  _Event(tag: '[가족]', bg: AppColors.yellowDeep, name: '🎨 페이스페인팅', time: '오후 1:00'),
+];
+
 class _TodayEventsSection extends StatelessWidget {
   const _TodayEventsSection();
   @override
   Widget build(BuildContext context) {
-    const events = [
-      (tag: '[D-DAY]', bg: AppColors.red, name: '🎭 퍼레이드', time: '오후 2:00'),
-      (tag: '[인기]', bg: AppColors.ink900, name: '🎪 서커스쇼', time: '오후 4:30'),
-      (tag: '[신규]', bg: AppColors.grape, name: '✨ 불빛 쇼', time: '오후 8:00'),
-    ];
+    final events = _kTodayEvents.take(3).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Eyebrow('TODAY · EVENTS'),
-                const SizedBox(height: 4),
-                Text(
-                  AppL10n.of(context)!.home_today_events,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.ink900,
-                    letterSpacing: -0.6,
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const _AllEventsScreen()),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Eyebrow('TODAY · EVENTS'),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppL10n.of(context)!.home_today_events,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.ink900,
+                      letterSpacing: -0.6,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(AppL10n.of(context)!.home_view_more,
-                style: const TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
-            const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
-          ],
+                ],
+              ),
+              const Spacer(),
+              Text(AppL10n.of(context)!.home_view_more,
+                  style: const TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
+              const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -1549,6 +1568,93 @@ class _TodayEventsSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AllEventsScreen extends StatelessWidget {
+  const _AllEventsScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bgPage,
+      appBar: AppBar(
+        title: Text(AppL10n.of(context)!.home_today_events,
+            style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+        backgroundColor: AppColors.bgCard,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.ink900),
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        itemCount: _kTodayEvents.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, i) {
+          final e = _kTodayEvents[i];
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.bgCard,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: e.bg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    e.tag,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        e.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '⏱ ${e.time}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded,
+                    color: AppColors.ink400),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

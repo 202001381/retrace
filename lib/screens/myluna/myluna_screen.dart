@@ -323,7 +323,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                     16,
                     12,
                     16,
-                    100 + MediaQuery.of(context).viewPadding.bottom,
+                    140 + MediaQuery.of(context).viewPadding.bottom,
                   ),
                   children: [
                     // 백엔드 연동 전 — 사용자가 미리 보는 샘플 코스.

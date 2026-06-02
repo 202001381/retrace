@@ -153,7 +153,7 @@ class _MypageScreenState extends State<MypageScreen> {
           0,
           0,
           0,
-          100 + MediaQuery.of(context).viewPadding.bottom,
+          140 + MediaQuery.of(context).viewPadding.bottom,
         ),
         children: [
           // ── 헤더 ─────────────────────────────────────────

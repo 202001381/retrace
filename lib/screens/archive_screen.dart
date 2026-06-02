@@ -321,7 +321,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       20,
                       20,
                       20,
-                      100 + MediaQuery.of(context).viewPadding.bottom,
+                      140 + MediaQuery.of(context).viewPadding.bottom,
                     ),
                     children: [
                       _Bookshelf(
