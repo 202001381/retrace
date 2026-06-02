@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class CompanionBottomSheet extends StatefulWidget {
   final String initialCompanion;
@@ -22,18 +23,41 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
   late String _companion;
   late String _style;
 
-  static const _companions = [
-    ('가족', '👨‍👩‍👧'),
-    ('연인', '💑'),
-    ('친구', '👫'),
-    ('혼자', '🙋'),
-  ];
-  static const _styles = [
-    ('스릴·액티비티', '🎢'),
-    ('사진·인생샷', '📸'),
-    ('여유·힐링', '🌿'),
-    ('공연·퍼레이드', '🎭'),
-  ];
+  // 키 — i18n 식별자 (영구 매칭용). 표시 라벨은 build 에서 AppL10n 으로.
+  static const _companionKeys = ['family', 'couple', 'friend', 'solo'];
+  static const _styleKeys = ['thrill', 'photo', 'relax', 'show'];
+  static const _companionEmojis = {
+    'family': '👨‍👩‍👧',
+    'couple': '💑',
+    'friend': '👫',
+    'solo': '🙋',
+  };
+  static const _styleEmojis = {
+    'thrill': '🎢',
+    'photo': '📸',
+    'relax': '🌿',
+    'show': '🎭',
+  };
+
+  String _companionLabel(AppL10n l, String key) {
+    switch (key) {
+      case 'family': return l.companion_family;
+      case 'couple': return l.companion_couple;
+      case 'friend': return l.companion_friend;
+      case 'solo': return l.companion_solo;
+    }
+    return key;
+  }
+
+  String _styleLabel(AppL10n l, String key) {
+    switch (key) {
+      case 'thrill': return l.style_thrill;
+      case 'photo': return l.style_photo;
+      case 'relax': return l.style_relax;
+      case 'show': return l.style_show;
+    }
+    return key;
+  }
 
   @override
   void initState() {
@@ -44,6 +68,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.bgCard,
@@ -63,9 +88,9 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
           const SizedBox(height: 18),
           Row(
             children: [
-              const Expanded(
-                child: Text('마이 루나 조건 변경',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+              Expanded(
+                child: Text(l.companion_change_title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
@@ -78,26 +103,29 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
             ],
           ),
           const SizedBox(height: 20),
-          const Text('구성원', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
+          Text(l.companion_members, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           Row(
-            children: _companions
-                .map((c) => Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(right: c == _companions.last ? 0 : 8),
-                        child: _OptionTile(
-                          label: c.$1,
-                          emoji: c.$2,
-                          selected: _companion == c.$1,
-                          activeColor: AppColors.ink900,
-                          onTap: () => setState(() => _companion = c.$1),
-                        ),
+            children: _companionKeys
+                .map((key) {
+                  final label = _companionLabel(l, key);
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: key == _companionKeys.last ? 0 : 8),
+                      child: _OptionTile(
+                        label: label,
+                        emoji: _companionEmojis[key]!,
+                        selected: _companion == label,
+                        activeColor: AppColors.ink900,
+                        onTap: () => setState(() => _companion = label),
                       ),
-                    ))
+                    ),
+                  );
+                })
                 .toList(),
           ),
           const SizedBox(height: 20),
-          const Text('선호 스타일', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
+          Text(l.companion_preferred_style, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
           const SizedBox(height: 10),
           GridView.count(
             crossAxisCount: 2,
@@ -106,16 +134,19 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 3.2,
-            children: _styles
-                .map((s) => _OptionTile(
-                      label: s.$1,
-                      emoji: s.$2,
-                      selected: _style == s.$1,
-                      activeColor: AppColors.yellow,
-                      compact: false,
-                      inline: true,
-                      onTap: () => setState(() => _style = s.$1),
-                    ))
+            children: _styleKeys
+                .map((key) {
+                  final label = _styleLabel(l, key);
+                  return _OptionTile(
+                    label: label,
+                    emoji: _styleEmojis[key]!,
+                    selected: _style == label,
+                    activeColor: AppColors.yellow,
+                    compact: false,
+                    inline: true,
+                    onTap: () => setState(() => _style = label),
+                  );
+                })
                 .toList(),
           ),
           const SizedBox(height: 24),
@@ -132,7 +163,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+              child: Text(l.common_ok, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
         ],

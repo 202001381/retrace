@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 
 import '../models/attraction.dart';
 import '../services/easter_egg_service.dart';
@@ -208,7 +209,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
             const SizedBox(height: 14),
             Row(
               children: [
-                _InfoChip(icon: '⏱', text: '대기 ${a.waitMinutes}분'),
+                _InfoChip(icon: '⏱', text: AppL10n.of(context)!.wait_short(a.waitMinutes)),
                 const SizedBox(width: 6),
                 _InfoChip(icon: '⭐', text: '${a.rating}'),
                 if (a.heightLimit > 0) ...[
@@ -217,7 +218,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                 ],
                 if (a.indoor) ...[
                   const SizedBox(width: 6),
-                  _InfoChip(icon: '🏠', text: '실내'),
+                  _InfoChip(icon: '🏠', text: AppL10n.of(context)!.common_indoor),
                 ],
               ],
             ),
@@ -233,7 +234,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                   children: [
                     Icon(Icons.directions_walk_rounded, size: 16, color: _catColor),
                     const SizedBox(width: 6),
-                    Text('예상 도보 ${widget.walkMinutes}분',
+                    Text(AppL10n.of(context)!.attr_walk_eta(widget.walkMinutes!),
                         style: TextStyle(color: _catColor, fontSize: 13, fontWeight: FontWeight.w800)),
                   ],
                 ),
@@ -249,7 +250,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                   widget.isNavigating ? Icons.hourglass_top_rounded : Icons.directions_walk_rounded,
                   size: 20,
                 ),
-                label: Text(widget.isNavigating ? '이동 중...' : '여기로 이동하기',
+                label: Text(widget.isNavigating ? AppL10n.of(context)!.common_traveling : AppL10n.of(context)!.attr_go_here,
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _catColor,
@@ -301,9 +302,10 @@ class _EasterEggSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     final bg = discovered ? AppColors.bgCardWarm : AppColors.bgPage;
     final border = discovered ? AppColors.textSecondary : AppColors.red;
-    final btnLabel = discovered ? '다시 듣기' : '이야기 들어보기';
+    final btnLabel = discovered ? l.attr_story_replay : l.attr_story_listen;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -315,11 +317,11 @@ class _EasterEggSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(discovered ? '🌙 발견한 이야기' : '🌙 이스터에그 발견!',
+          Text('🌙 ${l.common_easter_egg}',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.red)),
           const SizedBox(height: 4),
-          const Text('이 어트랙션에 숨겨진 이야기가 있어요',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text(l.attr_story_title,
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -521,9 +523,9 @@ class _NarrativePopupState extends State<_NarrativePopup>
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(99)),
                           ),
-                          child: const Text(
-                            '다음 동선 보기',
-                            style: TextStyle(
+                          child: Text(
+                            AppL10n.of(context)!.attr_view_next_route,
+                            style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w900),
                           ),
                         ),
@@ -654,9 +656,9 @@ class _NarrativePopupState extends State<_NarrativePopup>
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '발견!',
-            style: TextStyle(
+          Text(
+            AppL10n.of(context)!.common_discovered,
+            style: const TextStyle(
               color: AppColors.red,
               fontSize: 38,
               fontWeight: FontWeight.w900,

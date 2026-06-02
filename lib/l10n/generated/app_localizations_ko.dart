@@ -214,4 +214,109 @@ class AppL10nKo extends AppL10n {
   @override String get purpose_picnic => '나들이·피크닉';
   @override String get purpose_kids_outing => '아이 데리고 나들이';
   @override String get purpose_date => '데이트';
+
+  @override String get common_indoor => '실내';
+  @override String get common_outdoor => '실외';
+  @override String get common_easter_egg => '이스터에그';
+  @override String get common_quantity => '수량';
+  @override String get common_subtotal => '소계';
+  @override String get common_total_payment => '총 결제';
+  @override String get common_refresh => '새로고침';
+  @override String get common_discovered => '발견!';
+  @override String get common_traveling => '이동 중...';
+  @override String get common_just_now => '방금';
+  @override String get common_view_consent => '동의 내용 자세히 보기';
+  @override String get common_view_terms => '약관 보기';
+
+  @override String attr_walk_eta(int min) => '예상 도보 $min분';
+  @override String get attr_story_title => '이 어트랙션에 숨겨진 이야기가 있어요';
+  @override String get attr_story_listen => '이야기 들어보기';
+  @override String get attr_story_replay => '다시 듣기';
+  @override String get attr_view_next_route => '다음 동선 보기';
+  @override String get attr_go_here => '여기로 이동하기';
+
+  @override String get map_no_attractions_match => '조건에 맞는 어트랙션이 없어요';
+
+  @override String get notif_today_title => '오늘의 알림';
+  @override String get notif_today_8am => '오늘 08:00';
+  @override String get notif_today_1330 => '오늘 13:30';
+  @override String get notif_route_updated => '마이 루나 동선이 업데이트됐어요';
+  @override String get notif_route_detail => '대기시간 변화에 따라 라바트위스터를 두 번째 stop 으로 재배치했어요.';
+  @override String get notif_parade_soon => '오후 2시 퍼레이드 곧 시작';
+  @override String get notif_parade_detail => '중앙 광장에서 만나요. 좋은 자리는 30분 전부터 채워져요.';
+  @override String get notif_egg_nearby => '미래의 골동품가게 근처에서 누군가가 도장을 찾았어요. 가까이 가보세요.';
+  @override String get notif_pricing_today => '오늘 −15% 루나 프라이싱';
+  @override String get notif_pricing_reason => '오늘은 평일이라 비교적 한산';
+  @override String get notif_visit_recommend => '오전 11시 이후 입장을 추천드려요. 주말보다 평균 대기 8분 짧음.';
+  @override String get notif_cloudy_calm => '흐려서 한산할 거예요. 09:53 까지 ₩29,750 으로 받을 수 있어요.';
+
+  @override String get companion_change_title => '마이 루나 조건 변경';
+  @override String get companion_members => '구성원';
+  @override String get companion_preferred_style => '선호 스타일';
+  @override String get companion_solo => '혼자';
+  @override String get companion_couple => '연인';
+  @override String get companion_friend => '친구';
+  @override String get companion_family => '가족';
+  @override String get style_thrill => '스릴·액티비티';
+  @override String get style_show => '공연·퍼레이드';
+  @override String get style_photo => '사진·인생샷';
+  @override String get style_relax => '여유·힐링';
+
+  @override String get checkout_special_ticket => '오늘만의\n루나 티켓';
+  @override String get checkout_pass_1day => '자유이용권 · 1일';
+  @override String get checkout_luna_discount => '루나 할인';
+  @override String get checkout_how_pay => '어떻게 결제할까요?';
+  @override String get checkout_credit_card => '신용·체크카드';
+  @override String get checkout_kakao_pay => '카카오페이';
+  @override String get checkout_naver_pay => '네이버페이';
+  @override String get checkout_bank_transfer => '계좌이체';
+  @override String get checkout_start_my_luna => '마이 루나 시작하기';
+  @override String get checkout_payment_done => '결제 완료';
+  @override String get checkout_show_qr => '입장 시 QR을 보여주세요';
+  @override String get checkout_discount_expired => '할인 만료됨';
+  @override String get checkout_discount_expired_msg => '오늘의 루나 프라이싱 유효 시간이 지났습니다.\n홈으로 돌아갑니다.';
+
+  @override String get notif_set_title => '알림 설정';
+  @override String get notif_set_service => '서비스 알림';
+  @override String get notif_set_app_push => '앱 푸시 알림';
+  @override String get notif_set_calm_alert => '한산 알림';
+  @override String get notif_set_calm_desc => '비수기·날씨 한산 알림';
+  @override String get notif_set_marketing => '마케팅 정보 수신';
+  @override String get notif_set_marketing_desc => '할인 쿠폰·이벤트 광고';
+  @override String get notif_set_channels => '발송 채널 (중복 선택)';
+  @override String get notif_set_app_push_short => '앱 푸시';
+  @override String get notif_set_kakao => '카카오 알림톡';
+  @override String notif_set_last_consent(String date) => '마지막 동의: $date';
+
+  @override String get marketing_title => '마케팅 정보\n수신 동의';
+  @override String get marketing_collected => '수집·이용 항목';
+  @override String get marketing_received => '수신 동의 시 받게 되는 정보';
+  @override String get marketing_time => '수신 시간대';
+  @override String get marketing_time_value => '오전 8시 ~ 오후 9시';
+  @override String get marketing_optout => '수신 거부 방법';
+  @override String get marketing_optout_msg => '언제든 마이페이지 > 알림 설정에서 OFF 가능합니다.';
+  @override String get marketing_legal => '법적 근거: 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조';
+  @override String get marketing_optout_note => '수신 거부 시 한산 알림 등 일부 기능이 제한됩니다.';
+  @override String get marketing_agree => '동의하기';
+  @override String get marketing_disagree => '동의하지 않음';
+
+  @override String get app_info_title => '앱 정보';
+  @override String get app_info_service => '서비스';
+  @override String get app_info_service_desc => '서울랜드 AI 다이나믹 프라이싱 & 동선 추천';
+  @override String get app_info_version => '버전';
+  @override String get app_info_dev => '개발';
+  @override String get app_info_dev_team => '한국외국어대학교 캡스톤 1팀';
+  @override String get app_info_oss_license => '오픈소스 라이선스';
+  @override String get app_info_oss_coming => '라이선스 페이지 (준비 중)';
+
+  @override String get location_title => '위치 정보';
+  @override String get location_purpose => '이스터에그 발견·동선 추천에 사용됩니다';
+  @override String get location_terms_view => '위치정보 이용약관 보기';
+  @override String get location_terms_coming => '위치정보 이용약관 (준비 중)';
+  @override String get location_open_settings => '설정 열기';
+
+  @override String get search_no_results => '검색 결과가 없어요';
+  @override String get search_hint_all => '어트랙션, 음식점, 구역 검색';
+  @override String get no_survey_default => '설문 응답 없음 — 기본 우선순위로 추천';
+  @override String get no_facility_match => '해당 조건의 시설이 없습니다.';
 }

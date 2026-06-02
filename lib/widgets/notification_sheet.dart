@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'design/condition_pip.dart';
 
 /// 알림 시트 — 홈 헤더 벨 아이콘에서 진입.
@@ -19,7 +20,9 @@ class NotificationSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     final height = MediaQuery.of(context).size.height * 0.78;
+    final notifications = _buildMockNotifications(l);
     return Container(
       height: height,
       decoration: const BoxDecoration(
@@ -28,7 +31,6 @@ class NotificationSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 핸들
           Container(
             margin: const EdgeInsets.only(top: 10),
             width: 40,
@@ -39,7 +41,6 @@ class NotificationSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // 헤더
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 0, 14, 4),
             child: Row(
@@ -48,12 +49,12 @@ class NotificationSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Eyebrow('INBOX · 알림'),
-                      SizedBox(height: 4),
+                    children: [
+                      const Eyebrow('INBOX'),
+                      const SizedBox(height: 4),
                       Text(
-                        '오늘의 알림',
-                        style: TextStyle(
+                        l.notif_today_title,
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
                           color: AppColors.ink900,
@@ -72,12 +73,11 @@ class NotificationSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          // 알림 리스트
           Expanded(
             child: ListView.separated(
               padding:
                   const EdgeInsets.fromLTRB(0, 4, 0, 24),
-              itemCount: _kMockNotifications.length,
+              itemCount: notifications.length,
               separatorBuilder: (_, __) => const Divider(
                 height: 1,
                 thickness: 1,
@@ -85,10 +85,7 @@ class NotificationSheet extends StatelessWidget {
                 indent: 22,
                 endIndent: 22,
               ),
-              itemBuilder: (_, i) {
-                final n = _kMockNotifications[i];
-                return _NotificationRow(item: n);
-              },
+              itemBuilder: (_, i) => _NotificationRow(item: notifications[i]),
             ),
           ),
         ],
@@ -108,7 +105,7 @@ class _NotificationRow extends StatelessWidget {
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
           ..showSnackBar(SnackBar(
-            content: Text('${item.title} — 상세 페이지(준비 중)'),
+            content: Text(item.title),
             duration: const Duration(seconds: 2),
           ));
       },
@@ -117,7 +114,6 @@ class _NotificationRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 카테고리 아이콘 (컬러 박스)
             Container(
               width: 38,
               height: 38,
@@ -199,14 +195,7 @@ class _NotificationRow extends StatelessWidget {
   }
 }
 
-// ─── Mock 데이터 모델 ───────────────────────────────────
-enum _NotifCategory {
-  pricing,
-  route,
-  egg,
-  event,
-  system,
-}
+enum _NotifCategory { pricing, route, egg, event, system }
 
 extension on _NotifCategory {
   IconData get icon {
@@ -270,37 +259,37 @@ class _Notif {
   });
 }
 
-const List<_Notif> _kMockNotifications = [
-  _Notif(
-    category: _NotifCategory.pricing,
-    title: '오늘 −15% 루나 프라이싱',
-    body: '흐려서 한산할 거예요. 09:53 까지 ₩29,750 으로 받을 수 있어요.',
-    timeLabel: '방금',
-    unread: true,
-  ),
-  _Notif(
-    category: _NotifCategory.route,
-    title: '마이 루나 동선이 업데이트됐어요',
-    body: '대기시간 변화에 따라 라바트위스터를 두 번째 stop 으로 재배치했어요.',
-    timeLabel: '12분 전',
-    unread: true,
-  ),
-  _Notif(
-    category: _NotifCategory.egg,
-    title: '🥚 새 이스터에그 힌트',
-    body: '미래의 골동품가게 근처에서 누군가가 도장을 찾았어요. 가까이 가보세요.',
-    timeLabel: '1시간 전',
-  ),
-  _Notif(
-    category: _NotifCategory.event,
-    title: '오후 2시 퍼레이드 곧 시작',
-    body: '중앙 광장에서 만나요. 좋은 자리는 30분 전부터 채워져요.',
-    timeLabel: '오늘 13:30',
-  ),
-  _Notif(
-    category: _NotifCategory.system,
-    title: '오늘은 평일이라 비교적 한산',
-    body: '오전 11시 이후 입장을 추천드려요. 주말보다 평균 대기 8분 짧음.',
-    timeLabel: '오늘 08:00',
-  ),
-];
+List<_Notif> _buildMockNotifications(AppL10n l) => [
+      _Notif(
+        category: _NotifCategory.pricing,
+        title: l.notif_pricing_today,
+        body: l.notif_cloudy_calm,
+        timeLabel: l.common_just_now,
+        unread: true,
+      ),
+      _Notif(
+        category: _NotifCategory.route,
+        title: l.notif_route_updated,
+        body: l.notif_route_detail,
+        timeLabel: '12 min ago',
+        unread: true,
+      ),
+      _Notif(
+        category: _NotifCategory.egg,
+        title: '🥚 ${l.common_easter_egg}',
+        body: l.notif_egg_nearby,
+        timeLabel: '1 h ago',
+      ),
+      _Notif(
+        category: _NotifCategory.event,
+        title: l.notif_parade_soon,
+        body: l.notif_parade_detail,
+        timeLabel: l.notif_today_1330,
+      ),
+      _Notif(
+        category: _NotifCategory.system,
+        title: l.notif_pricing_reason,
+        body: l.notif_visit_recommend,
+        timeLabel: l.notif_today_8am,
+      ),
+    ];

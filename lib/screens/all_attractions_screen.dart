@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 import '../widgets/attraction_detail_sheet.dart';
 import '../widgets/design/condition_pip.dart';
@@ -21,6 +22,16 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
   String? _category; // null = 전체
 
   static const _categories = <String>['어트랙션', '음식점', '카페', '포토스팟'];
+
+  static String _categoryLabel(AppL10n l, String key) {
+    switch (key) {
+      case '어트랙션': return l.cat_attraction;
+      case '음식점': return l.cat_restaurant;
+      case '카페': return l.cat_cafe;
+      case '포토스팟': return l.cat_photo_spot;
+    }
+    return key;
+  }
 
   @override
   void dispose() {
@@ -115,11 +126,11 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
                         onChanged: (v) => setState(() => _query = v),
                         style: const TextStyle(
                             fontSize: 13, color: AppColors.ink900),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           isCollapsed: true,
                           border: InputBorder.none,
-                          hintText: '어트랙션, 음식점, 구역 검색',
-                          hintStyle: TextStyle(
+                          hintText: AppL10n.of(context)!.search_hint_all,
+                          hintStyle: const TextStyle(
                               color: AppColors.ink400, fontSize: 13),
                         ),
                       ),
@@ -146,9 +157,10 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
                 itemCount: _categories.length + 1,
                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                 itemBuilder: (_, i) {
+                  final l = AppL10n.of(context)!;
                   final isAll = i == 0;
                   final cat = isAll ? null : _categories[i - 1];
-                  final label = isAll ? '전체' : cat!;
+                  final label = isAll ? l.map_filter_all : _categoryLabel(l, cat!);
                   final active = _category == cat;
                   return GestureDetector(
                     onTap: () => setState(() => _category = cat),
@@ -183,7 +195,7 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
               child: Row(
                 children: [
                   Text(
-                    '결과 ${list.length}곳',
+                    AppL10n.of(context)!.map_result_count(list.length),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -197,10 +209,10 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
             // 카드 리스트
             Expanded(
               child: list.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        '검색 결과가 없어요',
-                        style: TextStyle(
+                        AppL10n.of(context)!.search_no_results,
+                        style: const TextStyle(
                           color: AppColors.ink400,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,

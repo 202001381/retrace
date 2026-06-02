@@ -1,6 +1,9 @@
+import '../l10n/generated/app_localizations.dart';
 import 'attraction.dart';
 
 /// 장소 카테고리 — `Attraction.category` 문자열과 1:1 매핑.
+/// `label` 은 데이터 매칭용 (한국어 고정, JSON 의 category 와 일치). 화면 표시는
+/// `displayLabel(l)` 로 i18n 분리.
 enum PlaceCategory {
   attraction('어트랙션'),
   restaurant('음식점'),
@@ -9,6 +12,19 @@ enum PlaceCategory {
 
   final String label;
   const PlaceCategory(this.label);
+
+  String displayLabel(AppL10n l) {
+    switch (this) {
+      case PlaceCategory.attraction:
+        return l.cat_attraction;
+      case PlaceCategory.restaurant:
+        return l.cat_restaurant;
+      case PlaceCategory.cafe:
+        return l.cat_cafe;
+      case PlaceCategory.photoSpot:
+        return l.cat_photo_spot;
+    }
+  }
 
   static PlaceCategory? fromLabel(String l) {
     for (final c in PlaceCategory.values) {

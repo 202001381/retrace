@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/design/v3_sub_header.dart';
 
 /// 정적 앱 정보 — 버전·라이선스·문의처 placeholder.
@@ -12,6 +13,7 @@ class AppInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -19,25 +21,25 @@ class AppInfoScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            const V3SubHeader(eyebrow: 'SETTINGS · ABOUT', title: '앱 정보'),
+            V3SubHeader(eyebrow: 'SETTINGS · ABOUT', title: l.app_info_title),
             const SizedBox(height: 8),
-            const _InfoCard(
-              label: '서비스',
+            _InfoCard(
+              label: l.app_info_service,
               value: 'Re·Trace',
-              sub: '서울랜드 AI 다이나믹 프라이싱 & 동선 추천',
+              sub: l.app_info_service_desc,
             ),
             const SizedBox(height: 12),
-            const _InfoCard(label: '버전', value: _version),
+            _InfoCard(label: l.app_info_version, value: _version),
             const SizedBox(height: 12),
-            const _InfoCard(
-              label: '개발',
-              value: '한국외국어대학교 캡스톤 1팀',
+            _InfoCard(
+              label: l.app_info_dev,
+              value: l.app_info_dev_team,
             ),
             const SizedBox(height: 12),
             _LinkCard(
-              label: '오픈소스 라이선스',
+              label: l.app_info_oss_license,
               onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('라이선스 페이지 (준비 중)')),
+                SnackBar(content: Text(l.app_info_oss_coming)),
               ),
             ),
           ],

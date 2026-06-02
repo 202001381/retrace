@@ -246,6 +246,111 @@ abstract class AppL10n {
   String get purpose_picnic;
   String get purpose_kids_outing;
   String get purpose_date;
+
+  String get common_indoor;
+  String get common_outdoor;
+  String get common_easter_egg;
+  String get common_quantity;
+  String get common_subtotal;
+  String get common_total_payment;
+  String get common_refresh;
+  String get common_discovered;
+  String get common_traveling;
+  String get common_just_now;
+  String get common_view_consent;
+  String get common_view_terms;
+
+  String attr_walk_eta(int min);
+  String get attr_story_title;
+  String get attr_story_listen;
+  String get attr_story_replay;
+  String get attr_view_next_route;
+  String get attr_go_here;
+
+  String get map_no_attractions_match;
+
+  String get notif_today_title;
+  String get notif_today_8am;
+  String get notif_today_1330;
+  String get notif_route_updated;
+  String get notif_route_detail;
+  String get notif_parade_soon;
+  String get notif_parade_detail;
+  String get notif_egg_nearby;
+  String get notif_pricing_today;
+  String get notif_pricing_reason;
+  String get notif_visit_recommend;
+  String get notif_cloudy_calm;
+
+  String get companion_change_title;
+  String get companion_members;
+  String get companion_preferred_style;
+  String get companion_solo;
+  String get companion_couple;
+  String get companion_friend;
+  String get companion_family;
+  String get style_thrill;
+  String get style_show;
+  String get style_photo;
+  String get style_relax;
+
+  String get checkout_special_ticket;
+  String get checkout_pass_1day;
+  String get checkout_luna_discount;
+  String get checkout_how_pay;
+  String get checkout_credit_card;
+  String get checkout_kakao_pay;
+  String get checkout_naver_pay;
+  String get checkout_bank_transfer;
+  String get checkout_start_my_luna;
+  String get checkout_payment_done;
+  String get checkout_show_qr;
+  String get checkout_discount_expired;
+  String get checkout_discount_expired_msg;
+
+  String get notif_set_title;
+  String get notif_set_service;
+  String get notif_set_app_push;
+  String get notif_set_calm_alert;
+  String get notif_set_calm_desc;
+  String get notif_set_marketing;
+  String get notif_set_marketing_desc;
+  String get notif_set_channels;
+  String get notif_set_app_push_short;
+  String get notif_set_kakao;
+  String notif_set_last_consent(String date);
+
+  String get marketing_title;
+  String get marketing_collected;
+  String get marketing_received;
+  String get marketing_time;
+  String get marketing_time_value;
+  String get marketing_optout;
+  String get marketing_optout_msg;
+  String get marketing_legal;
+  String get marketing_optout_note;
+  String get marketing_agree;
+  String get marketing_disagree;
+
+  String get app_info_title;
+  String get app_info_service;
+  String get app_info_service_desc;
+  String get app_info_version;
+  String get app_info_dev;
+  String get app_info_dev_team;
+  String get app_info_oss_license;
+  String get app_info_oss_coming;
+
+  String get location_title;
+  String get location_purpose;
+  String get location_terms_view;
+  String get location_terms_coming;
+  String get location_open_settings;
+
+  String get search_no_results;
+  String get search_hint_all;
+  String get no_survey_default;
+  String get no_facility_match;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

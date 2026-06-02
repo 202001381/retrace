@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 import '../../models/user_preferences.dart';
 import '../../services/preferences_service.dart';
@@ -82,6 +83,7 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final s = _state;
+    final l = AppL10n.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -89,40 +91,37 @@ class _NotificationSettingsScreenState
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            const V3SubHeader(eyebrow: 'SETTINGS · NOTIFY', title: '알림 설정'),
+            V3SubHeader(eyebrow: 'SETTINGS · NOTIFY', title: l.notif_set_title),
             const SizedBox(height: 8),
-          // ── 서비스 알림 ─────────────────────────────────────
           _SectionCard(
-            title: '서비스 알림',
+            title: l.notif_set_service,
             child: _ToggleRow(
-              title: '앱 푸시 알림',
-              subtitle:
-                  '· 마이 루나 동선 업데이트\n· 이스터에그 발견 알림\n· 이벤트 시작 알림',
+              title: l.notif_set_app_push,
+              subtitle: '',
               value: s.appPushEnabled,
               onChanged: (v) => _apply(s.copyWith(appPushEnabled: v)),
             ),
           ),
           const SizedBox(height: 14),
-          // ── 한산 알림 ───────────────────────────────────────
           _SectionCard(
-            title: '한산 알림',
+            title: l.notif_set_calm_alert,
             badge: '⭐',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _ToggleRow(
-                  title: '비수기·날씨 한산 알림',
-                  subtitle: 'AI가 서울랜드 한산 예측 시 알려드려요',
+                  title: l.notif_set_calm_desc,
+                  subtitle: '',
                   value: s.lowCrowdAlertEnabled,
                   onChanged: (v) =>
                       _apply(s.copyWith(lowCrowdAlertEnabled: v)),
                 ),
                 if (s.lowCrowdAlertEnabled) ...[
                   const Divider(height: 24, color: AppColors.line),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4, bottom: 8),
-                    child: Text('발송 채널 (중복 선택)',
-                        style: TextStyle(
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 8),
+                    child: Text(l.notif_set_channels,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w800,
@@ -130,14 +129,14 @@ class _NotificationSettingsScreenState
                         )),
                   ),
                   _ChannelCheck(
-                    label: '앱 푸시',
+                    label: l.notif_set_app_push_short,
                     value: s.lowCrowdChannels.contains(AlertChannel.appPush),
                     enabled: true,
                     onChanged: (v) =>
                         _toggleChannel(AlertChannel.appPush, v ?? false),
                   ),
                   _ChannelCheck(
-                    label: '카카오 알림톡',
+                    label: l.notif_set_kakao,
                     value: s.lowCrowdChannels.contains(AlertChannel.kakao),
                     enabled: s.canUseKakaoOrSms,
                     onChanged: (v) =>
@@ -150,44 +149,31 @@ class _NotificationSettingsScreenState
                     onChanged: (v) =>
                         _toggleChannel(AlertChannel.sms, v ?? false),
                   ),
-                  if (!s.canUseKakaoOrSms)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4, top: 6),
-                      child: Text(
-                        '※ 카카오·SMS 채널은 마케팅 정보 수신 동의 후 사용 가능합니다',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                 ],
               ],
             ),
           ),
           const SizedBox(height: 14),
-          // ── 마케팅 ──────────────────────────────────────────
           _SectionCard(
-            title: '마케팅 정보 수신',
+            title: l.notif_set_marketing,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _ToggleRow(
-                  title: '할인 쿠폰·이벤트 광고',
-                  subtitle: '💡 동의 시 한산 알림 + 추가 할인 쿠폰을 받을 수 있어요',
+                  title: l.notif_set_marketing_desc,
+                  subtitle: '',
                   value: s.marketingConsent,
                   onChanged: _toggleMarketing,
                 ),
                 const SizedBox(height: 6),
                 _LinkRow(
-                  label: '동의 내용 자세히 보기',
+                  label: l.common_view_consent,
                   onTap: () => showMarketingConsentModal(context),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 6, left: 4),
                   child: Text(
-                    '마지막 동의: ${_fmtConsentAt(s.marketingConsentAt)}',
+                    l.notif_set_last_consent(_fmtConsentAt(s.marketingConsentAt)),
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,

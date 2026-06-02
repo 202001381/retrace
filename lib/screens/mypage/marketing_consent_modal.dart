@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/design/condition_pip.dart';
 
 /// 마케팅 정보 수신 동의 풀스크린 모달 (정통법 §50 명시적 동의).
@@ -13,6 +14,7 @@ class MarketingConsentModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -34,12 +36,12 @@ class MarketingConsentModal extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Eyebrow('LEGAL · MARKETING'),
-                          SizedBox(height: 6),
+                        children: [
+                          const Eyebrow('LEGAL · MARKETING'),
+                          const SizedBox(height: 6),
                           Text(
-                            '마케팅 정보\n수신 동의',
-                            style: TextStyle(
+                            l.marketing_title,
+                            style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
                               color: AppColors.ink900,
@@ -59,39 +61,27 @@ class MarketingConsentModal extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     _Section(
-                      title: '수신 동의 시 받게 되는 정보',
-                      lines: [
-                        '· 비수기·날씨 기반 한산 알림',
-                        '· 할인 쿠폰·이벤트 안내',
-                        '· 신규 어트랙션·시즌 콘텐츠 소식',
-                      ],
+                      title: l.marketing_received,
+                      lines: const [],
                     ),
                     _Section(
-                      title: '수신 시간대',
-                      lines: ['오전 8시 ~ 오후 9시'],
+                      title: l.marketing_time,
+                      lines: [l.marketing_time_value],
                     ),
                     _Section(
-                      title: '수집·이용 항목',
-                      lines: [
-                        '· 닉네임',
-                        '· 카카오톡 ID (선택)',
-                        '· 휴대폰 번호 (선택)',
-                        '· 방문 이력',
-                      ],
+                      title: l.marketing_collected,
+                      lines: const [],
                     ),
                     _Section(
-                      title: '수신 거부 방법',
-                      lines: [
-                        '언제든 마이페이지 > 알림 설정에서 OFF 가능합니다.',
-                        '수신 거부 시 한산 알림 등 일부 기능이 제한됩니다.',
-                      ],
+                      title: l.marketing_optout,
+                      lines: [l.marketing_optout_msg, l.marketing_optout_note],
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(
-                      '법적 근거: 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조',
-                      style: TextStyle(
+                      l.marketing_legal,
+                      style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -116,8 +106,8 @@ class MarketingConsentModal extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(99)),
                       ),
-                      child: const Text('동의하지 않음',
-                          style: TextStyle(
+                      child: Text(l.marketing_disagree,
+                          style: const TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w800)),
                     ),
                   ),
@@ -133,8 +123,8 @@ class MarketingConsentModal extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(99)),
                       ),
-                      child: const Text('동의하기',
-                          style: TextStyle(
+                      child: Text(l.marketing_agree,
+                          style: const TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w900)),
                     ),
                   ),

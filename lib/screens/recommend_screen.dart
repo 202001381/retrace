@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 import '../services/onboarding_service.dart';
 import 'onboarding_screen.dart'; // 조건 변경 시 이동할 온보딩 화면
@@ -147,8 +148,8 @@ class _RecommendScreenState extends State<RecommendScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                      child: const Center(
-                        child: Text('조건에 맞는 어트랙션이 없어요', style: TextStyle(color: Color(0xFF888888), fontWeight: FontWeight.w700)),
+                      child: Center(
+                        child: Text(AppL10n.of(context)!.map_no_attractions_match, style: const TextStyle(color: Color(0xFF888888), fontWeight: FontWeight.w700)),
                       ),
                     )
                   else
@@ -225,9 +226,9 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   const SizedBox(height: 16),
 
                   if (filteredAttractions.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Center(child: Text('해당 조건의 시설이 없습니다.', style: TextStyle(color: Colors.grey))),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Center(child: Text(AppL10n.of(context)!.no_facility_match, style: const TextStyle(color: Colors.grey))),
                     )
                   else
                     ...filteredAttractions.map((item) => Padding(
@@ -259,18 +260,18 @@ class _HeaderRow extends StatelessWidget {
         children: [
           const Icon(Icons.auto_awesome_rounded, color: Color(0xFFE60012), size: 22),
           const SizedBox(width: 6),
-          const Text('맞춤 추천', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFE60012))),
+          const Text('Re·Trace', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFFE60012))),
           const Spacer(),
           TextButton(
             onPressed: onChangeCondition,
             style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), minimumSize: Size.zero),
-            child: const Text('조건 변경', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+            child: Text(AppL10n.of(context)!.home_change_conditions, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
           ),
           const SizedBox(width: 4),
           OutlinedButton.icon(
             onPressed: onRefresh,
             icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('새로고침', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+            label: Text(AppL10n.of(context)!.common_refresh, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF1E3158),
               side: const BorderSide(color: Color(0xFFDDDDDD)),
@@ -290,7 +291,7 @@ class _SummaryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (answers == null) return const Text('설문 응답 없음 — 기본 우선순위로 추천', style: TextStyle(color: Color(0xFF888888), fontSize: 12));
+    if (answers == null) return Text(AppL10n.of(context)!.no_survey_default, style: const TextStyle(color: Color(0xFF888888), fontSize: 12));
     final a = answers!;
     final memberText = MemberCategory.values.where((c) => a.count(c) > 0).map((c) => '${c.emoji}${a.count(c)}').join(' ');
     final chips = <String>[

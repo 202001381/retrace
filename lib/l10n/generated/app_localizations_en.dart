@@ -214,4 +214,109 @@ class AppL10nEn extends AppL10n {
   @override String get purpose_picnic => 'Picnic';
   @override String get purpose_kids_outing => 'Kids outing';
   @override String get purpose_date => 'Date';
+
+  @override String get common_indoor => 'Indoor';
+  @override String get common_outdoor => 'Outdoor';
+  @override String get common_easter_egg => 'Easter egg';
+  @override String get common_quantity => 'Quantity';
+  @override String get common_subtotal => 'Subtotal';
+  @override String get common_total_payment => 'Total';
+  @override String get common_refresh => 'Refresh';
+  @override String get common_discovered => 'Discovered!';
+  @override String get common_traveling => 'Heading there...';
+  @override String get common_just_now => 'Just now';
+  @override String get common_view_consent => 'View consent details';
+  @override String get common_view_terms => 'View terms';
+
+  @override String attr_walk_eta(int min) => '$min min walk';
+  @override String get attr_story_title => "There's a hidden story here";
+  @override String get attr_story_listen => 'Listen to the story';
+  @override String get attr_story_replay => 'Listen again';
+  @override String get attr_view_next_route => 'View next stop';
+  @override String get attr_go_here => 'Take me here';
+
+  @override String get map_no_attractions_match => 'No attractions match';
+
+  @override String get notif_today_title => "Today's notifications";
+  @override String get notif_today_8am => 'Today 08:00';
+  @override String get notif_today_1330 => 'Today 13:30';
+  @override String get notif_route_updated => 'Your My Luna route was updated';
+  @override String get notif_route_detail => 'Reshuffled Lavatwister to stop #2 based on wait-time changes.';
+  @override String get notif_parade_soon => '2 PM parade starting soon';
+  @override String get notif_parade_detail => 'Meet at Central Plaza. Best spots fill up 30 min before.';
+  @override String get notif_egg_nearby => 'Someone just found a stamp near the Antique Future Shop. Get closer.';
+  @override String get notif_pricing_today => "Today's −15% Luna Pricing";
+  @override String get notif_pricing_reason => 'Weekday — relatively calm';
+  @override String get notif_visit_recommend => 'We recommend visiting after 11 AM. 8 min shorter waits than weekends.';
+  @override String get notif_cloudy_calm => 'Cloudy and calm. Get it for ₩29,750 until 09:53.';
+
+  @override String get companion_change_title => 'Change My Luna conditions';
+  @override String get companion_members => 'Members';
+  @override String get companion_preferred_style => 'Preferred style';
+  @override String get companion_solo => 'Solo';
+  @override String get companion_couple => 'Couple';
+  @override String get companion_friend => 'Friends';
+  @override String get companion_family => 'Family';
+  @override String get style_thrill => 'Thrill · Activity';
+  @override String get style_show => 'Shows · Parades';
+  @override String get style_photo => 'Photo · Selfies';
+  @override String get style_relax => 'Relax · Healing';
+
+  @override String get checkout_special_ticket => 'Today only\nLuna ticket';
+  @override String get checkout_pass_1day => '1-day pass';
+  @override String get checkout_luna_discount => 'Luna discount';
+  @override String get checkout_how_pay => 'How would you like to pay?';
+  @override String get checkout_credit_card => 'Credit/Debit card';
+  @override String get checkout_kakao_pay => 'KakaoPay';
+  @override String get checkout_naver_pay => 'NaverPay';
+  @override String get checkout_bank_transfer => 'Bank transfer';
+  @override String get checkout_start_my_luna => 'Start My Luna';
+  @override String get checkout_payment_done => 'Payment complete';
+  @override String get checkout_show_qr => 'Show this QR at the gate';
+  @override String get checkout_discount_expired => 'Discount expired';
+  @override String get checkout_discount_expired_msg => "Today's Luna Pricing window has passed.\nReturning to home.";
+
+  @override String get notif_set_title => 'Notifications';
+  @override String get notif_set_service => 'Service notifications';
+  @override String get notif_set_app_push => 'App push notifications';
+  @override String get notif_set_calm_alert => 'Calm-day alert';
+  @override String get notif_set_calm_desc => 'Off-season · calm-weather alerts';
+  @override String get notif_set_marketing => 'Marketing consent';
+  @override String get notif_set_marketing_desc => 'Discount coupons · event ads';
+  @override String get notif_set_channels => 'Delivery channels (multi-select)';
+  @override String get notif_set_app_push_short => 'App push';
+  @override String get notif_set_kakao => 'KakaoTalk Alert';
+  @override String notif_set_last_consent(String date) => 'Last consent: $date';
+
+  @override String get marketing_title => 'Marketing consent';
+  @override String get marketing_collected => 'Collected / used';
+  @override String get marketing_received => "What you'll receive on consent";
+  @override String get marketing_time => 'Send window';
+  @override String get marketing_time_value => '8 AM ~ 9 PM';
+  @override String get marketing_optout => 'How to opt out';
+  @override String get marketing_optout_msg => 'You can opt out anytime in My Page > Notifications.';
+  @override String get marketing_legal => 'Legal basis: Act on Promotion of Information and Communications Network Utilization, Article 50';
+  @override String get marketing_optout_note => 'Opting out limits features like calm-day alerts.';
+  @override String get marketing_agree => 'I agree';
+  @override String get marketing_disagree => 'Decline';
+
+  @override String get app_info_title => 'App info';
+  @override String get app_info_service => 'Service';
+  @override String get app_info_service_desc => 'Seoul Land AI dynamic pricing & route recommendation';
+  @override String get app_info_version => 'Version';
+  @override String get app_info_dev => 'Developed by';
+  @override String get app_info_dev_team => 'HUFS Capstone Team 1';
+  @override String get app_info_oss_license => 'Open-source licenses';
+  @override String get app_info_oss_coming => 'License page (coming soon)';
+
+  @override String get location_title => 'Location';
+  @override String get location_purpose => 'Used for easter egg discovery and route recommendations';
+  @override String get location_terms_view => 'View Location Terms';
+  @override String get location_terms_coming => 'Location Terms (coming soon)';
+  @override String get location_open_settings => 'Open settings';
+
+  @override String get search_no_results => 'No results';
+  @override String get search_hint_all => 'Search attractions, food, zones';
+  @override String get no_survey_default => 'No survey — default priority';
+  @override String get no_facility_match => 'No facility matches the filter.';
 }

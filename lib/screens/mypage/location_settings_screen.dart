@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../models/user_preferences.dart';
@@ -92,6 +93,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -101,7 +103,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               children: [
-                const V3SubHeader(eyebrow: 'SETTINGS · GPS', title: '위치 정보'),
+                V3SubHeader(eyebrow: 'SETTINGS · GPS', title: l.location_title),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -126,16 +128,16 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('GPS 위치 추적',
-                                    style: TextStyle(
+                                Text(l.location_title,
+                                    style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w900,
                                       color: AppColors.textPrimary,
                                     )),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  '이스터에그 발견·동선 추천에 사용됩니다',
-                                  style: TextStyle(
+                                Text(
+                                  l.location_purpose,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                     fontWeight: FontWeight.w600,
@@ -165,7 +167,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                 // TODO: 법무 검토 필요 — 위치정보 이용약관 정식 텍스트 교체.
                 InkWell(
                   onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('위치정보 이용약관 (준비 중)')),
+                    SnackBar(content: Text(l.location_terms_coming)),
                   ),
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
@@ -176,15 +178,15 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
-                      children: const [
-                        Text('위치정보 이용약관 보기',
-                            style: TextStyle(
+                      children: [
+                        Text(l.location_terms_view,
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             )),
-                        Spacer(),
-                        Icon(Icons.chevron_right_rounded,
+                        const Spacer(),
+                        const Icon(Icons.chevron_right_rounded,
                             color: AppColors.textSecondary),
                       ],
                     ),
@@ -247,7 +249,7 @@ class _PermStatusRow extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onOpenSettings,
             icon: const Icon(Icons.settings_rounded, size: 16),
-            label: const Text('설정 열기'),
+            label: Text(AppL10n.of(context)!.location_open_settings),
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

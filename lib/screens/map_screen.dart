@@ -318,21 +318,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   /// 시트 카드 리스트가 빈 경우의 분기 — "내 이스터에그" 0건이 최우선.
   Widget _buildEmptyState() {
+    final l = AppL10n.of(context)!;
     if (_filter.onlyMyEasterEggs && _discoveredEggs.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
         child: Column(
           children: [
-            Text('아직 수집한 이스터에그가 없어요',
-                style: TextStyle(
+            Text(l.map_no_eggs_collected,
+                style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 )),
-            SizedBox(height: 6),
-            Text('지도에서 ✨ 표시된 곳을 방문해보세요',
+            const SizedBox(height: 6),
+            Text(l.map_visit_starred,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -345,8 +346,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       child: Column(
         children: [
-          const Text('조건에 맞는 장소가 없어요',
-              style: TextStyle(
+          Text(l.map_no_match,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -363,8 +364,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             ),
-            child: const Text('필터 초기화',
-                style: TextStyle(
+            child: Text(l.map_filter_reset,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                 )),
@@ -644,7 +645,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_showRoute)
-                    _StatusBadge(color: AppColors.red, text: '마이 루나 동선'),
+                    _StatusBadge(color: AppColors.red, text: AppL10n.of(context)!.map_route_on),
                   if (_showRoute && _navTarget != null) const SizedBox(height: 8),
                   if (_navTarget != null)
                     _StatusBadge(
@@ -741,8 +742,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                             color: AppColors.red,
                                             borderRadius: BorderRadius.circular(99),
                                           ),
-                                          child: const Text('다시 추천',
-                                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                                          child: Text(AppL10n.of(context)!.map_rerecommend,
+                                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
                                         ),
                                       ),
                                     ],
@@ -773,8 +774,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 children: [
                                   Text(
                                     _filter.isAnyActive
-                                        ? '결과 ${_visibleAttractions.length}곳'
-                                        : '전체 ${_visibleAttractions.length}곳',
+                                        ? AppL10n.of(context)!.map_result_count(_visibleAttractions.length)
+                                        : AppL10n.of(context)!.map_total_count(_visibleAttractions.length),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
@@ -787,8 +788,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                   const Spacer(),
                                   _PulseDot(),
                                   const SizedBox(width: 4),
-                                  const Text('실시간 연동 중',
-                                      style: TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
+                                  Text(AppL10n.of(context)!.map_route_realtime,
+                                      style: const TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -806,7 +807,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 itemBuilder: (_, i) {
                                   final isAll = i == 0;
                                   final cat = isAll ? null : PlaceCategory.values[i - 1];
-                                  final label = isAll ? '전체' : cat!.label;
+                                  final label = isAll ? AppL10n.of(context)!.map_filter_all : cat!.displayLabel(AppL10n.of(context)!);
                                   final active = _filter.category == cat;
                                   return GestureDetector(
                                     onTap: () => setState(() {
@@ -837,7 +838,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           const SizedBox(height: 12),
                           const Divider(height: 1, color: AppColors.line),
                           _FilterToggleRow(
-                            label: '운영중만 보기',
+                            label: AppL10n.of(context)!.map_operating_only,
                             value: _filter.onlyOperating,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyOperating: v)),

@@ -984,12 +984,13 @@ class _LunaPricingSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     final saved = pricing.discountAmount;
     // 사유 표시는 PricingState.reason 이 결정 + 보조 입력(재방문·미수집 에그) 가산.
     final reasons = <(String, String, String)>[
       (pricing.reasonEmoji, pricing.reasonLabel, '+${pricing.discountPercent - _bonusPct()}%'),
       if (lastVisitDaysAgo == null)
-        const ('🎉', '첫 방문 환영', '+5%')
+        ('🎉', l.home_first_visit_welcome, '+5%')
       else
         (
           '📅',
@@ -999,7 +1000,7 @@ class _LunaPricingSheet extends StatelessWidget {
           '+5%',
         ),
       if (missingEggCount > 0)
-        ('🥚', '미수집 이스터에그 $missingEggCount개', '+2%'),
+        ('🥚', l.home_uncollected_eggs(missingEggCount), '+2%'),
     ];
 
     return Container(
