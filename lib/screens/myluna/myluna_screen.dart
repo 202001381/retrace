@@ -251,10 +251,13 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
       builder: (_) => CompanionBottomSheet(
         initialCompanion: _companion,
         initialStyle: _style,
-        onConfirm: (c, s) {
+        onConfirm: (c, s) async {
+          final newSurvey = await _applyCompanionToSurvey(c, s);
+          if (!mounted) return;
           setState(() {
             _companion = c;
             _style = s;
+            _survey = newSurvey;
             _consecutiveSkips = 0;
             _skipBlocked = false;
           });
@@ -262,6 +265,57 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
         },
       ),
     );
+  }
+
+  /// CompanionBottomSheet 의 (companion, style) chip 값을 백엔드가 인식하는
+  /// SurveyAnswers (favoriteType / purpose / members) 로 변환.
+  /// 매핑:
+  ///   companion → members + (연인/가족 시 purpose 힌트)
+  ///   style → favoriteType + (스릴/여유 시 purpose 힌트)
+  /// 사용자가 명시적으로 조건을 바꿨으니 SharedPreferences 에도 저장해 다음
+  /// 부트스트랩 때 같은 추천이 유지되게 함.
+  Future<SurveyAnswers> _applyCompanionToSurvey(
+      String companion, String style) async {
+    final l = AppL10n.of(context)!;
+
+    Map<MemberCategory, int> members;
+    String? purpose;
+    if (companion == l.companion_solo) {
+      members = {MemberCategory.adultMale: 1};
+    } else if (companion == l.companion_couple) {
+      members = {MemberCategory.adultMale: 1, MemberCategory.adultFemale: 1};
+      purpose = VisitPurpose.date;
+    } else if (companion == l.companion_friend) {
+      members = {MemberCategory.adultMale: 2};
+    } else if (companion == l.companion_family) {
+      members = {
+        MemberCategory.adultMale: 1,
+        MemberCategory.adultFemale: 1,
+        MemberCategory.child: 1,
+      };
+      purpose = VisitPurpose.kidsOuting;
+    } else {
+      members = {MemberCategory.adultMale: 1};
+    }
+
+    String? favoriteType;
+    if (style == l.style_thrill) {
+      favoriteType = FavoriteType.thrill;
+      purpose ??= VisitPurpose.rides;
+    } else if (style == l.style_relax) {
+      favoriteType = FavoriteType.family;
+      purpose ??= VisitPurpose.picnic;
+    } else if (style == l.style_photo || style == l.style_show) {
+      favoriteType = FavoriteType.both;
+    }
+
+    final next = SurveyAnswers(
+      members: members,
+      favoriteType: favoriteType,
+      purpose: purpose,
+    );
+    await OnboardingService.save(next);
+    return next;
   }
 
   void _onNavigate(Attraction target) {

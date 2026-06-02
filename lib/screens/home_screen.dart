@@ -296,12 +296,65 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => CompanionBottomSheet(
         initialCompanion: _companion,
         initialStyle: _style,
-        onConfirm: (c, s) => setState(() {
-          _companion = c;
-          _style = s;
-        }),
+        onConfirm: (c, s) async {
+          final newSurvey = await _applyCompanionToSurvey(c, s);
+          if (!mounted) return;
+          setState(() {
+            _companion = c;
+            _style = s;
+            _survey = newSurvey;
+          });
+          await _loadRoute('profile_changed');
+        },
       ),
     );
+  }
+
+  /// CompanionBottomSheet (companion, style) → 백엔드 캐논 SurveyAnswers.
+  /// 매핑은 myluna_screen 과 동일. SharedPreferences 에도 저장해 다음 부트스트랩
+  /// 때 일관 유지.
+  Future<SurveyAnswers> _applyCompanionToSurvey(
+      String companion, String style) async {
+    final l = AppL10n.of(context)!;
+
+    Map<MemberCategory, int> members;
+    String? purpose;
+    if (companion == l.companion_solo) {
+      members = {MemberCategory.adultMale: 1};
+    } else if (companion == l.companion_couple) {
+      members = {MemberCategory.adultMale: 1, MemberCategory.adultFemale: 1};
+      purpose = VisitPurpose.date;
+    } else if (companion == l.companion_friend) {
+      members = {MemberCategory.adultMale: 2};
+    } else if (companion == l.companion_family) {
+      members = {
+        MemberCategory.adultMale: 1,
+        MemberCategory.adultFemale: 1,
+        MemberCategory.child: 1,
+      };
+      purpose = VisitPurpose.kidsOuting;
+    } else {
+      members = {MemberCategory.adultMale: 1};
+    }
+
+    String? favoriteType;
+    if (style == l.style_thrill) {
+      favoriteType = FavoriteType.thrill;
+      purpose ??= VisitPurpose.rides;
+    } else if (style == l.style_relax) {
+      favoriteType = FavoriteType.family;
+      purpose ??= VisitPurpose.picnic;
+    } else if (style == l.style_photo || style == l.style_show) {
+      favoriteType = FavoriteType.both;
+    }
+
+    final next = SurveyAnswers(
+      members: members,
+      favoriteType: favoriteType,
+      purpose: purpose,
+    );
+    await OnboardingService.save(next);
+    return next;
   }
 
   Future<void> _openPricingPopup() async {
