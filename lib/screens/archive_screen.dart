@@ -317,8 +317,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   final cfg = _kConfigs[s]!;
                   final list = _diaries[s] ?? const <_DiaryBook>[];
                   return ListView(
-                    padding:
-                        const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      20,
+                      20,
+                      100 + MediaQuery.of(context).viewPadding.bottom,
+                    ),
                     children: [
                       _Bookshelf(
                           config: cfg,

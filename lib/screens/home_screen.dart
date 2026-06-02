@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 import '../models/pricing_state.dart';
 import '../models/route_response.dart';
@@ -359,7 +360,14 @@ class _HomeScreenState extends State<HomeScreen> {
           onNotification: _onScroll,
           child: ListView(
             controller: _scrollCtrl,
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+            // MainScreen 의 extendBody=true + bottom nav(68) + SafeArea 만큼
+            // 여유. 마지막 카드("오늘의 이벤트") 잘림 방지.
+            padding: EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              100 + MediaQuery.of(context).viewPadding.bottom,
+            ),
             children: [
             // 1. 앱바
             _Header(
@@ -588,15 +596,20 @@ class _VisitDetailSheet extends StatelessWidget {
           // 날씨
           _SheetSection(
             icon: '☁️',
-            title: '날씨',
+            title: AppL10n.of(context)!.home_card_weather,
             lines: [weatherDetail, weatherRain],
           ),
           const Divider(height: 28, color: AppColors.line),
           // 혼잡도
           _SheetSection(
             icon: '🟡',
-            title: '혼잡도',
-            lines: ['현재 혼잡도: 중간', crowdDetail],
+            title: AppL10n.of(context)!.home_card_crowd,
+            lines: [
+              AppL10n.of(context)!.home_card_crowd_current(
+                AppL10n.of(context)!.home_crowd_mid,
+              ),
+              crowdDetail,
+            ],
           ),
           if (pricing != null) ...[
             const Divider(height: 28, color: AppColors.line),
@@ -605,8 +618,8 @@ class _VisitDetailSheet extends StatelessWidget {
               children: [
                 const Text('💰', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
-                const Text('할인',
-                    style: TextStyle(
+                Text(AppL10n.of(context)!.home_discount_label,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textPrimary,
@@ -1473,16 +1486,16 @@ class _TodayEventsSection extends StatelessWidget {
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: const [
+          children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Eyebrow('TODAY · EVENTS'),
-                SizedBox(height: 4),
+                const Eyebrow('TODAY · EVENTS'),
+                const SizedBox(height: 4),
                 Text(
-                  '오늘의 이벤트',
-                  style: TextStyle(
+                  AppL10n.of(context)!.home_today_events,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     color: AppColors.ink900,
@@ -1491,10 +1504,10 @@ class _TodayEventsSection extends StatelessWidget {
                 ),
               ],
             ),
-            Spacer(),
-            Text('전체보기',
-                style: TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
-            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
+            const Spacer(),
+            Text(AppL10n.of(context)!.home_view_more,
+                style: const TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
+            const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
           ],
         ),
         const SizedBox(height: 12),

@@ -38,6 +38,14 @@ class AppL10nKo extends AppL10n {
   @override String get home_crowd_low => '여유';
   @override String get home_crowd_mid => '보통';
   @override String get home_crowd_high => '혼잡';
+  @override String get home_today_events => '오늘의 이벤트';
+  @override String get home_get_ticket => '티켓 받기';
+  @override String get home_discount_label => '할인';
+  @override String get home_card_weather => '날씨';
+  @override String get home_card_crowd => '혼잡도';
+  @override String home_card_crowd_current(String level) => '현재 혼잡도: $level';
+  @override String get home_companion_change => '동행 바꾸기';
+  @override String get home_view_attractions => '어트랙션 보러가기';
 
   @override String get map_route_on => '마이 루나 동선';
   @override String get map_gps_label => '내 위치';
@@ -69,11 +77,16 @@ class AppL10nKo extends AppL10n {
   @override String get archive_empty_slot => '아직 비어 있어요';
   @override String archive_book_collected(int count, int total) => '$count/$total 수집';
 
-  @override String get mypage_title => '마이';
+  @override String get mypage_title => '마이페이지';
   @override String get mypage_section_profile => '프로필';
   @override String get mypage_section_preferences => '환경설정';
   @override String get mypage_section_legal => '이용 정보';
   @override String get mypage_section_app => '앱 정보';
+  @override String get mypage_settings_payment => '결제 내역';
+  @override String get mypage_settings_terms => '약관 및 정책';
+  @override String get mypage_coming_soon => '준비 중';
+  @override String get mypage_feedback => '건의 · 피드백 보내기';
+  @override String get mypage_replay_onboarding_sub => '취향 다시 받기';
   @override String get mypage_language => '언어';
   @override String get mypage_language_korean => '한국어';
   @override String get mypage_language_english => 'English';

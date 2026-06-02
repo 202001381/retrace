@@ -149,19 +149,24 @@ class _MypageScreenState extends State<MypageScreen> {
       body: SafeArea(
         bottom: false,
         child: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
+        padding: EdgeInsets.fromLTRB(
+          0,
+          0,
+          0,
+          100 + MediaQuery.of(context).viewPadding.bottom,
+        ),
         children: [
           // ── 헤더 ─────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Eyebrow('MY · RE·TRACE'),
-                SizedBox(height: 6),
+              children: [
+                const Eyebrow('MY · RE·TRACE'),
+                const SizedBox(height: 6),
                 Text(
-                  '마이페이지',
-                  style: TextStyle(
+                  AppL10n.of(context)!.mypage_title,
+                  style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.0,
@@ -194,70 +199,73 @@ class _MypageScreenState extends State<MypageScreen> {
           ),
           const SizedBox(height: 14),
           // ── 설정 리스트 (컬러 아이콘 박스) ───────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: _SettingsCard(rows: [
-              _SettingsRow(
-                icon: Icons.refresh_rounded,
-                label: '온보딩 다시하기',
-                sub: '취향 다시 받기',
-                tint: _IconTint.red,
-                onTap: widget.onResetOnboarding == null
-                    ? null
-                    : () {
-                        Navigator.of(context).pop();
-                        widget.onResetOnboarding!();
-                      },
-              ),
-              _SettingsRow(
-                icon: Icons.language_rounded,
-                label: AppL10n.of(context)!.mypage_language,
-                sub: _localeLabel(context),
-                tint: _IconTint.grape,
-                onTap: _showLanguageSheet,
-              ),
-              _SettingsRow(
-                icon: Icons.notifications_none_rounded,
-                label: '알림 설정',
-                tint: _IconTint.blue,
-                onTap: () => _push(const NotificationSettingsScreen()),
-              ),
-              _SettingsRow(
-                icon: Icons.location_on_outlined,
-                label: '위치 정보',
-                tint: _IconTint.mint,
-                onTap: () => _push(const LocationSettingsScreen()),
-              ),
-              _SettingsRow(
-                icon: Icons.credit_card_rounded,
-                label: '결제 내역',
-                badge: '준비 중',
-                tint: _IconTint.yellow,
-                onTap: () => _snack('결제 내역 (준비 중 — 백엔드 연동 필요)'),
-              ),
-              _SettingsRow(
-                icon: Icons.description_outlined,
-                label: '약관 및 정책',
-                badge: '준비 중',
-                tint: _IconTint.grape,
-                onTap: () => _snack('약관 페이지 (준비 중 — 법무 검토 후 공개)'),
-              ),
-              _SettingsRow(
-                icon: Icons.info_outline_rounded,
-                label: '앱 정보',
-                sub: 'v1.2.0 · build 0528',
-                tint: _IconTint.blush,
-                onTap: () => _push(const AppInfoScreen()),
-              ),
-            ]),
-          ),
+          Builder(builder: (context) {
+            final l = AppL10n.of(context)!;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: _SettingsCard(rows: [
+                _SettingsRow(
+                  icon: Icons.refresh_rounded,
+                  label: l.mypage_reset_onboarding,
+                  sub: l.mypage_replay_onboarding_sub,
+                  tint: _IconTint.red,
+                  onTap: widget.onResetOnboarding == null
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                          widget.onResetOnboarding!();
+                        },
+                ),
+                _SettingsRow(
+                  icon: Icons.language_rounded,
+                  label: l.mypage_language,
+                  sub: _localeLabel(context),
+                  tint: _IconTint.grape,
+                  onTap: _showLanguageSheet,
+                ),
+                _SettingsRow(
+                  icon: Icons.notifications_none_rounded,
+                  label: l.mypage_notification,
+                  tint: _IconTint.blue,
+                  onTap: () => _push(const NotificationSettingsScreen()),
+                ),
+                _SettingsRow(
+                  icon: Icons.location_on_outlined,
+                  label: l.mypage_location,
+                  tint: _IconTint.mint,
+                  onTap: () => _push(const LocationSettingsScreen()),
+                ),
+                _SettingsRow(
+                  icon: Icons.credit_card_rounded,
+                  label: l.mypage_settings_payment,
+                  badge: l.mypage_coming_soon,
+                  tint: _IconTint.yellow,
+                  onTap: () => _snack(l.mypage_settings_payment),
+                ),
+                _SettingsRow(
+                  icon: Icons.description_outlined,
+                  label: l.mypage_settings_terms,
+                  badge: l.mypage_coming_soon,
+                  tint: _IconTint.grape,
+                  onTap: () => _snack(l.mypage_settings_terms),
+                ),
+                _SettingsRow(
+                  icon: Icons.info_outline_rounded,
+                  label: l.mypage_app_info,
+                  sub: 'v1.2.0 · build 0528',
+                  tint: _IconTint.blush,
+                  onTap: () => _push(const AppInfoScreen()),
+                ),
+              ]),
+            );
+          }),
           const SizedBox(height: 14),
           // ── 피드백 dashed button ────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
             child: _DashedButton(
-              label: '건의 · 피드백 보내기',
-              onTap: () => _snack('건의·피드백 수집 채널 (준비 중)'),
+              label: AppL10n.of(context)!.mypage_feedback,
+              onTap: () => _snack(AppL10n.of(context)!.mypage_feedback),
             ),
           ),
         ],

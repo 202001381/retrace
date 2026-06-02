@@ -38,6 +38,14 @@ class AppL10nEn extends AppL10n {
   @override String get home_crowd_low => 'Light';
   @override String get home_crowd_mid => 'Moderate';
   @override String get home_crowd_high => 'Crowded';
+  @override String get home_today_events => "Today's events";
+  @override String get home_get_ticket => 'Get ticket';
+  @override String get home_discount_label => 'Discount';
+  @override String get home_card_weather => 'Weather';
+  @override String get home_card_crowd => 'Crowd';
+  @override String home_card_crowd_current(String level) => 'Current crowd: $level';
+  @override String get home_companion_change => 'Change companion';
+  @override String get home_view_attractions => 'Browse attractions';
 
   @override String get map_route_on => 'My Luna Route';
   @override String get map_gps_label => 'My location';
@@ -69,11 +77,16 @@ class AppL10nEn extends AppL10n {
   @override String get archive_empty_slot => 'Empty slot';
   @override String archive_book_collected(int count, int total) => '$count/$total collected';
 
-  @override String get mypage_title => 'Me';
+  @override String get mypage_title => 'My Page';
   @override String get mypage_section_profile => 'Profile';
   @override String get mypage_section_preferences => 'Preferences';
   @override String get mypage_section_legal => 'Legal';
   @override String get mypage_section_app => 'App';
+  @override String get mypage_settings_payment => 'Payment history';
+  @override String get mypage_settings_terms => 'Terms & policies';
+  @override String get mypage_coming_soon => 'Coming soon';
+  @override String get mypage_feedback => 'Send feedback';
+  @override String get mypage_replay_onboarding_sub => 'Retake preferences';
   @override String get mypage_language => 'Language';
   @override String get mypage_language_korean => '한국어';
   @override String get mypage_language_english => 'English';

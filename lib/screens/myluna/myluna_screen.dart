@@ -319,7 +319,12 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
             : RefreshIndicator(
                 onRefresh: _onManualRefresh,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    12,
+                    16,
+                    100 + MediaQuery.of(context).viewPadding.bottom,
+                  ),
                   children: [
                     // 백엔드 연동 전 — 사용자가 미리 보는 샘플 코스.
                     if (!_demoDismissed) ...[

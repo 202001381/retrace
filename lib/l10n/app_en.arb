@@ -36,6 +36,17 @@
   "home_crowd_low": "Light",
   "home_crowd_mid": "Moderate",
   "home_crowd_high": "Crowded",
+  "home_today_events": "Today's events",
+  "home_get_ticket": "Get ticket",
+  "home_discount_label": "Discount",
+  "home_card_weather": "Weather",
+  "home_card_crowd": "Crowd",
+  "home_card_crowd_current": "Current crowd: {level}",
+  "@home_card_crowd_current": {
+    "placeholders": { "level": { "type": "String" } }
+  },
+  "home_companion_change": "Change companion",
+  "home_view_attractions": "Browse attractions",
 
   "map_route_on": "My Luna Route",
   "map_gps_label": "My location",
@@ -79,11 +90,16 @@
     }
   },
 
-  "mypage_title": "Me",
+  "mypage_title": "My Page",
   "mypage_section_profile": "Profile",
   "mypage_section_preferences": "Preferences",
   "mypage_section_legal": "Legal",
   "mypage_section_app": "App",
+  "mypage_settings_payment": "Payment history",
+  "mypage_settings_terms": "Terms & policies",
+  "mypage_coming_soon": "Coming soon",
+  "mypage_feedback": "Send feedback",
+  "mypage_replay_onboarding_sub": "Retake preferences",
   "mypage_language": "Language",
   "mypage_language_korean": "한국어",
   "mypage_language_english": "English",

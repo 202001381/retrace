@@ -37,6 +37,17 @@
   "home_crowd_low": "여유",
   "home_crowd_mid": "보통",
   "home_crowd_high": "혼잡",
+  "home_today_events": "오늘의 이벤트",
+  "home_get_ticket": "티켓 받기",
+  "home_discount_label": "할인",
+  "home_card_weather": "날씨",
+  "home_card_crowd": "혼잡도",
+  "home_card_crowd_current": "현재 혼잡도: {level}",
+  "@home_card_crowd_current": {
+    "placeholders": { "level": { "type": "String" } }
+  },
+  "home_companion_change": "동행 바꾸기",
+  "home_view_attractions": "어트랙션 보러가기",
 
   "map_route_on": "마이 루나 동선",
   "map_gps_label": "내 위치",
@@ -80,11 +91,16 @@
     }
   },
 
-  "mypage_title": "마이",
+  "mypage_title": "마이페이지",
   "mypage_section_profile": "프로필",
   "mypage_section_preferences": "환경설정",
   "mypage_section_legal": "이용 정보",
   "mypage_section_app": "앱 정보",
+  "mypage_settings_payment": "결제 내역",
+  "mypage_settings_terms": "약관 및 정책",
+  "mypage_coming_soon": "준비 중",
+  "mypage_feedback": "건의 · 피드백 보내기",
+  "mypage_replay_onboarding_sub": "취향 다시 받기",
   "mypage_language": "언어",
   "mypage_language_korean": "한국어",
   "mypage_language_english": "English",

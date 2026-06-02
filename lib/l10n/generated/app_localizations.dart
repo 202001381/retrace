@@ -70,6 +70,14 @@ abstract class AppL10n {
   String get home_crowd_low;
   String get home_crowd_mid;
   String get home_crowd_high;
+  String get home_today_events;
+  String get home_get_ticket;
+  String get home_discount_label;
+  String get home_card_weather;
+  String get home_card_crowd;
+  String home_card_crowd_current(String level);
+  String get home_companion_change;
+  String get home_view_attractions;
 
   String get map_route_on;
   String get map_gps_label;
@@ -106,6 +114,11 @@ abstract class AppL10n {
   String get mypage_section_preferences;
   String get mypage_section_legal;
   String get mypage_section_app;
+  String get mypage_settings_payment;
+  String get mypage_settings_terms;
+  String get mypage_coming_soon;
+  String get mypage_feedback;
+  String get mypage_replay_onboarding_sub;
   String get mypage_language;
   String get mypage_language_korean;
   String get mypage_language_english;
