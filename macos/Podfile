@@ -39,9 +39,15 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
     target.build_configurations.each do |config|
-      # Force all pods (Firebase/gRPC/geolocator/etc.) onto the same min macOS,
-      # matching Runner. Avoids "deployment target is set to 10.12" warnings.
+      # Force all pods (Firebase/gRPC/abseil/geolocator/etc.) onto the same min
+      # macOS, matching Runner. Avoids "deployment target is set to 10.11/10.12,
+      # range of supported is 10.13 to 26.x" errors from abseil-xcprivacy etc.
       config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+      config.build_settings.delete('IPHONEOS_DEPLOYMENT_TARGET')
     end
+  end
+  # Patch Pods.xcodeproj itself — some pods inherit project-level settings.
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
   end
 end
