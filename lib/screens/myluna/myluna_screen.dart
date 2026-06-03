@@ -307,19 +307,20 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   /// 매핑:
   ///   companion → members + (연인/가족 시 purpose 힌트)
   ///   style → favoriteType + (스릴/여유 시 purpose 힌트)
-  /// 사용자가 명시적으로 조건을 바꿨으니 SharedPreferences 에도 저장해 다음
-  /// 부트스트랩 때 같은 추천이 유지되게 함.
+  /// 매핑이 purpose/favoriteType 을 결정하지 못하면 (예: 혼자+사진, 친구+공연)
+  /// 기존 _survey (온보딩 또는 직전 변경) 값을 보존 → 데이터 손실 방지.
   Future<SurveyAnswers> _applyCompanionToSurvey(
       String companion, String style) async {
     final l = AppL10n.of(context)!;
+    final existing = _survey;
 
     Map<MemberCategory, int> members;
-    String? purpose;
+    String? purposeFromCompanion;
     if (companion == l.companion_solo) {
       members = {MemberCategory.adultMale: 1};
     } else if (companion == l.companion_couple) {
       members = {MemberCategory.adultMale: 1, MemberCategory.adultFemale: 1};
-      purpose = VisitPurpose.date;
+      purposeFromCompanion = VisitPurpose.date;
     } else if (companion == l.companion_friend) {
       members = {MemberCategory.adultMale: 2};
     } else if (companion == l.companion_family) {
@@ -328,26 +329,30 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
         MemberCategory.adultFemale: 1,
         MemberCategory.child: 1,
       };
-      purpose = VisitPurpose.kidsOuting;
+      purposeFromCompanion = VisitPurpose.kidsOuting;
     } else {
       members = {MemberCategory.adultMale: 1};
     }
 
-    String? favoriteType;
+    String? favoriteTypeFromStyle;
+    String? purposeFromStyle;
     if (style == l.style_thrill) {
-      favoriteType = FavoriteType.thrill;
-      purpose ??= VisitPurpose.rides;
+      favoriteTypeFromStyle = FavoriteType.thrill;
+      purposeFromStyle = VisitPurpose.rides;
     } else if (style == l.style_relax) {
-      favoriteType = FavoriteType.family;
-      purpose ??= VisitPurpose.picnic;
+      favoriteTypeFromStyle = FavoriteType.family;
+      purposeFromStyle = VisitPurpose.picnic;
     } else if (style == l.style_photo || style == l.style_show) {
-      favoriteType = FavoriteType.both;
+      favoriteTypeFromStyle = FavoriteType.both;
     }
 
+    // 우선순위:
+    //   purpose: companion 매핑 > style 매핑 > 기존 (온보딩) 값
+    //   favoriteType: style 매핑 > 기존 값
     final next = SurveyAnswers(
       members: members,
-      favoriteType: favoriteType,
-      purpose: purpose,
+      favoriteType: favoriteTypeFromStyle ?? existing?.favoriteType,
+      purpose: purposeFromCompanion ?? purposeFromStyle ?? existing?.purpose,
     );
     await OnboardingService.save(next);
     return next;

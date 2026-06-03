@@ -327,19 +327,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// CompanionBottomSheet (companion, style) → 백엔드 캐논 SurveyAnswers.
-  /// 매핑은 myluna_screen 과 동일. SharedPreferences 에도 저장해 다음 부트스트랩
-  /// 때 일관 유지.
+  /// myluna_screen 의 _applyCompanionToSurvey 와 동일 매핑·동일 보존 정책.
   Future<SurveyAnswers> _applyCompanionToSurvey(
       String companion, String style) async {
     final l = AppL10n.of(context)!;
+    final existing = _survey;
 
     Map<MemberCategory, int> members;
-    String? purpose;
+    String? purposeFromCompanion;
     if (companion == l.companion_solo) {
       members = {MemberCategory.adultMale: 1};
     } else if (companion == l.companion_couple) {
       members = {MemberCategory.adultMale: 1, MemberCategory.adultFemale: 1};
-      purpose = VisitPurpose.date;
+      purposeFromCompanion = VisitPurpose.date;
     } else if (companion == l.companion_friend) {
       members = {MemberCategory.adultMale: 2};
     } else if (companion == l.companion_family) {
@@ -348,26 +348,27 @@ class _HomeScreenState extends State<HomeScreen> {
         MemberCategory.adultFemale: 1,
         MemberCategory.child: 1,
       };
-      purpose = VisitPurpose.kidsOuting;
+      purposeFromCompanion = VisitPurpose.kidsOuting;
     } else {
       members = {MemberCategory.adultMale: 1};
     }
 
-    String? favoriteType;
+    String? favoriteTypeFromStyle;
+    String? purposeFromStyle;
     if (style == l.style_thrill) {
-      favoriteType = FavoriteType.thrill;
-      purpose ??= VisitPurpose.rides;
+      favoriteTypeFromStyle = FavoriteType.thrill;
+      purposeFromStyle = VisitPurpose.rides;
     } else if (style == l.style_relax) {
-      favoriteType = FavoriteType.family;
-      purpose ??= VisitPurpose.picnic;
+      favoriteTypeFromStyle = FavoriteType.family;
+      purposeFromStyle = VisitPurpose.picnic;
     } else if (style == l.style_photo || style == l.style_show) {
-      favoriteType = FavoriteType.both;
+      favoriteTypeFromStyle = FavoriteType.both;
     }
 
     final next = SurveyAnswers(
       members: members,
-      favoriteType: favoriteType,
-      purpose: purpose,
+      favoriteType: favoriteTypeFromStyle ?? existing?.favoriteType,
+      purpose: purposeFromCompanion ?? purposeFromStyle ?? existing?.purpose,
     );
     await OnboardingService.save(next);
     return next;
