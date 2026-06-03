@@ -262,6 +262,25 @@ class AppL10nKo extends AppL10n {
   @override String get myluna_stat_wait => '대기';
   @override String get myluna_stat_total => '총';
   @override String myluna_stat_min(int min) => '$min분';
+  @override String get reward_unlock_eyebrow => '✦ 보상이 도착했어요';
+  @override String reward_unlock_title(String type) => type == 'ticket' ? '🎫 자유이용권 1매' : '🎁 굿즈 쿠폰';
+  @override String reward_unlock_subtitle(int unlocked, int total) => '이번 시즌 챕터 $unlocked/$total 달성';
+  @override String get reward_unlock_use_now_q => '당장 사용하시겠습니까?';
+  @override String get reward_action_use_now => '✅ 지금 사용하기';
+  @override String get reward_action_later => '나중에';
+  @override String get reward_action_view_code => '코드 보기';
+  @override String get reward_type_goods => '굿즈 쿠폰';
+  @override String get reward_type_ticket => '자유이용권';
+  @override String get reward_code_label => '교환 코드';
+  @override String get reward_show_at_store => '매장에서 이 코드를 보여주세요';
+  @override String get reward_already_redeemed => '이미 사용된 보상이에요';
+  @override String get reward_progress_title => '🎁 시즌 보상';
+  @override String reward_progress_books(int n, int total) => '발견 $n / $total';
+  @override String get reward_progress_next_at_3 => '3개 발견 시 굿즈 쿠폰';
+  @override String get reward_progress_next_at_5 => '5개 발견 시 자유이용권';
+  @override String get reward_progress_completed => '이번 시즌 보상 전부 수령했어요 🎉';
+  @override String get reward_history_title => '보유 보상';
+  @override String get reward_history_empty => '아직 받은 보상이 없어요';
 
   @override String get fav_thrill => '스릴 어트랙션 위주';
   @override String get fav_family => '가족·어린이 위주';

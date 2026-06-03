@@ -369,15 +369,24 @@ def create_app() -> Flask:
     def api_rewards_check():
         """시즌 챕터 진행도 기반 리워드 자동 발급.
 
-        body: {"uid": "..."} — 베타 단계는 클라이언트 신뢰. 추후 Firebase ID Token
-        검증으로 전환 예정.
+        body:
+          {"uid": "...", "discovered": ["a01", "a07", ...]?}
+
+        - `discovered` 가 주어지면 그대로 카운트 (베타: 클라이언트 SharedPreferences).
+        - 미지정 시 Firestore `users/{uid}.chapter_status` 조회.
+
+        추후 Firebase ID Token 검증으로 전환 예정 (현재 uid 신뢰).
         """
         body = request.get_json(silent=True) or {}
         uid = (body.get("uid") or "").strip()
         if not uid:
             return jsonify(error={"code": "MISSING_UID", "message": "uid required"}), 400
+        discovered = body.get("discovered")
+        if discovered is not None and not isinstance(discovered, list):
+            return jsonify(error={"code": "BAD_DISCOVERED",
+                                  "message": "discovered must be a list of attraction ids"}), 400
         try:
-            result = rewards.check_and_grant(uid)
+            result = rewards.check_and_grant(uid, discovered_override=discovered)
         except FileNotFoundError as e:
             return jsonify(error={"code": "FIRESTORE_UNAVAILABLE", "message": str(e)}), 503
         except Exception as e:

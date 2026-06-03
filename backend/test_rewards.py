@@ -128,9 +128,19 @@ def db():
     return _FakeDb()
 
 
-def _add_easter_egg(db, uid: str, attraction_id: str):
-    ref = db.collection("users").document(uid).collection("easterEggs").document(attraction_id)
-    ref.set({"discovered_at": "2026-09-15T09:00:00+09:00"})
+def _add_easter_egg(db, uid: str, attraction_id: str, season: str = "autumn"):
+    """Flutter 와 동일한 경로(users/{uid}.chapter_status[season].discovered) 에 기록."""
+    ref = db.collection("users").document(uid)
+    snap = ref.get()
+    data = snap.to_dict() if snap.exists else {}
+    cs = (data.get("chapter_status") or {})
+    season_cs = cs.get(season) or {"discovered": [], "completed": False}
+    discovered = list(season_cs.get("discovered") or [])
+    if attraction_id not in discovered:
+        discovered.append(attraction_id)
+    season_cs["discovered"] = discovered
+    cs[season] = season_cs
+    ref.set({"chapter_status": cs}, merge=True)
 
 
 # ─── 시즌 판정 ──────────────────────────────────────────────────
@@ -152,14 +162,19 @@ def test_count_unlocked_books_partial(db):
     """가을 챕터 3개 중 2개만 발견 — count=2."""
     _add_easter_egg(db, "u1", "a01")  # autumn target
     _add_easter_egg(db, "u1", "a07")  # autumn target
-    _add_easter_egg(db, "u1", "a99")  # autumn 아님
+    _add_easter_egg(db, "u1", "a99")  # autumn 챕터 시즌에 기록되나 target 아님
     assert rewards.count_unlocked_books("u1", "autumn", db=db) == 2
 
 
 def test_count_unlocked_books_zero_for_other_season(db):
-    """봄 챕터에 가을 발견은 카운트 안됨."""
-    _add_easter_egg(db, "u1", "a01")
+    """가을 시즌 데이터만 있고 봄 챕터 진행도 조회 — 0."""
+    _add_easter_egg(db, "u1", "a01", season="autumn")
     assert rewards.count_unlocked_books("u1", "spring", db=db) == 0
+
+
+def test_count_unlocked_books_user_doc_missing(db):
+    """users/{uid} 자체가 없으면 0 (예외 X)."""
+    assert rewards.count_unlocked_books("ghost", "autumn", db=db) == 0
 
 
 # ─── 발급 흐름 ─────────────────────────────────────────────────

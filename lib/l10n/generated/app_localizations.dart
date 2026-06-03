@@ -294,6 +294,25 @@ abstract class AppL10n {
   String get myluna_stat_wait;
   String get myluna_stat_total;
   String myluna_stat_min(int min);
+  String get reward_unlock_eyebrow;
+  String reward_unlock_title(String type);
+  String reward_unlock_subtitle(int unlocked, int total);
+  String get reward_unlock_use_now_q;
+  String get reward_action_use_now;
+  String get reward_action_later;
+  String get reward_action_view_code;
+  String get reward_type_goods;
+  String get reward_type_ticket;
+  String get reward_code_label;
+  String get reward_show_at_store;
+  String get reward_already_redeemed;
+  String get reward_progress_title;
+  String reward_progress_books(int n, int total);
+  String get reward_progress_next_at_3;
+  String get reward_progress_next_at_5;
+  String get reward_progress_completed;
+  String get reward_history_title;
+  String get reward_history_empty;
 
   String get fav_thrill;
   String get fav_family;

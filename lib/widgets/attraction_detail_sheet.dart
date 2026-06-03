@@ -7,6 +7,7 @@ import '../models/attraction.dart';
 import '../services/easter_egg_service.dart';
 import '../services/narrative_service.dart';
 import '../services/onboarding_service.dart';
+import '../services/reward_controller.dart';
 import 'design/stamp.dart';
 
 /// 지도 마커/카드 탭 시 표시되는 어트랙션 상세 시트.
@@ -89,6 +90,10 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
         narrative: result.narrative,
       ),
     );
+
+    // 챕터 어트랙션이면 시즌 리워드 자동 검사 — threshold 도달 시 풀스크린 모달.
+    if (!mounted) return;
+    await RewardController.instance.checkAfterDiscovery(context);
   }
 
   static String _currentSeason() {

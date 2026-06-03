@@ -25,15 +25,18 @@ class RewardsService {
 
   /// 현재 시즌 진행도 평가 + threshold 도달 시 발급.
   /// 백엔드 미설정·실패면 null 반환.
-  Future<RewardCheckResult?> checkAndGrant(String uid) async {
+  /// [discovered] 가 주어지면 그 리스트 기준으로 카운트 (베타: SharedPreferences 동기화 대신).
+  Future<RewardCheckResult?> checkAndGrant(String uid, {Iterable<String>? discovered}) async {
     if (!_enabled) return null;
     try {
       final uri = Uri.parse('$_baseUrl/api/rewards/check');
+      final body = <String, Object?>{'uid': uid};
+      if (discovered != null) body['discovered'] = discovered.toList();
       final resp = await http
           .post(
             uri,
             headers: const {'content-type': 'application/json'},
-            body: jsonEncode({'uid': uid}),
+            body: jsonEncode(body),
           )
           .timeout(_timeout);
       if (resp.statusCode >= 400) {

@@ -262,6 +262,25 @@ class AppL10nEn extends AppL10n {
   @override String get myluna_stat_wait => 'Wait';
   @override String get myluna_stat_total => 'Total';
   @override String myluna_stat_min(int min) => '$min m';
+  @override String get reward_unlock_eyebrow => '✦ Reward unlocked';
+  @override String reward_unlock_title(String type) => type == 'ticket' ? '🎫 Free Pass' : '🎁 Goods Coupon';
+  @override String reward_unlock_subtitle(int unlocked, int total) => 'Season chapter $unlocked/$total complete';
+  @override String get reward_unlock_use_now_q => 'Use it right now?';
+  @override String get reward_action_use_now => '✅ Use now';
+  @override String get reward_action_later => 'Later';
+  @override String get reward_action_view_code => 'View code';
+  @override String get reward_type_goods => 'Goods coupon';
+  @override String get reward_type_ticket => 'Free pass';
+  @override String get reward_code_label => 'Redeem code';
+  @override String get reward_show_at_store => 'Show this code at the store';
+  @override String get reward_already_redeemed => 'Already used';
+  @override String get reward_progress_title => '🎁 Season rewards';
+  @override String reward_progress_books(int n, int total) => 'Discovered $n / $total';
+  @override String get reward_progress_next_at_3 => 'Find 3 → goods coupon';
+  @override String get reward_progress_next_at_5 => 'Find 5 → free pass';
+  @override String get reward_progress_completed => "You've claimed every reward this season 🎉";
+  @override String get reward_history_title => 'Your rewards';
+  @override String get reward_history_empty => 'No rewards yet';
 
   @override String get fav_thrill => 'Thrill rides';
   @override String get fav_family => 'Family-friendly';

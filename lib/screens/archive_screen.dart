@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
+import '../services/easter_egg_service.dart';
+import '../services/reward_controller.dart';
 
 /// 아카이브 — '일일 탐험 매거진' 컨셉.
 ///   · 방문 날짜 하나당 단 한 권의 책 (date = 고유키).
@@ -331,6 +333,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                           onBookTap: (idx) => _openDiaryForSeason(s, idx)),
                       const SizedBox(height: 20),
                       _DiaryStats(books: list, config: cfg),
+                      const SizedBox(height: 16),
+                      _RewardProgressCard(season: s),
                       const SizedBox(height: 16),
                       _PaperHint(),
                     ],
@@ -2655,6 +2659,142 @@ class _StatItem extends StatelessWidget {
               color: _Vintage.inkMid,
             )),
       ],
+    );
+  }
+}
+
+// ─── 시즌 리워드 진행도 카드 (3개 → 굿즈 / 5개 → 자유이용권) ──
+class _RewardProgressCard extends StatefulWidget {
+  final _Season season;
+  const _RewardProgressCard({required this.season});
+
+  @override
+  State<_RewardProgressCard> createState() => _RewardProgressCardState();
+}
+
+class _RewardProgressCardState extends State<_RewardProgressCard> {
+  // 시즌별 챕터 타겟 (lib/models/chapter.dart 와 동일)
+  static const Map<_Season, List<String>> _targets = {
+    _Season.spring: ['a08', 'a14', 'a09', 'a15', 'a07'],
+    _Season.summer: ['a03', 'a06', 'a04', 'a05', 'a02'],
+    _Season.autumn: ['a01', 'a07', 'a12', 'a14', 'a08'],
+    _Season.winter: ['a13', 'a11', 'a02', 'a10', 'a08'],
+  };
+
+  int _found = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RewardProgressCard old) {
+    super.didUpdateWidget(old);
+    if (old.season != widget.season) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _loading = true);
+    final discovered = await EasterEggService.discoveredAll();
+    final targets = _targets[widget.season] ?? const <String>[];
+    final found = targets.where(discovered.contains).length;
+    if (!mounted) return;
+    setState(() {
+      _found = found;
+      _loading = false;
+    });
+  }
+
+  Future<void> _claimNow() async {
+    await RewardController.instance.checkAfterDiscovery(context);
+    if (mounted) _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
+    final total = (_targets[widget.season] ?? const []).length;
+    final hasThreshold = _found >= 3;
+    final allDone = _found >= 5;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0B84A), width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(l.reward_progress_title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF8A6300),
+                      letterSpacing: -0.3,
+                    )),
+              ),
+              Text(
+                _loading ? '—' : l.reward_progress_books(_found, total),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF8A6300),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: total > 0 ? (_found / total).clamp(0.0, 1.0) : 0,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFE0B84A).withValues(alpha: 0.25),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFFD49A00)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            allDone
+                ? l.reward_progress_completed
+                : (hasThreshold
+                    ? l.reward_progress_next_at_5
+                    : l.reward_progress_next_at_3),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF8A6300),
+              height: 1.4,
+            ),
+          ),
+          if (hasThreshold && !_loading) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _claimNow,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD49A00),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+                ),
+                child: Text(l.reward_action_view_code,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

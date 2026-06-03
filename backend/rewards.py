@@ -77,17 +77,35 @@ def _doc_to_reward(reward_id: str, data: dict) -> dict:
     }
 
 
-def count_unlocked_books(uid: str, season: str, db=None) -> int:
-    """현재 시즌의 챕터 타겟 어트랙션 중 사용자가 수집한 개수."""
+def count_unlocked_books(
+    uid: str,
+    season: str,
+    db=None,
+    discovered_override: Iterable[str] | None = None,
+) -> int:
+    """현재 시즌의 챕터 타겟 어트랙션 중 사용자가 수집한 개수.
+
+    - `discovered_override` 가 주어지면 그 리스트를 직접 사용 (Firestore I/O 생략).
+      클라이언트(앱)가 SharedPreferences 의 local 발견 기록을 그대로 넘길 때 사용.
+    - 미지정 시 Firestore `users/{uid}.chapter_status[season].discovered` 조회
+      (Flutter `FirestoreService.recordDiscovery` 와 동일한 경로).
+    - 데이터 누락 / 사용자 doc 없음 시 0.
+    """
     targets = set(CHAPTER_TARGETS.get(season, []))
     if not targets:
         return 0
+    if discovered_override is not None:
+        return sum(1 for aid in discovered_override if aid in targets)
     db = db or firestore_client.db()
-    found = 0
-    for doc in db.collection("users").document(uid).collection("easterEggs").stream():
-        if doc.id in targets:
-            found += 1
-    return found
+    snap = db.collection("users").document(uid).get()
+    if not snap.exists:
+        return 0
+    data = snap.to_dict() or {}
+    cs = (data.get("chapter_status") or {}).get(season) or {}
+    discovered = cs.get("discovered") or []
+    if not isinstance(discovered, list):
+        return 0
+    return sum(1 for aid in discovered if aid in targets)
 
 
 def _grant_reward_txn(db, uid: str, reward_id: str, threshold: int,
@@ -122,8 +140,16 @@ def _grant_reward_txn(db, uid: str, reward_id: str, threshold: int,
     return granted, _doc_to_reward(reward_id, snap.to_dict() or data)
 
 
-def check_and_grant(uid: str, today: date | None = None, db=None) -> dict:
+def check_and_grant(
+    uid: str,
+    today: date | None = None,
+    db=None,
+    discovered_override: Iterable[str] | None = None,
+) -> dict:
     """현재 시즌 진행도 → threshold 도달 시 일괄 발급.
+
+    `discovered_override` 가 있으면 그 리스트로 카운트 (클라이언트 로컬 SharedPreferences
+    기준 베타 흐름). 미지정 시 Firestore chapter_status 조회.
 
     반환:
       {
@@ -134,7 +160,8 @@ def check_and_grant(uid: str, today: date | None = None, db=None) -> dict:
     """
     db = db or firestore_client.db()
     season = current_season(today)
-    unlocked = count_unlocked_books(uid, season, db=db)
+    unlocked = count_unlocked_books(uid, season, db=db,
+                                    discovered_override=discovered_override)
 
     newly: list[dict] = []
     already: list[dict] = []
