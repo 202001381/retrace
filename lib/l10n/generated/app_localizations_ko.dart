@@ -344,4 +344,7 @@ class AppL10nKo extends AppL10n {
   @override String myluna_lock_label_sec(int sec) => '$sec초';
   @override String get myluna_lock_expired => '📍 새 정보가 들어왔어요. 추천을 갱신할까요?';
   @override String get myluna_refresh_now => '지금 갱신';
+
+  @override String get location_os_granted => 'OS 권한 허용됨';
+  @override String get location_os_denied => 'OS 권한이 꺼져 있어요';
 }

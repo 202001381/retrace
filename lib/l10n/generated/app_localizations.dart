@@ -376,6 +376,9 @@ abstract class AppL10n {
   String myluna_lock_label_sec(int sec);
   String get myluna_lock_expired;
   String get myluna_refresh_now;
+
+  String get location_os_granted;
+  String get location_os_denied;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

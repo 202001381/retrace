@@ -377,5 +377,8 @@
   "myluna_lock_label_sec": "{sec}s",
   "@myluna_lock_label_sec": { "placeholders": { "sec": { "type": "int" } } },
   "myluna_lock_expired": "📍 New info arrived. Refresh the recommendation?",
-  "myluna_refresh_now": "Refresh now"
+  "myluna_refresh_now": "Refresh now",
+
+  "location_os_granted": "OS permission granted",
+  "location_os_denied": "OS permission is off"
 }

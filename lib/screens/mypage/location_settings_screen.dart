@@ -211,14 +211,15 @@ class _PermStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     if (granted) {
       return Row(
-        children: const [
-          Icon(Icons.check_circle_rounded,
+        children: [
+          const Icon(Icons.check_circle_rounded,
               size: 18, color: AppColors.mint),
-          SizedBox(width: 6),
-          Text('OS 권한 허용됨',
-              style: TextStyle(
+          const SizedBox(width: 6),
+          Text(l.location_os_granted,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.mint,
@@ -230,13 +231,13 @@ class _PermStatusRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: const [
-            Icon(Icons.warning_amber_rounded,
+          children: [
+            const Icon(Icons.warning_amber_rounded,
                 size: 18, color: AppColors.red),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Expanded(
-              child: Text('OS 권한이 꺼져 있어요',
-                  style: TextStyle(
+              child: Text(l.location_os_denied,
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.red,

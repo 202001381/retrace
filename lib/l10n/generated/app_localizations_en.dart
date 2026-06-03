@@ -344,4 +344,7 @@ class AppL10nEn extends AppL10n {
   @override String myluna_lock_label_sec(int sec) => '${sec}s';
   @override String get myluna_lock_expired => '📍 New info arrived. Refresh the recommendation?';
   @override String get myluna_refresh_now => 'Refresh now';
+
+  @override String get location_os_granted => 'OS permission granted';
+  @override String get location_os_denied => 'OS permission is off';
 }
