@@ -228,7 +228,7 @@ class SpotDetailSheet extends StatelessWidget {
                       children: [
                         Icon(Icons.directions_walk_rounded, size: 16, color: _catColor),
                         const SizedBox(width: 6),
-                        Text(AppL10n.of(context)!.attr_walk_eta(walkMinutes),
+                        Text(AppL10n.of(context)!.attr_walk_eta(walkMinutes!),
                             style: TextStyle(color: _catColor, fontSize: 13, fontWeight: FontWeight.w800)),
                       ],
                     ),

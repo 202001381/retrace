@@ -342,6 +342,7 @@ abstract class AppL10n {
   String get archive_book_count_unit;
   String get archive_hint;
   String get archive_close_label;
+  String get notif_set_marketing_gate_hint;
 
   String get fav_thrill;
   String get fav_family;

@@ -768,7 +768,7 @@ class _Header extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  cfg.label,
+                                  cfg.label.of(context),
                                   maxLines: 1,
                                   overflow: TextOverflow.clip,
                                   style: TextStyle(

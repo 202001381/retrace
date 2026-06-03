@@ -365,6 +365,7 @@
   "archive_book_count_unit": "",
   "archive_hint": "Open a book and three pages appear (cover · log · memory).\nPhotos are optional — vintage stamps will hold the space.",
   "archive_close_label": "Close",
+  "notif_set_marketing_gate_hint": "※ Kakao/SMS channels require marketing consent",
 
   "fav_thrill": "Thrill rides",
   "fav_family": "Family-friendly",

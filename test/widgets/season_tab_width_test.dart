@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:seoul_land_app/l10n/generated/app_localizations.dart';
 import 'package:seoul_land_app/screens/archive_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,6 +16,15 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(
       const MaterialApp(
+        // 한국어 라벨('봄','여름'...) 을 검색하므로 ko 로케일 강제.
+        locale: Locale('ko'),
+        localizationsDelegates: [
+          AppL10n.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [Locale('ko'), Locale('en')],
         home: Scaffold(body: ArchiveScreen()),
       ),
     );

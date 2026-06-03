@@ -310,6 +310,7 @@ class AppL10nEn extends AppL10n {
   @override String get archive_book_count_unit => '';
   @override String get archive_hint => 'Open a book and three pages appear (cover · log · memory).\nPhotos are optional — vintage stamps will hold the space.';
   @override String get archive_close_label => 'Close';
+  @override String get notif_set_marketing_gate_hint => '※ Kakao/SMS channels require marketing consent';
 
   @override String get fav_thrill => 'Thrill rides';
   @override String get fav_family => 'Family-friendly';

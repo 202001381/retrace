@@ -153,6 +153,18 @@ class _NotificationSettingsScreenState
                     onChanged: (v) =>
                         _toggleChannel(AlertChannel.sms, v ?? false),
                   ),
+                  if (!s.canUseKakaoOrSms)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 6),
+                      child: Text(
+                        l.notif_set_marketing_gate_hint,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),

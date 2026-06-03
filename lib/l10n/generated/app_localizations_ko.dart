@@ -310,6 +310,7 @@ class AppL10nKo extends AppL10n {
   @override String get archive_book_count_unit => '권';
   @override String get archive_hint => '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요.\n사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.';
   @override String get archive_close_label => '닫기';
+  @override String get notif_set_marketing_gate_hint => '※ 카카오·SMS 채널은 마케팅 정보 수신 동의 후 사용 가능합니다';
 
   @override String get fav_thrill => '스릴 어트랙션 위주';
   @override String get fav_family => '가족·어린이 위주';
