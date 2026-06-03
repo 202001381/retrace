@@ -17,13 +17,20 @@ from .predictor import Prediction
 from .weather import DailyForecast
 
 
-def _forecast(rain: float = 20.0, sky: int = 1, pty: int = 0, temp: float = 20.0) -> DailyForecast:
+def _forecast(rain: float = 20.0, sky: int = 1, pty: int = 0, temp: float = 20.0,
+              temp_max: float | None = None, temp_min: float | None = None,
+              wind: float = 3.0, snow: float = 0.0, humidity: float = 50.0) -> DailyForecast:
     return DailyForecast(
         target_date=date.today() + timedelta(days=1),
         rain_prob=rain,
         temp_noon=temp,
+        temp_max=temp_max if temp_max is not None else temp + 5,
+        temp_min=temp_min if temp_min is not None else temp - 5,
         sky_code=sky,
         pty_max=pty,
+        wind_speed_max=wind,
+        humidity_noon=humidity,
+        snow_max=snow,
     )
 
 

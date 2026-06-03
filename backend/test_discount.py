@@ -82,3 +82,39 @@ def test_pricing_now_endpoint(monkeypatch):
     assert 'weather' in body
     assert 'temp' in body
     assert 'computed_at' in body
+
+
+def test_heat_wave_adds_bonus():
+    """폭염 (temp_max ≥ 33) 면 reason 에 폭염 + discount +5 (캡 25)."""
+    from backend.discount import calc_discount
+    base = calc_discount("하", rain_prob=10)
+    hot = calc_discount("하", rain_prob=10, temp_max=35)
+    assert hot["discount_pct"] >= base["discount_pct"]
+    assert "폭염" in hot["reason"]
+
+
+def test_cold_wave_adds_bonus():
+    from backend.discount import calc_discount
+    r = calc_discount("하", rain_prob=10, temp_min=-12)
+    assert "한파" in r["reason"]
+    assert r["discount_pct"] >= 15
+
+
+def test_heavy_snow_priority_over_others():
+    from backend.discount import calc_discount
+    r = calc_discount("하", rain_prob=10, snow_max=8, temp_max=35, wind_speed_max=15)
+    # 폭설이 안전 우선순위 1위
+    assert "폭설" in r["reason"]
+
+
+def test_strong_wind_adds_bonus():
+    from backend.discount import calc_discount
+    r = calc_discount("중", rain_prob=10, wind_speed_max=18)
+    assert "강풍" in r["reason"]
+
+
+def test_discount_capped_at_25():
+    """할인율은 25% 캡."""
+    from backend.discount import calc_discount
+    r = calc_discount("하", rain_prob=90, snow_max=10, temp_max=35)
+    assert r["discount_pct"] == 25

@@ -18,27 +18,61 @@ KST = timezone(timedelta(hours=9))
 # 발표 시각(매일 8회). 발표 후 약 10분부터 조회 가능.
 _BASE_TIMES = [200, 500, 800, 1100, 1400, 1700, 2000, 2300]
 
-WeatherCondition = Literal["맑음", "흐림", "소나기", "강우"]
+WeatherCondition = Literal["맑음", "흐림", "소나기", "강우", "폭염", "한파", "폭설", "강풍"]
 
 
 @dataclass(frozen=True)
 class DailyForecast:
     target_date: date
-    rain_prob: float  # 그날 시간대별 강수확률 최대값 (%)
-    temp_noon: float  # 정오 기온 (°C)
-    sky_code: int  # 정오 SKY (1 맑음, 3 구름많음, 4 흐림)
-    pty_max: int  # 그날 시간대별 강수형태 최대값 (0~4)
+    rain_prob: float       # POP — 그날 시간대별 강수확률 최대값 (%)
+    temp_noon: float       # TMP — 정오 기온 (°C)
+    temp_max: float        # TMX — 일 최고기온 (°C, 폭염 판정용)
+    temp_min: float        # TMN — 일 최저기온 (°C, 한파 판정용)
+    sky_code: int          # SKY — 정오 (1 맑음, 3 구름많음, 4 흐림)
+    pty_max: int           # PTY — 강수형태 최대 (0 없음, 1 비, 2 비/눈, 3 눈, 4 소나기)
+    wind_speed_max: float  # WSD — 일 최대 풍속 (m/s, 강풍 판정용)
+    humidity_noon: float   # REH — 정오 습도 (%, 체감온도용)
+    snow_max: float        # SNO — 일 적설량 최대 (cm, 폭설 판정용)
 
     @property
     def weather(self) -> WeatherCondition:
-        """SKY + PTY → 라벨."""
+        """시점 가장 두드러진 기상 라벨 — 안전·UX 우선순위.
+
+        극한 기상 → 강수 → 일반 분류.
+        """
+        # 1순위: 안전 위험 (체감·이동 영향)
+        if self.snow_max >= 5 or (self.pty_max in (2, 3) and self.snow_max > 0):
+            return "폭설"
+        if self.wind_speed_max >= 14:
+            return "강풍"
+        if self.temp_max >= 33:
+            return "폭염"
+        if self.temp_min <= -10:
+            return "한파"
+        # 2순위: 강수
         if self.pty_max == 4:
             return "소나기"
         if self.pty_max in (1, 2, 3):
             return "강우"
+        # 3순위: 일반
         if self.sky_code == 1:
             return "맑음"
         return "흐림"
+
+    @property
+    def is_extreme(self) -> bool:
+        """극한 기상 — push 우선순위 + 할인 가산 트리거."""
+        return self.weather in ("폭염", "한파", "폭설", "강풍")
+
+    @property
+    def heat_index(self) -> float:
+        """단순 체감온도 추정 — temp + humidity 보정 (Steadman 근사).
+
+        습도 60%+ 일 때 1.2배 가중, 그 아래는 평탄.
+        """
+        if self.humidity_noon >= 60:
+            return self.temp_noon + (self.humidity_noon - 60) * 0.15
+        return self.temp_noon
 
 
 def _latest_base(now: datetime) -> tuple[str, str]:
@@ -114,12 +148,24 @@ def fetch_forecast(target: date, now: datetime | None = None) -> DailyForecast:
         tmps = _vals("TMP")
         temp = sum(tmps) / len(tmps) if tmps else 0.0
 
+    tmn_vals = _vals("TMN")
+    tmx_vals = _vals("TMX")
+    wsd_vals = _vals("WSD")
+    sno_vals = _vals("SNO")
+    reh_noon = _at_noon("REH") or 50.0
+    tmps_all = _vals("TMP")
+
     return DailyForecast(
         target_date=target,
         rain_prob=max(pop) if pop else 0.0,
         temp_noon=float(temp),
+        temp_max=max(tmx_vals) if tmx_vals else (max(tmps_all) if tmps_all else float(temp)),
+        temp_min=min(tmn_vals) if tmn_vals else (min(tmps_all) if tmps_all else float(temp)),
         sky_code=int(sky),
         pty_max=int(max(pty)) if pty else 0,
+        wind_speed_max=max(wsd_vals) if wsd_vals else 0.0,
+        humidity_noon=float(reh_noon),
+        snow_max=max(sno_vals) if sno_vals else 0.0,
     )
 
 

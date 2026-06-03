@@ -67,7 +67,15 @@ def run_pipeline(target: Literal["today", "tomorrow"]) -> PipelineResult:
     }
     pred = predictor.predict_one(features)
 
-    disc = _discount.calc_discount(pred.crowd_level, fcst.rain_prob)
+    disc = _discount.calc_discount(
+        pred.crowd_level,
+        fcst.rain_prob,
+        temp_max=fcst.temp_max,
+        temp_min=fcst.temp_min,
+        wind_speed_max=fcst.wind_speed_max,
+        snow_max=fcst.snow_max,
+        pty_max=fcst.pty_max,
+    )
     sc = score.calc_visit_value(
         crowd_level=pred.crowd_level,
         weather=fcst.weather,
@@ -76,17 +84,37 @@ def run_pipeline(target: Literal["today", "tomorrow"]) -> PipelineResult:
         discount_pct=disc["discount_pct"],
     )
 
-    should_push = pred.crowd_level == "하" or fcst.rain_prob >= 50.0
+    # push 조건: 한산 OR 강수 우려 OR 극한 기상 (안전 알림)
+    should_push = (
+        pred.crowd_level == "하"
+        or fcst.rain_prob >= 50.0
+        or fcst.is_extreme
+    )
     reason_parts = []
     if pred.crowd_level == "하":
         reason_parts.append("혼잡도 하")
     if fcst.rain_prob >= 50.0:
         reason_parts.append(f"강수확률 {fcst.rain_prob:.0f}%")
+    if fcst.is_extreme:
+        reason_parts.append(f"기상특보({fcst.weather})")
     push_reason = " + ".join(reason_parts) if reason_parts else "조건 미충족"
 
     pushed = False
     if should_push:
-        title = "오늘 서울랜드, 한산해요" if target == "today" else "내일 서울랜드, 한산해요"
+        # 극한 기상은 안전 알림 톤, 나머지는 추천 톤
+        if fcst.is_extreme:
+            title_map = {
+                "폭염": "오늘 폭염주의 — 실내 어트랙션 추천",
+                "한파": "오늘 한파주의 — 따뜻하게 입고 오세요",
+                "폭설": "오늘 폭설 — 안전 운영 안내",
+                "강풍": "오늘 강풍 — 일부 어트랙션 운영 변경",
+            }
+            base = title_map.get(fcst.weather, f"오늘 {fcst.weather} 주의")
+            title = base if target == "today" else base.replace("오늘", "내일")
+        elif target == "today":
+            title = "오늘 서울랜드, 한산해요"
+        else:
+            title = "내일 서울랜드, 한산해요"
         body = (
             f"방문 가치 {sc['score']}점 | {disc['discount_pct']}% 할인 쿠폰 발급됨"
         )
@@ -101,6 +129,12 @@ def run_pipeline(target: Literal["today", "tomorrow"]) -> PipelineResult:
                     "score": str(sc["score"]),
                     "weather": fcst.weather,
                     "rain_prob": f"{fcst.rain_prob:.0f}",
+                    "temp_max": f"{fcst.temp_max:.1f}",
+                    "temp_min": f"{fcst.temp_min:.1f}",
+                    "wind_speed_max": f"{fcst.wind_speed_max:.1f}",
+                    "snow_max": f"{fcst.snow_max:.1f}",
+                    "is_extreme": str(fcst.is_extreme).lower(),
+                    "reason": push_reason,
                 },
             )
             pushed = True

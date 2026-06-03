@@ -305,12 +305,24 @@ def create_app() -> Flask:
         now = _dt.now()
         rain_prob = 30.0
         temp = 20.0
+        temp_max: float | None = None
+        temp_min: float | None = None
+        wind_speed_max: float | None = None
+        snow_max: float | None = None
+        pty_max: int | None = None
         weather_label = "흐림"
+        is_extreme = False
         try:
             fcst = _weather.fetch_today()
             rain_prob = float(fcst.rain_prob)
             temp = float(fcst.temp_noon)
+            temp_max = float(fcst.temp_max)
+            temp_min = float(fcst.temp_min)
+            wind_speed_max = float(fcst.wind_speed_max)
+            snow_max = float(fcst.snow_max)
+            pty_max = int(fcst.pty_max)
             weather_label = fcst.weather
+            is_extreme = fcst.is_extreme
         except Exception as e:
             logger.info("pricing weather fallback: %s", e)
 
@@ -333,11 +345,21 @@ def create_app() -> Flask:
         result = discount.calc_discount(
             crowd_level=ko_level,
             rain_prob=rain_prob,
+            temp_max=temp_max,
+            temp_min=temp_min,
+            wind_speed_max=wind_speed_max,
+            snow_max=snow_max,
+            pty_max=pty_max,
         )
         return jsonify({
             **result,
             "weather": weather_label,
             "temp": round(temp, 1),
+            "temp_max": round(temp_max, 1) if temp_max is not None else None,
+            "temp_min": round(temp_min, 1) if temp_min is not None else None,
+            "wind_speed_max": round(wind_speed_max, 1) if wind_speed_max is not None else None,
+            "snow_max": round(snow_max, 1) if snow_max is not None else None,
+            "is_extreme": is_extreme,
             "computed_at": now.isoformat(),
         })
 
