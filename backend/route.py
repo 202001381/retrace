@@ -237,12 +237,18 @@ def recommend_route(
         # 미발견 이스터에그 보너스
         if a["has_easter_egg"] and a["id"] not in req.discovered_eggs:
             score += 25
-        # 선호 어트랙션 가중
+        # 선호 어트랙션 가중 + 반대 패널티 (사용자 의도가 1번 스팟에 보이도록)
         if a["category"] == "어트랙션":
-            if req.favorite_type == FAVORITE_THRILL and a["thrill_level"] >= 4:
-                score += 25
-            if req.favorite_type == FAVORITE_FAMILY and a["thrill_level"] <= 2:
-                score += 25
+            if req.favorite_type == FAVORITE_THRILL:
+                if a["thrill_level"] >= 4:
+                    score += 35   # 강한 가산
+                elif a["thrill_level"] <= 2:
+                    score -= 15   # 저 스릴 페널티 (스릴 모드에서 carousel 류 억제)
+            elif req.favorite_type == FAVORITE_FAMILY:
+                if a["thrill_level"] <= 2:
+                    score += 30
+                elif a["thrill_level"] >= 4:
+                    score -= 15
         # 어린이 동반 시 저스릴 어트랙션 우대
         if (
             req.has_child
@@ -250,6 +256,29 @@ def recommend_route(
             and a["thrill_level"] <= 2
         ):
             score += 15
+        # 목적별 추가 가중 (fav=both 일 때도 purpose 로 1번 스팟 영향)
+        if req.purpose == PURPOSE_DATE:
+            # 데이트 — 포토스팟·실내(분위기)·평점 4.5+ 우대
+            if a["category"] == "포토스팟":
+                score += 22
+            if a.get("indoor"):
+                score += 8
+            if a.get("rating", 0) >= 4.5:
+                score += 10
+        elif req.purpose == PURPOSE_PICNIC:
+            # 피크닉 — 야외·포토스팟·낮은 wait
+            if not a.get("indoor"):
+                score += 10
+            if a["category"] == "포토스팟":
+                score += 18
+        elif req.purpose == PURPOSE_KIDS_OUTING:
+            # 아이 나들이 — 저 thrill + 음식점 가깝게
+            if a["category"] == "어트랙션" and a["thrill_level"] <= 2:
+                score += 12
+        elif req.purpose == PURPOSE_RIDES:
+            # 놀이기구 — 어트랙션 자체에 보너스
+            if a["category"] == "어트랙션":
+                score += 8
         # 우천 시 실내 어트랙션 가산
         if indoor_bonus_active and a.get("indoor"):
             score += 18
@@ -289,8 +318,19 @@ def recommend_route(
             break
         picked.append(a)
 
-    # 6) nearest-neighbor 순서
-    ordered = _nearest_neighbor(picked, req.lat, req.lng)
+    # 6) 순서 — 최고 점수 어트랙션을 STOP 01 로 고정, 나머지는 그 어트랙션
+    #    위치에서 nearest-neighbor.
+    #    이렇게 안 하면 정문에서 가장 가까운 carousel 류가 항상 1등 차지하면서
+    #    사용자가 스릴 선택해도 1번 스팟이 바뀌지 않는 문제 발생.
+    if picked:
+        # picked 는 점수 내림차순으로 들어옴 (어트랙션 먼저, extras 점수 무시).
+        # extras 가 어트랙션보다 점수 높을 수 있으니 전체에서 최고점 재선정.
+        score_by_id = {a["id"]: s for a, s in scored}
+        anchor = max(picked, key=lambda a: score_by_id.get(a["id"], 0))
+        rest = [a for a in picked if a["id"] != anchor["id"]]
+        ordered = [anchor] + _nearest_neighbor(rest, anchor["lat"], anchor["lng"])
+    else:
+        ordered = []
 
     # 7) ETA / total
     stops: list[RouteStop] = []

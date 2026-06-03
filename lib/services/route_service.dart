@@ -120,12 +120,38 @@ class RouteService {
       final dist = _hav(req.lat, req.lng, a.lat, a.lng);
       score += ((1200 - dist) / 80).clamp(-10, 15);
       if (a.hasEasterEgg && !req.discoveredEggs.contains(a.id)) score += 25;
+      // 선호 + 반대 페널티 (1번 스팟 변별력)
       if (a.category == '어트랙션') {
-        if (req.onboarding.favoriteType == FavoriteType.thrill && a.thrillLevel >= 4) score += 25;
-        if (req.onboarding.favoriteType == FavoriteType.family && a.thrillLevel <= 2) score += 25;
+        if (req.onboarding.favoriteType == FavoriteType.thrill) {
+          if (a.thrillLevel >= 4) {
+            score += 35;
+          } else if (a.thrillLevel <= 2) {
+            score -= 15;
+          }
+        } else if (req.onboarding.favoriteType == FavoriteType.family) {
+          if (a.thrillLevel <= 2) {
+            score += 30;
+          } else if (a.thrillLevel >= 4) {
+            score -= 15;
+          }
+        }
       }
       if (req.onboarding.hasChild && a.category == '어트랙션' && a.thrillLevel <= 2) {
         score += 15;
+      }
+      // 목적별 가중
+      final purpose = req.onboarding.purpose;
+      if (purpose == VisitPurpose.date) {
+        if (a.category == '포토스팟') score += 22;
+        if (a.indoor) score += 8;
+        if (a.rating >= 4.5) score += 10;
+      } else if (purpose == VisitPurpose.picnic) {
+        if (!a.indoor) score += 10;
+        if (a.category == '포토스팟') score += 18;
+      } else if (purpose == VisitPurpose.kidsOuting) {
+        if (a.category == '어트랙션' && a.thrillLevel <= 2) score += 12;
+      } else if (purpose == VisitPurpose.rides) {
+        if (a.category == '어트랙션') score += 8;
       }
       // 우천 → 실내 가산
       if (rainHigh && a.indoor) score += 18;
@@ -153,7 +179,18 @@ class RouteService {
       picked.add(s.a);
     }
 
-    final ordered = _nearestNeighbor(picked, req.lat, req.lng);
+    // 최고 점수 어트랙션을 STOP 01 로 고정, 나머지는 그 어트랙션 위치에서
+    // nearest-neighbor. 백엔드와 동일 순서 정책.
+    List<Attraction> ordered;
+    if (picked.isEmpty) {
+      ordered = const [];
+    } else {
+      final scoreById = {for (final s in scored) s.a.id: s.score};
+      final anchor = picked.reduce(
+          (a, b) => (scoreById[a.id] ?? 0) >= (scoreById[b.id] ?? 0) ? a : b);
+      final rest = picked.where((a) => a.id != anchor.id).toList();
+      ordered = [anchor, ..._nearestNeighbor(rest, anchor.lat, anchor.lng)];
+    }
 
     final stops = <RouteStop>[];
     double prevLat = req.lat, prevLng = req.lng;
