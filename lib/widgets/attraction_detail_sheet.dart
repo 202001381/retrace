@@ -70,6 +70,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
         weather: '맑음',
         visitCount: 1,
       ),
+      locale: Localizations.localeOf(context),
     );
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();

@@ -51,12 +51,32 @@ def _get_client() -> Anthropic:
     return _client
 
 
-def _fallback_narrative(attraction_name: str, companion_type: str, season: str) -> str:
+def _fallback_narrative(
+    attraction_name: str, companion_type: str, season: str, locale: str = "ko"
+) -> str:
     """API key 없거나 Anthropic 호출 실패 시 로컬 룰 기반 fallback.
 
-    시연·테스트 환경에서도 화면이 끊기지 않도록. season + companion 조합으로
-    8가지 톤 변화.
+    locale='en' 이면 영어 버전. 그 외엔 한국어.
     """
+    if locale == "en":
+        season_phrase = {
+            "spring": "a cherry-blossom day",
+            "summer": "a sun-drenched summer",
+            "autumn": "an autumn at the peak of color",
+            "winter": "a quiet, snow-falling winter",
+        }.get(season, "a memorable day")
+        companion_phrase = {
+            "혼자": "a solo footprint",
+            "연인": "two together's footsteps",
+            "친구": "friends' footsteps",
+            "가족": "a family's footsteps",
+        }.get(companion_type, "your footsteps")
+        return (
+            f"{attraction_name}. On {season_phrase}, {companion_phrase} made a page here. "
+            f"Since opening in 1988, countless memories have piled up at this very spot — "
+            f"and today, your visit adds a new chapter 🌙"
+        )
+
     season_phrase = {
         "spring": "벚꽃이 흩날리던",
         "summer": "햇볕이 짙던 여름",
@@ -83,6 +103,7 @@ def generate_narrative(
     season: str,
     weather: str,
     visit_count: int,
+    locale: str = "ko",
     model: str = "claude-sonnet-4-6",
 ) -> NarrativeOutput:
     # Firestore 미가용 (credentials 없음·offline 등) 시 attractions.json 으로
@@ -114,7 +135,7 @@ def generate_narrative(
         return NarrativeOutput(
             attraction_id=attraction_id,
             attraction_name=name,
-            narrative=_fallback_narrative(name, companion_type, season),
+            narrative=_fallback_narrative(name, companion_type, season, locale),
         )
 
     user_prompt = _USER_TEMPLATE.format(
@@ -136,9 +157,9 @@ def generate_narrative(
         )
         text = "".join(block.text for block in resp.content if hasattr(block, "text")).strip()
         if not text:
-            text = _fallback_narrative(name, companion_type, season)
+            text = _fallback_narrative(name, companion_type, season, locale)
     except Exception as e:
         logger.warning("narrative — Anthropic call failed (%s), using fallback", e)
-        text = _fallback_narrative(name, companion_type, season)
+        text = _fallback_narrative(name, companion_type, season, locale)
 
     return NarrativeOutput(attraction_id=attraction_id, attraction_name=name, narrative=text)

@@ -201,6 +201,7 @@ def create_app() -> Flask:
                 season=body.get("season", "spring"),
                 weather=body.get("weather", "맑음"),
                 visit_count=int(body.get("visit_count", 1)),
+                locale=body.get("locale", "ko"),
             )
         except (KeyError, ValueError) as e:
             return jsonify(error=str(e)), 400
