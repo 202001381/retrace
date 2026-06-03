@@ -12,6 +12,7 @@ import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 import '../models/place_filter.dart';
 import '../models/route_response.dart';
+import '../widgets/design/retrace_glyph.dart';
 import '../widgets/design/stamp.dart';
 import 'all_attractions_screen.dart';
 import '../services/easter_egg_service.dart';
@@ -1069,7 +1070,7 @@ class _GpsCircleButton extends StatelessWidget {
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: AppColors.ink900),
                 )
-              : const RetraceGlyph(
+              : RetraceGlyph(
                   name: 'gps',
                   size: 18,
                   color: AppColors.ink900,
