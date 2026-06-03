@@ -206,6 +206,20 @@ class AppL10nKo extends AppL10n {
   @override String get onboarding_thrill_fast => '빠르고 짜릿한 걸 좋아해요';
   @override String get onboarding_family_together => '함께 탈 수 있는 걸 좋아해요';
   @override String get onboarding_either_ok => '상황에 따라 달라요';
+  @override String onboarding_summary_family_infant(int infant) => '유아 $infant명과 함께하는 가족 코스로 짰어요 🎠';
+  @override String onboarding_summary_family(int total) => '$total인 가족 코스로 짰어요 🎠';
+  @override String onboarding_summary_thrill(int total) => '스릴을 즐기는 $total인 코스로 짰어요 🎢';
+  @override String get onboarding_summary_date => '둘만의 데이트 코스로 짰어요 💑';
+  @override String onboarding_summary_custom(int total) => '$total인 맞춤 코스로 짰어요 ✨';
+  @override String get onboarding_result_see_route => '🗺️  오늘의 동선 보러가기';
+  @override String get onboarding_result_get_ticket => '💰  할인 티켓 먼저 받기';
+  @override String get onboarding_pricing_short => '💰 루나 프라이싱';
+  @override String onboarding_pricing_now_off(int pct) => '지금 입장하면 정가 대비 $pct% 할인';
+  @override String spot_reviews_count(int count) => '$count개 후기';
+  @override String spot_duration_min(int min) => '$min분';
+  @override String get spot_wait_now_label => '현재 대기시간';
+  @override String get spot_price_range_label => '가격대';
+  @override String get spot_photo_tip_title => 'AI 촬영 팁';
 
   @override String get fav_thrill => '스릴 어트랙션 위주';
   @override String get fav_family => '가족·어린이 위주';

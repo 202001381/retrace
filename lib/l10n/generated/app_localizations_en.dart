@@ -206,6 +206,20 @@ class AppL10nEn extends AppL10n {
   @override String get onboarding_thrill_fast => 'I love fast and exciting rides';
   @override String get onboarding_family_together => 'I love rides we can take together';
   @override String get onboarding_either_ok => 'Depends on the situation';
+  @override String onboarding_summary_family_infant(int infant) => 'A family course with $infant little one${infant == 1 ? '' : 's'} 🎠';
+  @override String onboarding_summary_family(int total) => 'A family course for $total 🎠';
+  @override String onboarding_summary_thrill(int total) => 'A thrill-packed course for $total 🎢';
+  @override String get onboarding_summary_date => 'A date course just for the two of you 💑';
+  @override String onboarding_summary_custom(int total) => 'A custom course for $total ✨';
+  @override String get onboarding_result_see_route => '🗺️  See today\'s route';
+  @override String get onboarding_result_get_ticket => '💰  Grab the discount ticket first';
+  @override String get onboarding_pricing_short => '💰 Luna Pricing';
+  @override String onboarding_pricing_now_off(int pct) => 'Enter now for $pct% off list price';
+  @override String spot_reviews_count(int count) => '$count reviews';
+  @override String spot_duration_min(int min) => '$min min';
+  @override String get spot_wait_now_label => 'Current wait';
+  @override String get spot_price_range_label => 'Price range';
+  @override String get spot_photo_tip_title => 'AI photo tip';
 
   @override String get fav_thrill => 'Thrill rides';
   @override String get fav_family => 'Family-friendly';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/spot_model.dart';
 
 class SpotDetailSheet extends StatelessWidget {
@@ -23,11 +24,12 @@ class SpotDetailSheet extends StatelessWidget {
     }
   }
 
-  String get _catLabel {
+  String _catLabel(BuildContext context) {
+    final l = AppL10n.of(context)!;
     switch (spot.category) {
-      case SpotCategory.attraction: return '어트랙션';
-      case SpotCategory.food:       return '음식점';
-      case SpotCategory.photo:      return '포토스팟';
+      case SpotCategory.attraction: return l.cat_attraction;
+      case SpotCategory.food:       return l.cat_restaurant;
+      case SpotCategory.photo:      return l.cat_photo_spot;
     }
   }
 
@@ -92,7 +94,7 @@ class SpotDetailSheet extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  _catLabel,
+                                  _catLabel(context),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
@@ -109,13 +111,13 @@ class SpotDetailSheet extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: const Color(0xFFFFB300)),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('🥚', style: TextStyle(fontSize: 10)),
-                                      SizedBox(width: 3),
-                                      Text('이스터에그',
-                                        style: TextStyle(
+                                      const Text('🥚', style: TextStyle(fontSize: 10)),
+                                      const SizedBox(width: 3),
+                                      Text(AppL10n.of(context)!.common_easter_egg,
+                                        style: const TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
                                           color: Color(0xFFFF8F00),
@@ -163,9 +165,9 @@ class SpotDetailSheet extends StatelessWidget {
                     const SizedBox(width: 8),
                     _infoChip(Icons.star_rounded, spot.rating.toStringAsFixed(1), const Color(0xFFFFB300)),
                     const SizedBox(width: 8),
-                    _infoChip(Icons.reviews_rounded, '${spot.reviewCount}개 후기', const Color(0xFF4CAF50)),
+                    _infoChip(Icons.reviews_rounded, AppL10n.of(context)!.spot_reviews_count(spot.reviewCount), const Color(0xFF4CAF50)),
                     const SizedBox(width: 8),
-                    _infoChip(Icons.schedule_rounded, '${spot.visitDurationMin}분', const Color(0xFF9E9E9E)),
+                    _infoChip(Icons.schedule_rounded, AppL10n.of(context)!.spot_duration_min(spot.visitDurationMin), const Color(0xFF9E9E9E)),
                   ],
                 ),
 
@@ -194,7 +196,7 @@ class SpotDetailSheet extends StatelessWidget {
                 if (spot.waitTime != null)
                   _extraInfoCard(
                     icon: '⏱️',
-                    label: '현재 대기시간',
+                    label: AppL10n.of(context)!.spot_wait_now_label,
                     value: spot.waitTime!,
                     color: spot.waitTime == '없음'
                         ? const Color(0xFF4CAF50)
@@ -204,13 +206,13 @@ class SpotDetailSheet extends StatelessWidget {
                 if (spot.priceRange != null)
                   _extraInfoCard(
                     icon: '💰',
-                    label: '가격대',
+                    label: AppL10n.of(context)!.spot_price_range_label,
                     value: spot.priceRange!,
                     color: const Color(0xFFFF6D00),
                   ),
 
                 if (spot.photoTip != null)
-                  _photoTipCard(spot.photoTip!),
+                  _photoTipCard(context, spot.photoTip!),
 
                 const SizedBox(height: 16),
 
@@ -226,7 +228,7 @@ class SpotDetailSheet extends StatelessWidget {
                       children: [
                         Icon(Icons.directions_walk_rounded, size: 16, color: _catColor),
                         const SizedBox(width: 6),
-                        Text('예상 도보 $walkMinutes분',
+                        Text(AppL10n.of(context)!.attr_walk_eta(walkMinutes),
                             style: TextStyle(color: _catColor, fontSize: 13, fontWeight: FontWeight.w800)),
                       ],
                     ),
@@ -243,7 +245,9 @@ class SpotDetailSheet extends StatelessWidget {
                       size: 20,
                     ),
                     label: Text(
-                      isNavigating ? '이동 중...' : '여기로 이동하기',
+                      isNavigating
+                          ? AppL10n.of(context)!.common_traveling
+                          : AppL10n.of(context)!.attr_go_here,
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -326,7 +330,7 @@ class SpotDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _photoTipCard(String tip) {
+  Widget _photoTipCard(BuildContext context, String tip) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
@@ -349,9 +353,9 @@ class SpotDetailSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'AI 촬영 팁',
-                  style: TextStyle(
+                Text(
+                  AppL10n.of(context)!.spot_photo_tip_title,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF8E24AA),

@@ -42,6 +42,8 @@ const int _kFirstSurveyPage = 4;
 const int _kLastSurveyPage = 6;
 const int _kDonePage = 7;
 
+enum _CourseKind { family, thrill, date, custom }
+
 // 데모용 — 오늘 할인 여부 / 할인율 (실제로는 백엔드 루나 프라이싱 응답).
 const bool _kHasDiscountToday = true;
 const int _kDiscountPct = 15;
@@ -117,35 +119,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _count(MemberCategory c) => _members[c] ?? 0;
 
   /// 우선순위: 가족 > 스릴 > 데이트 > 맞춤.
-  String _resultLabel() {
-    if (_count(MemberCategory.infant) > 0) return '가족 코스';
+  _CourseKind _resultKind() {
+    if (_count(MemberCategory.infant) > 0) return _CourseKind.family;
     if (_count(MemberCategory.teen) > 0 || _favoriteType == FavoriteType.thrill) {
-      return '스릴 코스';
+      return _CourseKind.thrill;
     }
     final adultsOnly = _count(MemberCategory.infant) == 0 &&
         _count(MemberCategory.child) == 0 &&
         _count(MemberCategory.teen) == 0 &&
         _count(MemberCategory.seniorMale) == 0 &&
         _count(MemberCategory.seniorFemale) == 0;
-    if (adultsOnly && _purpose == VisitPurpose.date) return '데이트 코스';
-    return '맞춤 코스';
+    if (adultsOnly && _purpose == VisitPurpose.date) return _CourseKind.date;
+    return _CourseKind.custom;
   }
 
-  /// 결과 화면 서브 텍스트.
-  String _summaryText() {
-    final label = _resultLabel();
+  /// 영구 저장용 안정 키 (영문). 추후 i18n-safe 분기에 사용.
+  String _resultLabel() => switch (_resultKind()) {
+        _CourseKind.family => 'family',
+        _CourseKind.thrill => 'thrill',
+        _CourseKind.date => 'date',
+        _CourseKind.custom => 'custom',
+      };
+
+  /// 결과 화면 서브 텍스트 — locale-aware.
+  String _summaryText(BuildContext context) {
+    final l = AppL10n.of(context)!;
     final total = _total;
-    switch (label) {
-      case '가족 코스':
+    switch (_resultKind()) {
+      case _CourseKind.family:
         final infant = _count(MemberCategory.infant);
-        if (infant > 0) return '유아 $infant명과 함께하는 가족 코스로 짰어요 🎠';
-        return '$total인 가족 코스로 짰어요 🎠';
-      case '스릴 코스':
-        return '스릴을 즐기는 $total인 코스로 짰어요 🎢';
-      case '데이트 코스':
-        return '둘만의 데이트 코스로 짰어요 💑';
-      default:
-        return '$total인 맞춤 코스로 짰어요 ✨';
+        if (infant > 0) return l.onboarding_summary_family_infant(infant);
+        return l.onboarding_summary_family(total);
+      case _CourseKind.thrill:
+        return l.onboarding_summary_thrill(total);
+      case _CourseKind.date:
+        return l.onboarding_summary_date;
+      case _CourseKind.custom:
+        return l.onboarding_summary_custom(total);
     }
   }
 
@@ -252,7 +262,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onNext: _purpose != null ? () => _goTo(7) : null,
             ),
             _ResultPage(
-              summaryText: _summaryText(),
+              summaryText: _summaryText(context),
               hasDiscount: _kHasDiscountToday,
               discountPct: _kDiscountPct,
               onSeeRoute: () => _finish(OnboardingExit.mapTab),
@@ -389,15 +399,16 @@ class _StarField extends StatelessWidget {
 }
 
 class _StarFieldPainter extends CustomPainter {
+  // 텍스트 블록(y 0.50~0.82, x 0.05~0.72)을 피해서 상단 밴드 + 우측 마진에 배치.
   static const _stars = [
-    [0.20, 0.32, 6.0],
-    [0.84, 0.40, 4.0],
-    [0.92, 0.58, 5.0],
-    [0.08, 0.62, 4.0],
-    [0.78, 0.74, 6.0],
-    [0.32, 0.82, 4.0],
-    [0.16, 0.88, 5.0],
-    [0.60, 0.46, 3.0],
+    [0.18, 0.16, 6.0],
+    [0.42, 0.22, 4.0],
+    [0.72, 0.14, 5.0],
+    [0.88, 0.24, 4.0],
+    [0.30, 0.36, 3.0],
+    [0.62, 0.34, 4.0],
+    [0.92, 0.42, 5.0],
+    [0.94, 0.66, 4.0],
   ];
 
   @override
@@ -752,9 +763,9 @@ class _ResultPage extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(99)),
                           ),
-                          child: const Text(
-                            '🗺️  오늘의 동선 보러가기',
-                            style: TextStyle(
+                          child: Text(
+                            AppL10n.of(context)!.onboarding_result_see_route,
+                            style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w900),
                           ),
                         ),
@@ -774,9 +785,9 @@ class _ResultPage extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(99)),
                             ),
-                            child: const Text(
-                              '💰  할인 티켓 먼저 받기',
-                              style: TextStyle(
+                            child: Text(
+                              AppL10n.of(context)!.onboarding_result_get_ticket,
+                              style: const TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w800),
                             ),
                           ),
@@ -813,13 +824,13 @@ class _PricingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('💰 루나 프라이싱',
-                    style: TextStyle(color: _kAccent, fontSize: 14, fontWeight: FontWeight.w900)),
+                Text(AppL10n.of(context)!.onboarding_pricing_short,
+                    style: const TextStyle(color: _kAccent, fontSize: 14, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 8),
-                const Text('오늘 한산한 날이에요',
-                    style: TextStyle(color: _kText, fontSize: 18, fontWeight: FontWeight.w900)),
+                Text(AppL10n.of(context)!.home_today_chill_day,
+                    style: const TextStyle(color: _kText, fontSize: 18, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
-                Text('지금 입장하면 정가 대비 $discountPct% 할인',
+                Text(AppL10n.of(context)!.onboarding_pricing_now_off(discountPct),
                     style: const TextStyle(color: _kMuted, fontSize: 14)),
               ],
             ),

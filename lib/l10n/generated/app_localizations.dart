@@ -238,6 +238,20 @@ abstract class AppL10n {
   String get onboarding_thrill_fast;
   String get onboarding_family_together;
   String get onboarding_either_ok;
+  String onboarding_summary_family_infant(int infant);
+  String onboarding_summary_family(int total);
+  String onboarding_summary_thrill(int total);
+  String get onboarding_summary_date;
+  String onboarding_summary_custom(int total);
+  String get onboarding_result_see_route;
+  String get onboarding_result_get_ticket;
+  String get onboarding_pricing_short;
+  String onboarding_pricing_now_off(int pct);
+  String spot_reviews_count(int count);
+  String spot_duration_min(int min);
+  String get spot_wait_now_label;
+  String get spot_price_range_label;
+  String get spot_photo_tip_title;
 
   String get fav_thrill;
   String get fav_family;
