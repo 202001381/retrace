@@ -947,23 +947,134 @@ class _TopBar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _IconLabelButton(
-                  label: '🗺️ ${AppL10n.of(context)!.map_btn_route}',
+                _RouteTogglePill(
                   active: routeOn,
-                  activeColor: AppColors.ink900,
                   onTap: onToggleRoute,
                 ),
                 const SizedBox(width: 6),
-                _IconLabelButton(
-                  label: '📍 ${AppL10n.of(context)!.map_btn_gps}',
-                  active: false,
-                  activeColor: AppColors.mint,
+                _GpsCircleButton(
                   loading: gpsLoading,
                   onTap: onGps,
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 동선 토글 — 디자인 spec 의 black pill (active) / white pill (off).
+/// glyph(route) + 텍스트 ("동선") 조합.
+class _RouteTogglePill extends StatelessWidget {
+  final bool active;
+  final VoidCallback onTap;
+  const _RouteTogglePill({required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
+    return Semantics(
+      button: true,
+      selected: active,
+      label: l.map_btn_route,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: active ? AppColors.ink900 : Colors.white,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: active ? AppColors.ink900 : AppColors.line),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.22),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RetraceGlyph(
+                name: 'route',
+                size: 16,
+                color: active ? Colors.white : AppColors.ink900,
+                strokeWidth: 2,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                l.map_btn_route,
+                style: TextStyle(
+                  color: active ? Colors.white : AppColors.ink900,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// GPS — 흰 원 + 크로스헤어 글리프 하나만 (디자인 spec). 텍스트 없음.
+class _GpsCircleButton extends StatelessWidget {
+  final bool loading;
+  final VoidCallback onTap;
+  const _GpsCircleButton({required this.loading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      enabled: !loading,
+      label: AppL10n.of(context)!.map_btn_gps,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.line),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: loading
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppColors.ink900),
+                )
+              : const RetraceGlyph(
+                  name: 'gps',
+                  size: 18,
+                  color: AppColors.ink900,
+                  strokeWidth: 2,
+                ),
         ),
       ),
     );

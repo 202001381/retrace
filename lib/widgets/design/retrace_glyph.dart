@@ -254,6 +254,18 @@ class _GlyphPainter extends CustomPainter {
         canvas.drawLine(const Offset(19, 12), const Offset(22, 12), paint);
         break;
 
+      case 'route':
+        // S-curve — start dot + curve to end dot (design 의 동선 라인)
+        canvas.drawCircle(const Offset(5, 5), 2, paint..style = PaintingStyle.fill);
+        paint.style = PaintingStyle.stroke;
+        canvas.drawCircle(const Offset(19, 19), 2, paint..style = PaintingStyle.fill);
+        paint.style = PaintingStyle.stroke;
+        final p = Path()
+          ..moveTo(5, 7)
+          ..cubicTo(5, 13, 19, 11, 19, 17);
+        canvas.drawPath(p, paint);
+        break;
+
       case 'search':
         canvas.drawCircle(const Offset(11, 11), 6.5, paint);
         canvas.drawLine(const Offset(16, 16), const Offset(20.5, 20.5), paint);
