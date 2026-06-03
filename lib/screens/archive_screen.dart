@@ -44,14 +44,6 @@ class _Vintage {
   static const stampInk = Color(0xFF111111);
 }
 
-/// 한글 시즌 라벨 → 영문 eyebrow 매핑 (시안 v2 — 11/11b/11c/11d).
-const Map<String, String> _kSeasonEng = {
-  '봄': 'SPRING',
-  '여름': 'SUMMER',
-  '가을': 'AUTUMN',
-  '겨울': 'WINTER',
-};
-
 /// 아카이브 본문 공용 텍스트 헬퍼 — theme default (Pretendard fallback system sans)
 /// 를 그대로 inherit. fontFamily 명시는 절대 금지 (기기에 번들 안 된 폰트 명시 →
 /// iOS 가 Times 류 세리프 폴백 골라 톤 깨짐).
@@ -79,8 +71,18 @@ class _SpinePalette {
   const _SpinePalette(this.spine, this.text);
 }
 
+/// ko/en 페어 (Archive 데모 시드 데이터 영문화 — 별도 ARB 키 안 만들고 인라인 페어).
+class _LocPair {
+  final String ko;
+  final String en;
+  const _LocPair(this.ko, this.en);
+  String of(BuildContext ctx) =>
+      Localizations.localeOf(ctx).languageCode == 'en' ? en : ko;
+}
+
 class _SeasonConfig {
-  final String label, tagline;
+  final _LocPair label;
+  final _LocPair tagline;
   final Color titleColor;     // chapter eyebrow 대표 컬러 (브랜드 톤)
   final Color accentColor;    // 시안 def.accent — chapter eyebrow 소프트 컬러
   final Color bgColor;        // shelf 내부 옅은 시즌 BG
@@ -105,8 +107,8 @@ class _SeasonConfig {
 
 const Map<_Season, _SeasonConfig> _kConfigs = {
   _Season.spring: _SeasonConfig(
-    label: '봄',
-    tagline: '벚꽃 흩날리는 봄날',
+    label: _LocPair('봄', 'Spring'),
+    tagline: _LocPair('벚꽃 흩날리는 봄날', 'Cherry blossoms in the breeze'),
     titleColor: Color(0xFFE60023),
     accentColor: Color(0xFFE89AB0),
     bgColor: Color(0xFFFDEFF2),
@@ -123,8 +125,8 @@ const Map<_Season, _SeasonConfig> _kConfigs = {
     ],
   ),
   _Season.summer: _SeasonConfig(
-    label: '여름',
-    tagline: '바다 냄새 나는 여름',
+    label: _LocPair('여름', 'Summer'),
+    tagline: _LocPair('바다 냄새 나는 여름', 'Salt air, sun-bleached afternoons'),
     titleColor: Color(0xFF0084E0),
     accentColor: Color(0xFF1F8FB0),
     bgColor: Color(0xFFE5F4F9),
@@ -141,8 +143,8 @@ const Map<_Season, _SeasonConfig> _kConfigs = {
     ],
   ),
   _Season.autumn: _SeasonConfig(
-    label: '가을',
-    tagline: '단풍이 깊어가는 가을',
+    label: _LocPair('가을', 'Autumn'),
+    tagline: _LocPair('단풍이 깊어가는 가을', 'Maples burning red, the year tipping over'),
     titleColor: Color(0xFF8A6300),
     accentColor: Color(0xFFB5491E),
     bgColor: Color(0xFFFAF0E2),
@@ -159,8 +161,8 @@ const Map<_Season, _SeasonConfig> _kConfigs = {
     ],
   ),
   _Season.winter: _SeasonConfig(
-    label: '겨울',
-    tagline: '눈 내리는 고요한 겨울',
+    label: _LocPair('겨울', 'Winter'),
+    tagline: _LocPair('눈 내리는 고요한 겨울', 'Quiet winter, snow falling all evening'),
     titleColor: Color(0xFF1F2A44),
     accentColor: Color(0xFF2A4A6E),
     bgColor: Color(0xFFEAEFF5),
@@ -184,11 +186,11 @@ class _DiaryBook {
   final String id;
   final DateTime date;
   final _Weather weather;
-  final String headline;
+  final _LocPair headline;
   final List<String> attractionIds;
   final List<_Mission> missions;
   final List<_BadgeSpec> badges;
-  final String story;
+  final _LocPair story;
   /// 사진 placeholder (그라데이션 + 이모지). null = 사진 없음 → 빈티지 스탬프 표시.
   final _SampleIllustration? sampleIllustration;
   const _DiaryBook({
@@ -210,14 +212,14 @@ class _DiaryBook {
 
 class _Weather {
   final String icon; // ☀️ ⛅ 🌧️ ❄️ ⛈️
-  final String label; // '맑음 22°C'
+  final _LocPair label; // ('맑음 22°C', 'Clear 22°C')
   final Color stampColor;
   const _Weather(
       {required this.icon, required this.label, required this.stampColor});
 }
 
 class _Mission {
-  final String label;
+  final _LocPair label;
   final bool completed;
   final IconData icon;
   const _Mission({required this.label, required this.completed, required this.icon});
@@ -225,7 +227,7 @@ class _Mission {
 
 class _BadgeSpec {
   final String emoji;
-  final String label;
+  final _LocPair label;
   const _BadgeSpec({required this.emoji, required this.label});
 }
 
@@ -359,7 +361,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       context: context,
       barrierColor: Colors.black.withOpacity(0.65),
       barrierDismissible: true,
-      barrierLabel: '닫기',
+      barrierLabel: AppL10n.of(context)!.archive_close_label,
       transitionDuration: const Duration(milliseconds: 360),
       pageBuilder: (ctx, anim, secAnim) {
         return _DiaryDialog(
@@ -392,22 +394,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _DiaryBook(
           id: 'd_2026_04_14',
           date: DateTime(2026, 4, 14, 14, 30),
-          weather: const _Weather(icon: '☀️', label: '맑음 22°C', stampColor: _Vintage.stampRed),
-          headline: '벚꽃 흩날리는 첫 봄나들이',
+          weather: _Weather(icon: '☀️', label: _LocPair('맑음 22°C', 'Clear 22°C'), stampColor: _Vintage.stampRed),
+          headline: _LocPair('벚꽃 흩날리는 첫 봄나들이', 'First spring outing under falling petals'),
           attractionIds: const ['cherry_blossom_path', 'carousel'],
-          missions: const [
-            _Mission(label: '회전목마 50m 진입', completed: true, icon: Icons.celebration_rounded),
-            _Mission(label: '벚꽃길 산책 완주', completed: true, icon: Icons.directions_walk_rounded),
-            _Mission(label: '오후 야외 어트랙션 3회', completed: false, icon: Icons.sunny),
+          missions: [
+            _Mission(label: _LocPair('회전목마 50m 진입', 'Within 50m of the carousel'), completed: true, icon: Icons.celebration_rounded),
+            _Mission(label: _LocPair('벚꽃길 산책 완주', 'Cherry blossom walk completed'), completed: true, icon: Icons.directions_walk_rounded),
+            _Mission(label: _LocPair('오후 야외 어트랙션 3회', '3 outdoor rides in the afternoon'), completed: false, icon: Icons.sunny),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🌸', label: '봄의 시작'),
-            _BadgeSpec(emoji: '📷', label: '첫 방문 기록자'),
+            _BadgeSpec(emoji: '🌸', label: _LocPair('봄의 시작', 'Spring begins')),
+            _BadgeSpec(emoji: '📷', label: _LocPair('첫 방문 기록자', 'First visit logged')),
           ],
-          story:
-              '벚꽃이 만개한 4월의 오후, 친구들과 손을 잡고 걸었던 그 길. 바람이 불 때마다 머리 위로 꽃잎이 쏟아져 내렸어요. '
-              '카메라를 꺼낼 새도 없이 그 순간이 너무 빠르게 지나가서, 결국엔 눈에 담는 것으로 만족했답니다. '
-              '점심엔 회전목마 옆 카페에서 봄 한정 음료를 마셨고, 해가 기울 무렵에야 천천히 정문을 나왔습니다.',
+          story: _LocPair(
+            '벚꽃이 만개한 4월의 오후, 친구들과 손을 잡고 걸었던 그 길. 바람이 불 때마다 머리 위로 꽃잎이 쏟아져 내렸어요. '
+            '카메라를 꺼낼 새도 없이 그 순간이 너무 빠르게 지나가서, 결국엔 눈에 담는 것으로 만족했답니다. '
+            '점심엔 회전목마 옆 카페에서 봄 한정 음료를 마셨고, 해가 기울 무렵에야 천천히 정문을 나왔습니다.',
+            'An April afternoon under full bloom, walking hand in hand with friends. Every breeze brought another shower of petals over our heads. '
+            'There was no time to grab a camera — the moment moved too fast, so we just kept it in our eyes. '
+            'For lunch we tried a spring-only drink at the café next to the carousel, and only when the sun started to dip did we slowly head out the front gate.',
+          ),
           sampleIllustration: const _SampleIllustration(
             gradient: [Color(0xFFFCE4EC), Color(0xFFF8BBD0), Color(0xFFE91E63)],
             emoji: '🌸',
@@ -416,39 +422,45 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _DiaryBook(
           id: 'd_2026_04_21',
           date: DateTime(2026, 4, 21, 11, 15),
-          weather: const _Weather(icon: '⛅', label: '구름 많음 18°C', stampColor: _Vintage.stampInk),
-          headline: '어른의 회전목마, 다시 동심',
+          weather: _Weather(icon: '⛅', label: _LocPair('구름 많음 18°C', 'Mostly cloudy 18°C'), stampColor: _Vintage.stampInk),
+          headline: _LocPair('어른의 회전목마, 다시 동심', "A grown-up's carousel — childhood comes back"),
           attractionIds: const ['carousel'],
-          missions: const [
-            _Mission(label: '회전목마 탑승', completed: true, icon: Icons.attractions_rounded),
-            _Mission(label: '캐릭터 타운 전체 산책', completed: true, icon: Icons.map_rounded),
+          missions: [
+            _Mission(label: _LocPair('회전목마 탑승', 'Rode the carousel'), completed: true, icon: Icons.attractions_rounded),
+            _Mission(label: _LocPair('캐릭터 타운 전체 산책', 'Walked all of Character Town'), completed: true, icon: Icons.map_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🎠', label: '동심 회복'),
+            _BadgeSpec(emoji: '🎠', label: _LocPair('동심 회복', 'Childhood, restored')),
           ],
-          story:
-              '어릴 적 엄마 손을 잡고 처음 탔던 회전목마. 어른이 되어 다시 올라타니 그 시절의 설렘이 그대로 떠올랐어요. '
-              '음악도, 조명도, 거울에 비친 풍경도 모두 그대로였답니다.',
+          story: _LocPair(
+            '어릴 적 엄마 손을 잡고 처음 탔던 회전목마. 어른이 되어 다시 올라타니 그 시절의 설렘이 그대로 떠올랐어요. '
+            '음악도, 조명도, 거울에 비친 풍경도 모두 그대로였답니다.',
+            "The first carousel I ever rode, holding mom's hand. Climbing on again as an adult, the same thrill from back then came rushing back. "
+            'The music, the lights, the reflection in the mirror — all of it untouched.',
+          ),
           // sampleIllustration 없음 → 빈티지 스탬프 표시
         ),
         _DiaryBook(
           id: 'd_2026_05_05',
           date: DateTime(2026, 5, 5, 12, 0),
-          weather: const _Weather(icon: '☀️', label: '맑음 24°C', stampColor: _Vintage.stampRed),
-          headline: '어린이날, 가족 총출동',
+          weather: _Weather(icon: '☀️', label: _LocPair('맑음 24°C', 'Clear 24°C'), stampColor: _Vintage.stampRed),
+          headline: _LocPair('어린이날, 가족 총출동', "Children's Day — the whole family showed up"),
           attractionIds: const ['mini_viking', 'carousel', 'bumper_car'],
-          missions: const [
-            _Mission(label: '가족 단체 사진 촬영', completed: true, icon: Icons.groups_rounded),
-            _Mission(label: '미니바이킹 첫 탑승', completed: true, icon: Icons.sailing_rounded),
-            _Mission(label: '범퍼카 5회 이상', completed: false, icon: Icons.directions_car_rounded),
+          missions: [
+            _Mission(label: _LocPair('가족 단체 사진 촬영', 'Took the family group photo'), completed: true, icon: Icons.groups_rounded),
+            _Mission(label: _LocPair('미니바이킹 첫 탑승', 'First mini Viking ride'), completed: true, icon: Icons.sailing_rounded),
+            _Mission(label: _LocPair('범퍼카 5회 이상', '5+ bumper car rounds'), completed: false, icon: Icons.directions_car_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '👨‍👩‍👧‍👦', label: '패밀리 데이'),
-            _BadgeSpec(emoji: '🎈', label: '어린이날 마스터'),
+            _BadgeSpec(emoji: '👨‍👩‍👧‍👦', label: _LocPair('패밀리 데이', 'Family Day')),
+            _BadgeSpec(emoji: '🎈', label: _LocPair('어린이날 마스터', "Children's Day master")),
           ],
-          story:
-              '온 가족이 다 모인 어린이날. 조카들이 처음 타본 미니바이킹에서 환하게 웃던 그 표정, 평생 기억에 남을 것 같아요. '
-              '점심엔 다 같이 모여 사진을 찍었는데 아빠가 셀카봉을 처음 써보셨답니다.',
+          story: _LocPair(
+            '온 가족이 다 모인 어린이날. 조카들이 처음 타본 미니바이킹에서 환하게 웃던 그 표정, 평생 기억에 남을 것 같아요. '
+            '점심엔 다 같이 모여 사진을 찍었는데 아빠가 셀카봉을 처음 써보셨답니다.',
+            "Children's Day with everyone together. The way my niece and nephew lit up on their first mini Viking ride — I'll remember that look forever. "
+            'At lunch we all crowded in for a photo and dad tried a selfie stick for the very first time.',
+          ),
           sampleIllustration: const _SampleIllustration(
             gradient: [Color(0xFFFFF3E0), Color(0xFFFFCC80), Color(0xFFFF7043)],
             emoji: '👨‍👩‍👧‍👦',
@@ -459,38 +471,44 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _DiaryBook(
           id: 'd_2025_07_04',
           date: DateTime(2025, 7, 4, 19, 30),
-          weather: const _Weather(icon: '☀️', label: '맑음 31°C', stampColor: _Vintage.stampRed),
-          headline: '한여름 야간개장의 매력',
+          weather: _Weather(icon: '☀️', label: _LocPair('맑음 31°C', 'Clear 31°C'), stampColor: _Vintage.stampRed),
+          headline: _LocPair('한여름 야간개장의 매력', 'Midsummer after-hours, a different park'),
           attractionIds: const ['galaxy_888', 'carousel'],
-          missions: const [
-            _Mission(label: '야간 어트랙션 3종', completed: true, icon: Icons.nightlight_round),
-            _Mission(label: '21시 이후 분수쇼 관람', completed: true, icon: Icons.celebration_rounded),
+          missions: [
+            _Mission(label: _LocPair('야간 어트랙션 3종', '3 rides after dark'), completed: true, icon: Icons.nightlight_round),
+            _Mission(label: _LocPair('21시 이후 분수쇼 관람', 'Watched the 9pm fountain show'), completed: true, icon: Icons.celebration_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🌃', label: '야경 헌터'),
+            _BadgeSpec(emoji: '🌃', label: _LocPair('야경 헌터', 'Nightscape hunter')),
           ],
-          story:
-              '해가 진 후의 서울랜드는 완전 다른 분위기예요. 낮엔 봐도 그냥 지나치던 조명들이 모두 살아 움직였어요. '
-              '은하열차의 야간 라이드는 그 어떤 어트랙션보다도 짜릿했답니다.',
+          story: _LocPair(
+            '해가 진 후의 서울랜드는 완전 다른 분위기예요. 낮엔 봐도 그냥 지나치던 조명들이 모두 살아 움직였어요. '
+            '은하열차의 야간 라이드는 그 어떤 어트랙션보다도 짜릿했답니다.',
+            'Seoul Land after sundown is a whole different mood. Lights I would have walked right past in daylight were suddenly alive. '
+            "The Galaxy 888's night ride was the most thrilling thing of the trip — easily.",
+          ),
           // 사진 없음 → 빈티지 스탬프
         ),
         _DiaryBook(
           id: 'd_2025_07_20',
           date: DateTime(2025, 7, 20, 13, 30),
-          weather: const _Weather(icon: '☀️', label: '폭염 33°C', stampColor: _Vintage.stampRed),
-          headline: '스카이엑스에서 본 여름 하늘',
+          weather: _Weather(icon: '☀️', label: _LocPair('폭염 33°C', 'Heatwave 33°C'), stampColor: _Vintage.stampRed),
+          headline: _LocPair('스카이엑스에서 본 여름 하늘', 'The summer sky from Sky X'),
           attractionIds: const ['sky_x'],
-          missions: const [
-            _Mission(label: '스카이엑스 첫 도전', completed: true, icon: Icons.paragliding_rounded),
-            _Mission(label: '익스트림 라이드 2회', completed: true, icon: Icons.bolt_rounded),
+          missions: [
+            _Mission(label: _LocPair('스카이엑스 첫 도전', 'First Sky X attempt'), completed: true, icon: Icons.paragliding_rounded),
+            _Mission(label: _LocPair('익스트림 라이드 2회', '2 extreme rides'), completed: true, icon: Icons.bolt_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🪂', label: '스릴 마스터'),
-            _BadgeSpec(emoji: '☀️', label: '여름의 정점'),
+            _BadgeSpec(emoji: '🪂', label: _LocPair('스릴 마스터', 'Thrill master')),
+            _BadgeSpec(emoji: '☀️', label: _LocPair('여름의 정점', 'Peak summer')),
           ],
-          story:
-              '70m 상공에서 떨어지던 그 순간, 시간이 멈춘 듯했어요. 떨어지는 동안 본 푸른 여름 하늘이 잊혀지지 않아요. '
-              '내려와서 다시 줄을 섰더니 친구가 어이없어했답니다.',
+          story: _LocPair(
+            '70m 상공에서 떨어지던 그 순간, 시간이 멈춘 듯했어요. 떨어지는 동안 본 푸른 여름 하늘이 잊혀지지 않아요. '
+            '내려와서 다시 줄을 섰더니 친구가 어이없어했답니다.',
+            "In the moment we dropped from 70m up, time just stopped. That blue summer sky I saw on the way down — I can't shake it. "
+            'I got off and immediately got back in line. My friend was speechless.',
+          ),
           sampleIllustration: const _SampleIllustration(
             gradient: [Color(0xFFE3F2FD), Color(0xFF64B5F6), Color(0xFF1976D2)],
             emoji: '🪂',
@@ -499,37 +517,42 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _DiaryBook(
           id: 'd_2025_08_05',
           date: DateTime(2025, 8, 5, 15, 10),
-          weather: const _Weather(icon: '⛈️', label: '뇌우 28°C', stampColor: _Vintage.stampInk),
-          headline: '뇌우 피해 실내 어트랙션 종일',
+          weather: _Weather(icon: '⛈️', label: _LocPair('뇌우 28°C', 'Thunderstorm 28°C'), stampColor: _Vintage.stampInk),
+          headline: _LocPair('뇌우 피해 실내 어트랙션 종일', 'Ducking the storm — all indoors, all day'),
           attractionIds: const ['bumper_car', 'time_machine_5d'],
-          missions: const [
-            _Mission(label: '실내 어트랙션 3종 클리어', completed: true, icon: Icons.house_rounded),
-            _Mission(label: '범퍼카 단체전', completed: true, icon: Icons.directions_car_rounded),
+          missions: [
+            _Mission(label: _LocPair('실내 어트랙션 3종 클리어', 'Cleared 3 indoor rides'), completed: true, icon: Icons.house_rounded),
+            _Mission(label: _LocPair('범퍼카 단체전', 'Bumper car group battle'), completed: true, icon: Icons.directions_car_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '☂️', label: '비 오는 날 탐험가'),
+            _BadgeSpec(emoji: '☂️', label: _LocPair('비 오는 날 탐험가', 'Rainy-day explorer')),
           ],
-          story:
-              '오후부터 비가 쏟아져서 실내 위주로 다녔어요. 오히려 사람이 적어서 여유로웠고, '
-              '범퍼카는 같은 자리에서 30분 동안 연속으로 탔답니다.',
+          story: _LocPair(
+            '오후부터 비가 쏟아져서 실내 위주로 다녔어요. 오히려 사람이 적어서 여유로웠고, '
+            '범퍼카는 같은 자리에서 30분 동안 연속으로 탔답니다.',
+            'Rain poured down from the afternoon on so we stayed indoors. Fewer people around — actually a relief — and '
+            'we rode the bumper cars in the same spot for 30 minutes straight.',
+          ),
         ),
       ],
       _Season.autumn: [
         _DiaryBook(
           id: 'd_2025_10_18',
           date: DateTime(2025, 10, 18, 14, 20),
-          weather: const _Weather(icon: '☀️', label: '맑음 19°C', stampColor: _Vintage.stampRed),
-          headline: '단풍 사이로 달린 은하열차',
+          weather: _Weather(icon: '☀️', label: _LocPair('맑음 19°C', 'Clear 19°C'), stampColor: _Vintage.stampRed),
+          headline: _LocPair('단풍 사이로 달린 은하열차', 'Galaxy 888 racing through red maples'),
           attractionIds: const ['galaxy_888', 'gyro_swing'],
-          missions: const [
-            _Mission(label: '단풍 명소 3곳 방문', completed: true, icon: Icons.park_rounded),
-            _Mission(label: '은하열차 야간 라이드', completed: false, icon: Icons.train_rounded),
+          missions: [
+            _Mission(label: _LocPair('단풍 명소 3곳 방문', 'Visited 3 maple spots'), completed: true, icon: Icons.park_rounded),
+            _Mission(label: _LocPair('은하열차 야간 라이드', 'Galaxy 888 night ride'), completed: false, icon: Icons.train_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🍁', label: '단풍 헌터'),
+            _BadgeSpec(emoji: '🍁', label: _LocPair('단풍 헌터', 'Maple hunter')),
           ],
-          story:
-              '단풍이 물든 풍경 사이로 질주하는 은하열차. 바람에 실려오는 가을 향기와 함께 달렸던 그 코스가 최고였어요.',
+          story: _LocPair(
+            '단풍이 물든 풍경 사이로 질주하는 은하열차. 바람에 실려오는 가을 향기와 함께 달렸던 그 코스가 최고였어요.',
+            'Galaxy 888 tearing through a landscape soaked in maple red. Riding it with the autumn air streaming in — best track of the day.',
+          ),
           sampleIllustration: const _SampleIllustration(
             gradient: [Color(0xFFFFF3E0), Color(0xFFFFB74D), Color(0xFFE65100)],
             emoji: '🍁',
@@ -538,40 +561,46 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _DiaryBook(
           id: 'd_2025_10_25',
           date: DateTime(2025, 10, 25, 16, 10),
-          weather: const _Weather(icon: '⛅', label: '구름 16°C', stampColor: _Vintage.stampInk),
-          headline: '가을 야경 둘만의 데이트',
+          weather: _Weather(icon: '⛅', label: _LocPair('구름 16°C', 'Cloudy 16°C'), stampColor: _Vintage.stampInk),
+          headline: _LocPair('가을 야경 둘만의 데이트', 'Autumn nightscape, just the two of us'),
           attractionIds: const ['shot_drop', 'galaxy_888'],
-          missions: const [
-            _Mission(label: '저녁 야경 어트랙션', completed: true, icon: Icons.nightlight_round),
-            _Mission(label: '단풍 포토스팟 통과', completed: true, icon: Icons.camera_alt_rounded),
+          missions: [
+            _Mission(label: _LocPair('저녁 야경 어트랙션', 'Evening night-view ride'), completed: true, icon: Icons.nightlight_round),
+            _Mission(label: _LocPair('단풍 포토스팟 통과', 'Maple photo spots cleared'), completed: true, icon: Icons.camera_alt_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '💕', label: '데이트 마스터'),
+            _BadgeSpec(emoji: '💕', label: _LocPair('데이트 마스터', 'Date-night master')),
           ],
-          story:
-              '단풍이 절정이던 날, 둘이서 천천히 걸으며 본 풍경. 시간이 멈췄으면 좋겠다 싶었어요. '
-              '저녁엔 야경 명소에서 잠시 쉬며 그날의 모든 것을 마음에 담았습니다.',
+          story: _LocPair(
+            '단풍이 절정이던 날, 둘이서 천천히 걸으며 본 풍경. 시간이 멈췄으면 좋겠다 싶었어요. '
+            '저녁엔 야경 명소에서 잠시 쉬며 그날의 모든 것을 마음에 담았습니다.',
+            'Peak maple, walking slowly together — I caught myself wishing time would just stop. '
+            'In the evening we paused at a viewpoint and quietly took in everything from the day.',
+          ),
         ),
       ],
       _Season.winter: [
         _DiaryBook(
           id: 'd_2024_12_24',
           date: DateTime(2024, 12, 24, 18, 30),
-          weather: const _Weather(icon: '❄️', label: '눈 -2°C', stampColor: _Vintage.stampInk),
-          headline: '눈 내리는 회전목마, 동화의 밤',
+          weather: _Weather(icon: '❄️', label: _LocPair('눈 -2°C', 'Snow -2°C'), stampColor: _Vintage.stampInk),
+          headline: _LocPair('눈 내리는 회전목마, 동화의 밤', 'Snow on the carousel — a fairytale night'),
           attractionIds: const ['carousel', 'santa_restaurant'],
-          missions: const [
-            _Mission(label: '눈 오는 날 야간 방문', completed: true, icon: Icons.ac_unit_rounded),
-            _Mission(label: '산타레스토랑 식사', completed: true, icon: Icons.restaurant_rounded),
-            _Mission(label: '눈 인증샷 5장', completed: false, icon: Icons.camera_alt_rounded),
+          missions: [
+            _Mission(label: _LocPair('눈 오는 날 야간 방문', 'Night visit on a snowy day'), completed: true, icon: Icons.ac_unit_rounded),
+            _Mission(label: _LocPair('산타레스토랑 식사', 'Dinner at Santa Restaurant'), completed: true, icon: Icons.restaurant_rounded),
+            _Mission(label: _LocPair('눈 인증샷 5장', '5 snow photos saved'), completed: false, icon: Icons.camera_alt_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🎄', label: '크리스마스 이브'),
-            _BadgeSpec(emoji: '❄️', label: '겨울 동화'),
+            _BadgeSpec(emoji: '🎄', label: _LocPair('크리스마스 이브', 'Christmas Eve')),
+            _BadgeSpec(emoji: '❄️', label: _LocPair('겨울 동화', 'Winter fairytale')),
           ],
-          story:
-              '함박눈이 내리던 12월 24일 저녁, 조명이 켜진 회전목마. 한 폭의 동화 같았던 그 풍경을 잊을 수 없어요. '
-              '추워서 손이 곱아도 카메라 셔터를 멈출 수 없었답니다.',
+          story: _LocPair(
+            '함박눈이 내리던 12월 24일 저녁, 조명이 켜진 회전목마. 한 폭의 동화 같았던 그 풍경을 잊을 수 없어요. '
+            '추워서 손이 곱아도 카메라 셔터를 멈출 수 없었답니다.',
+            "Big fat flakes coming down on Christmas Eve, lights on the carousel. The whole scene looked pulled out of a storybook — I can't forget it. "
+            'My hands were numb but I just kept hitting the shutter.',
+          ),
           sampleIllustration: const _SampleIllustration(
             gradient: [Color(0xFFE1F5FE), Color(0xFFB3E5FC), Color(0xFF0288D1)],
             emoji: '🎄',
@@ -580,18 +609,20 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _DiaryBook(
           id: 'd_2025_01_01',
           date: DateTime(2025, 1, 1, 13, 0),
-          weather: const _Weather(icon: '☀️', label: '맑음 1°C', stampColor: _Vintage.stampRed),
-          headline: '새해 첫 방문, 타임머신 5D',
+          weather: _Weather(icon: '☀️', label: _LocPair('맑음 1°C', 'Clear 1°C'), stampColor: _Vintage.stampRed),
+          headline: _LocPair('새해 첫 방문, 타임머신 5D', "New Year's first visit — Time Machine 5D"),
           attractionIds: const ['time_machine_5d'],
-          missions: const [
-            _Mission(label: '새해 첫 어트랙션', completed: true, icon: Icons.celebration_rounded),
-            _Mission(label: '5D 영상 관람', completed: true, icon: Icons.movie_rounded),
+          missions: [
+            _Mission(label: _LocPair('새해 첫 어트랙션', "New Year's first ride"), completed: true, icon: Icons.celebration_rounded),
+            _Mission(label: _LocPair('5D 영상 관람', 'Watched the 5D feature'), completed: true, icon: Icons.movie_rounded),
           ],
           badges: const [
-            _BadgeSpec(emoji: '🎊', label: '새해 첫 도전'),
+            _BadgeSpec(emoji: '🎊', label: _LocPair('새해 첫 도전', "New Year's first run")),
           ],
-          story:
-              '새해 첫날 가족과 함께 본 5D 영상. 미래의 한 장면 같았던 그 경험이 새해의 시작을 특별하게 만들어줬어요.',
+          story: _LocPair(
+            '새해 첫날 가족과 함께 본 5D 영상. 미래의 한 장면 같았던 그 경험이 새해의 시작을 특별하게 만들어줬어요.',
+            "Watched the 5D feature with family on New Year's Day. It felt like a scene from the future and made the start of the year feel special.",
+          ),
         ),
       ],
     };
@@ -663,7 +694,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '기억의 책장',
+            AppL10n.of(context)!.archive_bookshelf_title,
             style: _serif(
               size: 28,
               weight: FontWeight.w900,
@@ -673,7 +704,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '서울랜드를 찾은 날들이 한 권씩 쌓이고 있어요',
+            AppL10n.of(context)!.archive_bookshelf_subtitle,
             style: _serif(
               size: 12,
               weight: FontWeight.w500,
@@ -795,7 +826,7 @@ class _SeasonBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${config.label} 챕터',
+                  AppL10n.of(context)!.archive_chapter_label(config.label.of(context)),
                   style: _serif(
                     size: 18,
                     weight: FontWeight.w900,
@@ -804,7 +835,7 @@ class _SeasonBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  config.tagline,
+                  config.tagline.of(context),
                   style: _serif(size: 12, color: _Vintage.inkMid),
                 ),
               ],
@@ -844,7 +875,7 @@ class _Bookshelf extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'CHAPTER · ${_kSeasonEng[config.label] ?? config.label.toUpperCase()}',
+                      'CHAPTER · ${config.label.en.toUpperCase()}',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -854,7 +885,7 @@ class _Bookshelf extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      config.tagline,
+                      config.tagline.of(context),
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -901,7 +932,7 @@ class _Bookshelf extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${books.length}권',
+                AppL10n.of(context)!.archive_books_count(books.length),
                 style: const TextStyle(
                   fontSize: 10,
                   color: Color(0xFF707070),
@@ -1039,14 +1070,14 @@ class _BookSpine extends StatelessWidget {
     return '$m.$d';
   }
 
-  /// 헤드라인에서 공백·구두점 제거, 최대 5자.
-  String get _spineTitle {
-    final cleaned = book.headline.replaceAll(RegExp(r'[\s·,.!?]'), '');
+  /// 헤드라인에서 공백·구두점 제거, 최대 5자 (locale 별 텍스트 기준).
+  String _spineTitle(BuildContext context) {
+    final cleaned = book.headline.of(context).replaceAll(RegExp(r'[\s·,.!?]'), '');
     return cleaned.characters.take(5).toString();
   }
 
-  double get _width {
-    final len = _spineTitle.characters.length;
+  double _spineWidth(BuildContext context) {
+    final len = _spineTitle(context).characters.length;
     return (28 + len * 1.4).clamp(28.0, 36.0);
   }
 
@@ -1077,7 +1108,7 @@ class _BookSpine extends StatelessWidget {
         child: Transform.rotate(
           angle: _tilt,
           child: Container(
-            width: _width,
+            width: _spineWidth(context),
             height: 110,
             decoration: BoxDecoration(
               color: palette.spine,
@@ -1130,7 +1161,7 @@ class _BookSpine extends StatelessWidget {
                 Positioned(
                   top: 8,
                   child: Container(
-                    width: _width * 0.7,
+                    width: _spineWidth(context) * 0.7,
                     height: 4,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.4),
@@ -1142,7 +1173,7 @@ class _BookSpine extends StatelessWidget {
                 Positioned(
                   bottom: 8,
                   child: Container(
-                    width: _width * 0.7,
+                    width: _spineWidth(context) * 0.7,
                     height: 4,
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.18),
@@ -1157,7 +1188,7 @@ class _BookSpine extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      for (final ch in _spineTitle.characters)
+                      for (final ch in _spineTitle(context).characters)
                         Text(
                           ch,
                           style: TextStyle(
@@ -1397,7 +1428,7 @@ class _DialogTopBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${config.label.toUpperCase()} · VOL.1',
+                    '${config.label.en.toUpperCase()} · VOL.1',
                     style: TextStyle(
                       color: eyebrow,
                       fontSize: 10,
@@ -1476,9 +1507,14 @@ class _PageCover extends StatelessWidget {
     return '${months[d.month - 1]} ${d.day} · ${d.year}';
   }
 
-  String _formatKoreanDate(DateTime d) {
-    final wd = const ['일', '월', '화', '수', '목', '금', '토'][d.weekday % 7];
-    return '${d.month}월 ${d.day}일 · $wd요일';
+  String _formatKoreanDate(BuildContext ctx, DateTime d) {
+    final l = AppL10n.of(ctx)!;
+    final wd = [
+      l.archive_weekday_sun, l.archive_weekday_mon, l.archive_weekday_tue,
+      l.archive_weekday_wed, l.archive_weekday_thu, l.archive_weekday_fri,
+      l.archive_weekday_sat,
+    ][d.weekday % 7];
+    return l.archive_date_full(d.month, d.day, wd);
   }
 
   @override
@@ -1529,7 +1565,7 @@ class _PageCover extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${_formatKoreanDate(book.date)} · 11:42-18:30',
+                    '${_formatKoreanDate(context, book.date)} · 11:42-18:30',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.85),
                       fontSize: 12,
@@ -1560,7 +1596,7 @@ class _PageCover extends StatelessWidget {
                 ),
               ),
               child: Text(
-                '"${book.story.split(RegExp(r'[.。!?]'))[0]}."',
+                '"${book.story.of(context).split(RegExp(r'[.。!?]'))[0]}."',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.92),
                   fontSize: 14,
@@ -1627,18 +1663,19 @@ class _BookCoverCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 40),
-            Text(
-              book.headline.length > 8
-                  ? '${book.headline.characters.take(8).toString()}…'
-                  : book.headline,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                height: 1.25,
-                letterSpacing: -0.4,
-              ),
-            ),
+            Builder(builder: (ctx) {
+              final h = book.headline.of(ctx);
+              return Text(
+                h.length > 8 ? '${h.characters.take(8).toString()}…' : h,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  height: 1.25,
+                  letterSpacing: -0.4,
+                ),
+              );
+            }),
             const SizedBox(height: 14),
             Text(
               formatDate(book.date),
@@ -1731,7 +1768,7 @@ class _PageJournal extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
         children: [
           Text(
-            'CH · 02 · 탐험 일지',
+            AppL10n.of(context)!.archive_ch_02_log,
             style: TextStyle(
               color: const Color(0xFFE60023),
               fontSize: 11,
@@ -1741,7 +1778,7 @@ class _PageJournal extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${attrs.length}곳을 거쳤어요',
+            AppL10n.of(context)!.archive_visited_count(attrs.length),
             style: const TextStyle(
               color: Color(0xFF111111),
               fontSize: 22,
@@ -1761,11 +1798,11 @@ class _PageJournal extends StatelessWidget {
           const SizedBox(height: 18),
           // 어트랙션 stamp 리스트 (시안 C)
           if (attrs.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
-                '기록된 어트랙션이 없어요.',
-                style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
+                AppL10n.of(context)!.archive_no_attractions,
+                style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
               ),
             )
           else
@@ -1780,7 +1817,7 @@ class _PageJournal extends StatelessWidget {
           const SizedBox(height: 14),
           // 미션 섹션 (compact list)
           Text(
-            '오늘의 미션',
+            AppL10n.of(context)!.archive_todays_missions,
             style: TextStyle(
               color: const Color(0xFFE60023),
               fontSize: 11,
@@ -1806,7 +1843,7 @@ class _PageJournal extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      m.label,
+                      m.label.of(context),
                       style: TextStyle(
                         color: const Color(0xFF333333),
                         fontSize: 13,
@@ -1825,7 +1862,7 @@ class _PageJournal extends StatelessWidget {
             const _JournalDashedRule(),
             const SizedBox(height: 14),
             Text(
-              '획득한 뱃지',
+              AppL10n.of(context)!.archive_earned_badges,
               style: TextStyle(
                 color: const Color(0xFFE60023),
                 fontSize: 11,
@@ -2114,7 +2151,7 @@ class _MissionRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              mission.label,
+              mission.label.of(context),
               style: _serif(
                 size: 12,
                 weight: done ? FontWeight.w700 : FontWeight.w500,
@@ -2150,7 +2187,7 @@ class _BadgeChip extends StatelessWidget {
           Text(spec.emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 6),
           Text(
-            spec.label,
+            spec.label.of(context),
             style: _serif(
               size: 11,
               weight: FontWeight.w800,
@@ -2190,7 +2227,7 @@ class _PageMemory extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
         children: [
           Text(
-            'CH · 03 · 추억의 장',
+            AppL10n.of(context)!.archive_ch_03_memory,
             style: TextStyle(
               color: const Color(0xFFE60023),
               fontSize: 11,
@@ -2214,7 +2251,7 @@ class _PageMemory extends StatelessWidget {
               ),
             ),
             child: Text(
-              book.story,
+              book.story.of(context),
               style: _serif(
                 size: 14,
                 color: _Vintage.inkBody,
@@ -2233,7 +2270,7 @@ class _PageMemory extends StatelessWidget {
                     caption: '${book.date.month}.${book.date.day}',
                   )
                 : _VintageStamp(
-                    main: '오늘의 탐험 성공',
+                    main: AppL10n.of(context)!.archive_explore_success,
                     sub: 'MISSION COMPLETE',
                     color: _Vintage.stampRed,
                   ),
@@ -2246,28 +2283,28 @@ class _PageMemory extends StatelessWidget {
               if (userPhoto == null) ...[
                 _PhotoActionBtn(
                   icon: Icons.photo_library_rounded,
-                  label: '갤러리',
+                  label: AppL10n.of(context)!.archive_photo_gallery,
                   onTap: onPickGallery,
                   primary: true,
                 ),
                 const SizedBox(width: 10),
                 _PhotoActionBtn(
                   icon: Icons.camera_alt_rounded,
-                  label: '촬영',
+                  label: AppL10n.of(context)!.archive_photo_camera,
                   onTap: onPickCamera,
                   primary: false,
                 ),
               ] else ...[
                 _PhotoActionBtn(
                   icon: Icons.edit_rounded,
-                  label: '사진 변경',
+                  label: AppL10n.of(context)!.archive_photo_replace,
                   onTap: onPickGallery,
                   primary: true,
                 ),
                 const SizedBox(width: 10),
                 _PhotoActionBtn(
                   icon: Icons.delete_outline_rounded,
-                  label: '삭제',
+                  label: AppL10n.of(context)!.archive_photo_delete,
                   onTap: onRemovePhoto,
                   primary: false,
                 ),
@@ -2579,9 +2616,9 @@ class _DiaryStats extends StatelessWidget {
         children: [
           Expanded(
               child: _StatItem(
-                  label: '수집한 추억',
+                  label: AppL10n.of(context)!.archive_stat_collected,
                   value: '${books.length}',
-                  unit: '권',
+                  unit: AppL10n.of(context)!.archive_book_count_unit,
                   color: config.titleColor)),
           Container(
               width: 1,
@@ -2589,9 +2626,9 @@ class _DiaryStats extends StatelessWidget {
               color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
               child: _StatItem(
-                  label: '사진 첨부',
+                  label: AppL10n.of(context)!.archive_stat_photo_attached,
                   value: '$withPhoto',
-                  unit: '권',
+                  unit: AppL10n.of(context)!.archive_book_count_unit,
                   color: config.titleColor)),
           Container(
               width: 1,
@@ -2599,7 +2636,7 @@ class _DiaryStats extends StatelessWidget {
               color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
               child: _StatItem(
-                  label: '기록 기간',
+                  label: AppL10n.of(context)!.archive_stat_record_period,
                   value: '${fmt(firstDate)}~${fmt(lastDate)}',
                   unit: '',
                   color: config.titleColor,
@@ -2818,7 +2855,7 @@ class _PaperHint extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요.\n사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.',
+              AppL10n.of(context)!.archive_hint,
               style: _serif(
                 size: 12,
                 color: const Color(0xFF5A3F18), // 충분히 진한 갈색 — 가독성
