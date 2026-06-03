@@ -45,6 +45,12 @@ SCHEDULER_ENABLED=0 python -m backend.app
 | GET  | `/api/rewards/list?uid=...` | — | `{items[{reward_id,type,threshold,season,granted_at,redeemed_at,code}]}` |
 | POST | `/api/rewards/redeem` | `{uid, reward_id}` | 갱신된 reward (`redeemed_at` 채움) |
 
+### Narrative 디스크 캐시
+같은 `(attraction_id, locale, season, companion_type)` 4-튜플 조합은 변동 없는 결과 — 한 번 생성된 서사는 `./cache/narratives/{sha1[:16]}.json` 으로 보관. 재호출 시 Claude API 호출 없이 즉시 반환. 캐시 위치 변경: `NARRATIVE_CACHE_DIR=…` env. 룰 기반 fallback 응답은 캐시 안 함 (룰은 즉시 생성 가능).
+
+### FCM 다중 토큰 발송
+`fcm.send_to_tokens(tokens, title, body, data=)` — 최대 500개 multicast. 개인 보상 알림 등에 사용. 토픽 발송과 별개.
+
 ### Beta 환경 — 외부 키 없이 동작
 
 | 의존성 | 미설정 시 동작 |

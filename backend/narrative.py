@@ -1,13 +1,21 @@
 """Task 5 — Claude API 기반 어트랙션 서사 생성.
 
 attractions/{id}/history_text 를 Firestore 에서 읽어 컨텍스트 프롬프트에 주입한다.
+
+디스크 캐시: 같은 attraction × locale × season × companion_type 조합은 변동 없는
+서사 — 한 번 생성되면 ./cache/narratives/{key}.json 으로 보관해 재호출 시 즉시 반환.
+v2 백엔드 story.py 의 캐시 패턴을 가져옴. ANTHROPIC_API_KEY 미설정 (fallback)
+케이스는 캐시하지 않음 (룰 기반은 즉시 생성).
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from anthropic import Anthropic
 
@@ -39,6 +47,34 @@ class NarrativeOutput:
 
 
 _client: Anthropic | None = None
+
+
+_CACHE_DIR = Path(os.environ.get("NARRATIVE_CACHE_DIR", "./cache/narratives"))
+
+
+def _cache_key(attraction_id: str, locale: str, season: str, companion_type: str) -> str:
+    raw = f"{attraction_id}|{locale}|{season}|{companion_type}"
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _cache_get(key: str) -> dict | None:
+    path = _CACHE_DIR / f"{key}.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _cache_put(key: str, data: dict) -> None:
+    try:
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        (_CACHE_DIR / f"{key}.json").write_text(
+            json.dumps(data, ensure_ascii=False, indent=2), "utf-8"
+        )
+    except OSError as e:
+        logger.warning("narrative — cache write failed: %s", e)
 
 
 def _get_client() -> Anthropic:
@@ -129,7 +165,18 @@ def generate_narrative(
     name = attraction.get("name") or attraction_id
     history = attraction.get("history_text") or attraction.get("description") or ""
 
-    # Anthropic API 미설정 시 룰 기반 fallback (서비스 안 끊기게).
+    # 디스크 캐시 hit — Claude 호출 없이 즉시 반환.
+    cache_key = _cache_key(attraction_id, locale, season, companion_type)
+    cached = _cache_get(cache_key)
+    if cached:
+        logger.info("narrative — cache hit %s", cache_key)
+        return NarrativeOutput(
+            attraction_id=attraction_id,
+            attraction_name=cached.get("attraction_name") or name,
+            narrative=cached["narrative"],
+        )
+
+    # Anthropic API 미설정 시 룰 기반 fallback (서비스 안 끊기게). 캐시 안 함.
     if not os.getenv("ANTHROPIC_API_KEY"):
         logger.info("narrative — ANTHROPIC_API_KEY missing, using fallback")
         return NarrativeOutput(
@@ -158,8 +205,24 @@ def generate_narrative(
         text = "".join(block.text for block in resp.content if hasattr(block, "text")).strip()
         if not text:
             text = _fallback_narrative(name, companion_type, season, locale)
+            cached_ok = False
+        else:
+            cached_ok = True
     except Exception as e:
         logger.warning("narrative — Anthropic call failed (%s), using fallback", e)
         text = _fallback_narrative(name, companion_type, season, locale)
+        cached_ok = False
+
+    # Claude 성공 응답만 캐시 — 룰 기반 fallback 은 매번 생성 가능하므로 캐시 의미 없음.
+    if cached_ok:
+        _cache_put(cache_key, {
+            "attraction_id": attraction_id,
+            "attraction_name": name,
+            "narrative": text,
+            "model": model,
+            "locale": locale,
+            "season": season,
+            "companion_type": companion_type,
+        })
 
     return NarrativeOutput(attraction_id=attraction_id, attraction_name=name, narrative=text)
