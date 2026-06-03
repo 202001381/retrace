@@ -18,7 +18,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from . import config, discount, score
+from . import config, discount, rewards, score
 from .narrative import generate_narrative
 from .pipeline import run_pipeline
 from .predictor import predict_one, to_crowd_level
@@ -363,6 +363,62 @@ def create_app() -> Flask:
             "is_extreme": is_extreme,
             "computed_at": now.isoformat(),
         })
+
+    # ── Task 5 — 시즌 리워드 (v2 백엔드에서 부분 도입) ──────────────
+    @app.post("/api/rewards/check")
+    def api_rewards_check():
+        """시즌 챕터 진행도 기반 리워드 자동 발급.
+
+        body: {"uid": "..."} — 베타 단계는 클라이언트 신뢰. 추후 Firebase ID Token
+        검증으로 전환 예정.
+        """
+        body = request.get_json(silent=True) or {}
+        uid = (body.get("uid") or "").strip()
+        if not uid:
+            return jsonify(error={"code": "MISSING_UID", "message": "uid required"}), 400
+        try:
+            result = rewards.check_and_grant(uid)
+        except FileNotFoundError as e:
+            return jsonify(error={"code": "FIRESTORE_UNAVAILABLE", "message": str(e)}), 503
+        except Exception as e:
+            logger.exception("rewards check failed")
+            return jsonify(error={"code": "REWARDS_ERROR", "message": str(e)}), 500
+        return jsonify(result)
+
+    @app.get("/api/rewards/list")
+    def api_rewards_list():
+        uid = (request.args.get("uid") or "").strip()
+        if not uid:
+            return jsonify(error={"code": "MISSING_UID", "message": "uid query required"}), 400
+        try:
+            items = rewards.list_rewards(uid)
+        except FileNotFoundError as e:
+            return jsonify(error={"code": "FIRESTORE_UNAVAILABLE", "message": str(e)}), 503
+        except Exception as e:
+            logger.exception("rewards list failed")
+            return jsonify(error={"code": "REWARDS_ERROR", "message": str(e)}), 500
+        return jsonify(items=items)
+
+    @app.post("/api/rewards/redeem")
+    def api_rewards_redeem():
+        """리워드 사용 처리 — 매장 POS 인증 대신 클라이언트 액션 기록."""
+        body = request.get_json(silent=True) or {}
+        uid = (body.get("uid") or "").strip()
+        reward_id = (body.get("reward_id") or "").strip()
+        if not uid or not reward_id:
+            return jsonify(error={"code": "MISSING_PARAM",
+                                  "message": "uid + reward_id required"}), 400
+        try:
+            updated = rewards.redeem_reward(uid, reward_id)
+        except FileNotFoundError as e:
+            return jsonify(error={"code": "FIRESTORE_UNAVAILABLE", "message": str(e)}), 503
+        except Exception as e:
+            logger.exception("rewards redeem failed")
+            return jsonify(error={"code": "REWARDS_ERROR", "message": str(e)}), 500
+        if updated is None:
+            return jsonify(error={"code": "NOT_FOUND",
+                                  "message": "reward not found"}), 404
+        return jsonify(updated)
 
     if config.SCHEDULER_ENABLED:
         start_scheduler()

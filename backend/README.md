@@ -41,6 +41,9 @@ SCHEDULER_ENABLED=0 python -m backend.app
 | GET  | `/api/crowd-level?visitor_count=N` | — | 임계치 기반 등급 |
 | POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` — ANTHROPIC_API_KEY 없으면 룰 fallback |
 | POST | `/api/revisit-push/run` | — | `{counts, sent}` (Firebase 없으면 502 skipped) |
+| POST | `/api/rewards/check` | `{uid}` | `{season, unlocked_count, newly_granted[], already_granted[]}` — 시즌 챕터 3개 → goods, 5개 → ticket. 트랜잭션 idempotent 발급 |
+| GET  | `/api/rewards/list?uid=...` | — | `{items[{reward_id,type,threshold,season,granted_at,redeemed_at,code}]}` |
+| POST | `/api/rewards/redeem` | `{uid, reward_id}` | 갱신된 reward (`redeemed_at` 채움) |
 
 ### Beta 환경 — 외부 키 없이 동작
 
