@@ -183,15 +183,31 @@ class RouteService {
       if (seenExtra.length >= 3) break;
     }
 
-    // 최고 점수 어트랙션을 STOP 01 로 고정, 나머지는 그 어트랙션 위치에서
-    // nearest-neighbor. 백엔드와 동일 순서 정책.
+    // anchor 는 top-3 어트랙션 중 점수 가중 stochastic 샘플링 — 같은 입력에도
+    // 약간 다른 동선이 나오게 ("AI 개인화" 경험). 백엔드와 동일 정책.
     List<Attraction> ordered;
     if (picked.isEmpty) {
       ordered = const [];
     } else {
       final scoreById = {for (final s in scored) s.a.id: s.score};
-      final anchor = picked.reduce(
-          (a, b) => (scoreById[a.id] ?? 0) >= (scoreById[b.id] ?? 0) ? a : b);
+      final attractionsInPick =
+          picked.where((a) => a.category == '어트랙션').toList()
+            ..sort((a, b) =>
+                (scoreById[b.id] ?? 0).compareTo(scoreById[a.id] ?? 0));
+      final candidates = attractionsInPick.take(3).toList();
+      final pool = candidates.isEmpty ? picked.take(3).toList() : candidates;
+      final weights = pool.map((a) => math.max(0.1, scoreById[a.id] ?? 0)).toList();
+      final total = weights.fold<double>(0, (a, b) => a + b);
+      final rnd = math.Random().nextDouble() * total;
+      double cum = 0;
+      Attraction anchor = pool.first;
+      for (var i = 0; i < pool.length; i++) {
+        cum += weights[i];
+        if (rnd <= cum) {
+          anchor = pool[i];
+          break;
+        }
+      }
       final rest = picked.where((a) => a.id != anchor.id).toList();
       ordered = [anchor, ..._nearestNeighbor(rest, anchor.lat, anchor.lng)];
     }

@@ -18,10 +18,13 @@ from __future__ import annotations
 import json
 import logging
 import math
+import random
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
+
+from .embeddings import cosine, embed_attraction, embed_user
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +227,16 @@ def recommend_route(
     # 5) 주말/공휴일이면 혼잡 더 심함 가정 — 인기(평점 높은) 스팟 가중치 ↓
     crowded_day = (weekday is not None and weekday >= 5) or bool(is_holiday)
 
+    # 사용자 임베딩 (룰 점수에 코사인 유사도 결합 — "AI 개인화" 시그널).
+    # 51개 풀에서 첫 스팟이 4종류 정도만 나오던 변별력 부족을 해결.
+    user_vec = embed_user(
+        favorite_type=req.favorite_type,
+        purpose=req.purpose,
+        has_child=req.has_child,
+        has_infant=req.has_infant,
+        discovered_eggs_ratio=min(1.0, len(req.discovered_eggs) / 18),
+    )
+
     # 6) 스코어링
     scored: list[tuple[dict, float]] = []
     for a in pool:
@@ -288,6 +301,10 @@ def recommend_route(
         # 주말/공휴일이면 인기 스팟 가중치 완화 (혼잡 회피)
         rating_mult = (1.0 if crowded_day else 1.5) if a["category"] == "어트랙션" else 4.0
         score += a["rating"] * rating_mult
+        # 임베딩 코사인 유사도 — 룰 점수 평균치(~50) 의 절반 비중으로 결합.
+        # 같은 의도여도 어트랙션별 미세한 매치 차이가 점수에 반영됨.
+        sim = cosine(user_vec, embed_attraction(a))
+        score += sim * 25  # 0~25 점 가산
         scored.append((a, score))
 
     scored.sort(key=lambda t: t[1], reverse=True)
@@ -330,15 +347,32 @@ def recommend_route(
             break
         picked.append(a)
 
-    # 6) 순서 — 최고 점수 어트랙션을 STOP 01 로 고정, 나머지는 그 어트랙션
-    #    위치에서 nearest-neighbor.
-    #    이렇게 안 하면 정문에서 가장 가까운 carousel 류가 항상 1등 차지하면서
-    #    사용자가 스릴 선택해도 1번 스팟이 바뀌지 않는 문제 발생.
+    # 6) 순서 — anchor 를 stochastic top-k 에서 가중 샘플링, 나머지는 NN.
+    #    같은 입력에 매번 약간 다른 동선이 나오게 → "AI 개인화" 경험.
+    #    완전 결정적이면 같은 의도 두 사용자가 똑같은 동선 받게 됨.
+    #    seed 는 호출 시각 + uid 로 고정 가능하지만 일단 무작위.
     if picked:
-        # picked 는 점수 내림차순으로 들어옴 (어트랙션 먼저, extras 점수 무시).
-        # extras 가 어트랙션보다 점수 높을 수 있으니 전체에서 최고점 재선정.
         score_by_id = {a["id"]: s for a, s in scored}
-        anchor = max(picked, key=lambda a: score_by_id.get(a["id"], 0))
+        attractions_in_pick = [a for a in picked if a["category"] == "어트랙션"]
+        # top-3 어트랙션 중 점수 가중 샘플링 (가장 높은 점수 favored).
+        candidates = sorted(
+            attractions_in_pick,
+            key=lambda a: score_by_id.get(a["id"], 0),
+            reverse=True,
+        )[:3]
+        if not candidates:
+            candidates = picked[:3]
+        # softmax-ish — 점수 차에 비례한 확률.
+        scores = [max(0.1, score_by_id.get(a["id"], 0)) for a in candidates]
+        total = sum(scores)
+        rnd = random.random() * total
+        cum = 0.0
+        anchor = candidates[0]
+        for a, s in zip(candidates, scores):
+            cum += s
+            if rnd <= cum:
+                anchor = a
+                break
         rest = [a for a in picked if a["id"] != anchor["id"]]
         ordered = [anchor] + _nearest_neighbor(rest, anchor["lat"], anchor["lng"])
     else:
