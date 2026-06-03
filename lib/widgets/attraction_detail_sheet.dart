@@ -5,6 +5,8 @@ import '../l10n/generated/app_localizations.dart';
 
 import '../models/attraction.dart';
 import '../services/easter_egg_service.dart';
+import '../services/narrative_service.dart';
+import '../services/onboarding_service.dart';
 import 'design/stamp.dart';
 
 /// 지도 마커/카드 탭 시 표시되는 어트랙션 상세 시트.
@@ -51,40 +53,61 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
 
   Future<void> _onEasterEggTap() async {
     setState(() => _eggLoading = true);
-    // 로딩 다이얼로그
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => const _LunaLoadingDialog(),
     );
-    // Claude API 호출 자리 — 실제로는 NarrativeService.generate(...) 호출.
-    // 데모용으로 1.4초 딜레이 후 스텁 서사 반환.
-    await Future.delayed(const Duration(milliseconds: 1400));
-    final narrative = _stubNarrative(widget.attraction);
+    // 백엔드 /api/narrative 호출 — Anthropic 또는 룰 기반 fallback.
+    // API_BASE_URL 미설정 또는 호출 실패 시 클라이언트 mock fallback.
+    final survey = await OnboardingService.read();
+    final companion = _companionFromMembers(survey);
+    final result = await NarrativeServiceLite.instance.generate(
+      NarrativeRequest(
+        attractionId: widget.attraction.id,
+        companionType: companion,
+        season: _currentSeason(),
+        weather: '맑음',
+        visitCount: 1,
+      ),
+    );
     if (!mounted) return;
-    Navigator.of(context, rootNavigator: true).pop(); // 로딩 닫기
+    Navigator.of(context, rootNavigator: true).pop();
 
-    // 발견 기록 저장
     await EasterEggService.markDiscovered(widget.attraction.id);
     if (mounted) setState(() {
       _eggDiscovered = true;
       _eggLoading = false;
     });
 
-    // 전체화면 서사 팝업
     if (!mounted) return;
     await showDialog(
       context: context,
       builder: (_) => _NarrativePopup(
         attraction: widget.attraction,
-        narrative: narrative,
+        narrative: result.narrative,
       ),
     );
   }
 
-  String _stubNarrative(Attraction a) {
-    // TODO: NarrativeService 로 교체 — 백엔드 Claude API 호출.
-    return '${a.name}. 1988년 개장 이후 38년간 수많은 발걸음이 만들어낸 서울랜드의 한 페이지입니다. 오늘 당신의 방문이 새로운 챕터를 더합니다 🌙';
+  static String _currentSeason() {
+    final m = DateTime.now().month;
+    if (m >= 3 && m <= 5) return 'spring';
+    if (m >= 6 && m <= 8) return 'summer';
+    if (m >= 9 && m <= 11) return 'autumn';
+    return 'winter';
+  }
+
+  static String _companionFromMembers(SurveyAnswers? s) {
+    if (s == null || s.total == 0) return '혼자';
+    if (s.hasChild || s.hasInfant) return '가족';
+    final adults = s.count(MemberCategory.adultMale) +
+        s.count(MemberCategory.adultFemale);
+    if (s.total == 2 &&
+        s.count(MemberCategory.adultMale) == 1 &&
+        s.count(MemberCategory.adultFemale) == 1) return '연인';
+    if (adults >= 2) return '친구';
+    return '혼자';
   }
 
   @override

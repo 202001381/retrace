@@ -51,6 +51,31 @@ def _get_client() -> Anthropic:
     return _client
 
 
+def _fallback_narrative(attraction_name: str, companion_type: str, season: str) -> str:
+    """API key 없거나 Anthropic 호출 실패 시 로컬 룰 기반 fallback.
+
+    시연·테스트 환경에서도 화면이 끊기지 않도록. season + companion 조합으로
+    8가지 톤 변화.
+    """
+    season_phrase = {
+        "spring": "벚꽃이 흩날리던",
+        "summer": "햇볕이 짙던 여름",
+        "autumn": "단풍이 절정이던 가을",
+        "winter": "눈이 내리던 겨울",
+    }.get(season, "기억에 남는")
+    companion_phrase = {
+        "혼자": "혼자만의 발걸음",
+        "연인": "둘만의 발걸음",
+        "친구": "친구들과 함께한 발걸음",
+        "가족": "가족과 함께한 발걸음",
+    }.get(companion_type, "당신의 발걸음")
+    return (
+        f"{attraction_name}. {season_phrase} 날, {companion_phrase}이 만든 한 페이지입니다. "
+        f"1988년 개장 이래 셀 수 없이 많은 사람들의 기억이 이 자리에 쌓였고, "
+        f"오늘 당신의 방문이 새로운 챕터를 더합니다 🌙"
+    )
+
+
 def generate_narrative(
     *,
     attraction_id: str,
@@ -60,12 +85,37 @@ def generate_narrative(
     visit_count: int,
     model: str = "claude-sonnet-4-6",
 ) -> NarrativeOutput:
-    attraction = firestore_client.get_attraction(attraction_id)
+    # Firestore 미가용 (credentials 없음·offline 등) 시 attractions.json 으로
+    # 조용히 fallback. 베타 환경에서 admin SDK 안 깔려도 narrative 동작 보장.
+    attraction = None
+    try:
+        attraction = firestore_client.get_attraction(attraction_id)
+    except Exception as e:
+        logger.info("narrative — firestore unavailable (%s), using json fallback", e)
+    if not attraction:
+        try:
+            import json
+            from pathlib import Path
+            data = json.loads(
+                Path(__file__).parent.joinpath("attractions.json").read_text("utf-8")
+            )
+            attraction = next((a for a in data if a["id"] == attraction_id), None)
+        except Exception as e:
+            logger.warning("narrative — attractions.json read failed: %s", e)
     if not attraction:
         raise LookupError(f"attraction not found: {attraction_id}")
 
     name = attraction.get("name") or attraction_id
-    history = attraction.get("history_text") or ""
+    history = attraction.get("history_text") or attraction.get("description") or ""
+
+    # Anthropic API 미설정 시 룰 기반 fallback (서비스 안 끊기게).
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        logger.info("narrative — ANTHROPIC_API_KEY missing, using fallback")
+        return NarrativeOutput(
+            attraction_id=attraction_id,
+            attraction_name=name,
+            narrative=_fallback_narrative(name, companion_type, season),
+        )
 
     user_prompt = _USER_TEMPLATE.format(
         attraction_name=name,
@@ -76,13 +126,19 @@ def generate_narrative(
         visit_count=visit_count,
     )
 
-    client = _get_client()
-    resp = client.messages.create(
-        model=model,
-        max_tokens=400,
-        system=_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
+    try:
+        client = _get_client()
+        resp = client.messages.create(
+            model=model,
+            max_tokens=400,
+            system=_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        text = "".join(block.text for block in resp.content if hasattr(block, "text")).strip()
+        if not text:
+            text = _fallback_narrative(name, companion_type, season)
+    except Exception as e:
+        logger.warning("narrative — Anthropic call failed (%s), using fallback", e)
+        text = _fallback_narrative(name, companion_type, season)
 
-    text = "".join(block.text for block in resp.content if hasattr(block, "text")).strip()
     return NarrativeOutput(attraction_id=attraction_id, attraction_name=name, narrative=text)

@@ -134,3 +134,21 @@ def test_target_today_uses_today_date():
     from datetime import datetime, timezone, timedelta
     today_kst = datetime.now(timezone(timedelta(hours=9))).date().isoformat()
     assert result.to_dict()["target_date"] == today_kst
+
+
+def test_narrative_fallback_when_no_api_key(monkeypatch):
+    """ANTHROPIC_API_KEY 없으면 룰 기반 fallback 으로 narrative 반환."""
+    monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
+    from backend.narrative import generate_narrative
+    # carousel = '빅회전목마' — attractions.json 에 있는 id
+    out = generate_narrative(
+        attraction_id='carousel',
+        companion_type='연인',
+        season='spring',
+        weather='맑음',
+        visit_count=1,
+    )
+    assert out.attraction_id == 'carousel'
+    assert out.attraction_name == '빅회전목마'
+    assert '벚꽃' in out.narrative or '발걸음' in out.narrative
+    assert '1988년' in out.narrative

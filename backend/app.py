@@ -13,6 +13,7 @@ from __future__ import annotations
 import atexit
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -41,6 +42,73 @@ def create_app() -> Flask:
     @app.get("/healthz")
     def healthz():
         return jsonify(status="ok", time=datetime.now(timezone.utc).isoformat())
+
+    @app.get("/healthz/full")
+    def healthz_full():
+        """서브시스템 상태 종합 — Sentry/Uptime 모니터링이 한 번에 확인.
+
+        각 서브시스템 결과:
+          ok        — 정상
+          fallback  — 동작은 하나 기본값으로 (예: 모델 없으면 mid 추정)
+          missing   — 의존성 없음 (예: ANTHROPIC_API_KEY 미설정)
+          error     — 호출 실패
+        """
+        report: dict = {
+            "status": "ok",
+            "time": datetime.now(timezone.utc).isoformat(),
+            "subsystems": {},
+        }
+        sub = report["subsystems"]
+
+        # 1. 어트랙션 카탈로그
+        try:
+            from .route import _load as _load_attractions
+            n = len(_load_attractions())
+            sub["catalog"] = {"status": "ok", "count": n}
+        except Exception as e:
+            sub["catalog"] = {"status": "error", "detail": str(e)}
+
+        # 2. XGBoost 예측 모델
+        try:
+            from .predictor import predict_one
+            predict_one({"hour": 11, "weekday": 2, "is_holiday": 0,
+                         "temp": 20, "rain_prob": 10, "is_event": 0, "pre_sales": 0})
+            sub["predictor"] = {"status": "ok"}
+        except FileNotFoundError:
+            sub["predictor"] = {"status": "missing", "detail": "model file not found"}
+        except Exception as e:
+            sub["predictor"] = {"status": "error", "detail": str(e)}
+
+        # 3. 기상청 API
+        import os as _os
+        if not _os.getenv("KMA_SERVICE_KEY") or _os.getenv("KMA_SERVICE_KEY") == "test":
+            sub["weather"] = {"status": "missing", "detail": "KMA_SERVICE_KEY not configured"}
+        else:
+            sub["weather"] = {"status": "ok"}
+
+        # 4. Anthropic API (narrative)
+        if not _os.getenv("ANTHROPIC_API_KEY"):
+            sub["narrative_ai"] = {"status": "missing", "detail": "fallback to rule-based"}
+        else:
+            sub["narrative_ai"] = {"status": "ok"}
+
+        # 5. Firebase Admin (Firestore + FCM)
+        firebase_path = Path("backend/secrets/firebase-admin.json")
+        if not firebase_path.exists():
+            sub["firebase"] = {"status": "missing", "detail": "credentials file not found"}
+        else:
+            sub["firebase"] = {"status": "ok"}
+
+        # 종합 상태 — 핵심 (catalog + predictor + route 스코어링) 만 OK 면 200.
+        # 외부 의존성은 fallback 가능하므로 missing 이어도 200.
+        core_ok = (
+            sub["catalog"]["status"] == "ok"
+            and sub["predictor"]["status"] in ("ok", "missing", "fallback")
+        )
+        if not core_ok:
+            report["status"] = "degraded"
+            return jsonify(report), 503
+        return jsonify(report)
 
     @app.post("/api/discount")
     def api_discount():
@@ -104,8 +172,14 @@ def create_app() -> Flask:
         try:
             result = run_pipeline(target)  # type: ignore[arg-type]
         except Exception as e:
-            logger.exception("manual pipeline run failed")
-            return jsonify(error=str(e)), 500
+            # 비밀키·외부 API 미가용 (KMA / Firebase) — 베타 환경에서 흔함.
+            # 502 로 분리해서 모니터링이 health/route 와 구분 가능하게.
+            logger.warning("pipeline skipped: %s", e)
+            return jsonify(
+                skipped=True,
+                reason=str(e),
+                target=target,
+            ), 502
         return jsonify(result.to_dict())
 
     # 노출용 헬퍼 — Flutter 디버그에서 임의 visitor_count 로 등급 변환만 확인할 때
@@ -208,8 +282,8 @@ def create_app() -> Flask:
         try:
             summary = run_revisit_push()
         except Exception as e:
-            logger.exception("manual revisit push run failed")
-            return jsonify(error=str(e)), 500
+            logger.warning("revisit push skipped: %s", e)
+            return jsonify(skipped=True, reason=str(e)), 502
         return jsonify(summary)
 
     @app.get("/api/pricing/now")

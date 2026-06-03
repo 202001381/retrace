@@ -31,14 +31,27 @@ SCHEDULER_ENABLED=0 python -m backend.app
 | Method | Path | Body / Query | Response |
 |---|---|---|---|
 | GET  | `/healthz` | — | `{status, time}` |
+| GET  | `/healthz/full` | — | `{status, subsystems{catalog,predictor,weather,narrative_ai,firebase}}` |
+| GET  | `/api/pricing/now` | — | `{discount_pct, crowd_level, rain_prob, weather, temp, reason, computed_at}` — 날씨+예측+할인 통합 |
 | POST | `/api/discount` | `{crowd_level, rain_prob}` | `{crowd_level, rain_prob, discount_pct, reason}` |
 | POST | `/api/score` | `{crowd_level, weather, weekday, is_holiday, discount_pct}` | `{score, breakdown, inputs}` |
 | POST | `/api/predict` | 7개 피처 + `weather` (선택) | `{crowd_level, visitor_count, discount, score}` |
 | POST | `/api/route` | `RouteRequest`(uid, lat, lng, has_gps, onboarding, completed_attraction_ids, discovered_eggs, request_reason) + 선택 `features` | `{route[{id,order,eta_min_from_prev}], total_min, rationale, computed_at, cache_key}` |
-| POST | `/api/run-pipeline?target=today\|tomorrow` | — | 파이프라인 결과 + FCM 발송 |
+| POST | `/api/run-pipeline?target=today\|tomorrow` | — | 파이프라인 결과 + FCM 발송 (외부 키 없으면 502 skipped) |
 | GET  | `/api/crowd-level?visitor_count=N` | — | 임계치 기반 등급 |
-| POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` |
-| POST | `/api/revisit-push/run` | — | `{counts, sent}` (수동 실행) |
+| POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` — ANTHROPIC_API_KEY 없으면 룰 fallback |
+| POST | `/api/revisit-push/run` | — | `{counts, sent}` (Firebase 없으면 502 skipped) |
+
+### Beta 환경 — 외부 키 없이 동작
+
+| 의존성 | 미설정 시 동작 |
+|---|---|
+| `KMA_SERVICE_KEY` | `/api/pricing/now` 는 기본값 (rain=30, temp=20, 흐림) 으로 fallback |
+| `ANTHROPIC_API_KEY` | `/api/narrative` 는 룰 기반 fallback (season + companion 조합 8가지 톤) |
+| `secrets/firebase-admin.json` | `/api/run-pipeline` 과 `/api/revisit-push/run` 만 502 skipped, 나머지 정상 |
+| `artifacts/crowd_model.pkl` | `/api/route` 의 시점 wait 보정 안 됨 (정적 wait 사용), 그 외 정상 |
+
+`GET /healthz/full` 로 서브시스템 상태 한번에 확인.
 
 ### 예시
 

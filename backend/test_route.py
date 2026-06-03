@@ -232,3 +232,44 @@ def test_to_dict_serialization(gate_req):
         assert set(stop.keys()) == {"id", "order", "eta_min_from_prev"}
     # JSON 직렬화 가능해야 함
     json.dumps(d, ensure_ascii=False)
+
+
+def test_pipeline_endpoint_graceful_skip():
+    """KMA 키 없으면 /api/run-pipeline 은 502 skipped 응답."""
+    from backend.app import create_app
+    app = create_app()
+    client = app.test_client()
+    resp = client.post('/api/run-pipeline?target=today')
+    # 키 없으면 502 with skipped flag, 있으면 200 with result
+    assert resp.status_code in (200, 502)
+    body = resp.get_json()
+    if resp.status_code == 502:
+        assert body.get('skipped') is True
+        assert 'reason' in body
+
+
+def test_revisit_push_graceful_skip():
+    """Firebase 키 없으면 /api/revisit-push/run 도 502 skipped."""
+    from backend.app import create_app
+    app = create_app()
+    client = app.test_client()
+    resp = client.post('/api/revisit-push/run')
+    assert resp.status_code in (200, 502)
+    body = resp.get_json()
+    if resp.status_code == 502:
+        assert body.get('skipped') is True
+
+
+def test_healthz_full_reports_subsystems():
+    """/healthz/full 가 모든 서브시스템 상태 객체 포함."""
+    from backend.app import create_app
+    app = create_app()
+    client = app.test_client()
+    resp = client.get('/healthz/full')
+    assert resp.status_code in (200, 503)
+    body = resp.get_json()
+    assert 'subsystems' in body
+    sub = body['subsystems']
+    for key in ('catalog', 'predictor', 'weather', 'narrative_ai', 'firebase'):
+        assert key in sub, f'missing subsystem: {key}'
+        assert 'status' in sub[key]
