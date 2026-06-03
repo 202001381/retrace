@@ -12,7 +12,6 @@
 /// 호수를 가로지를 만큼 양 끝이 멀 때 그래프가 정확히 우회시킵니다.
 library;
 
-import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:latlong2/latlong.dart';

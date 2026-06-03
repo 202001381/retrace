@@ -179,9 +179,9 @@ class _MainScreenState extends State<MainScreen> {
   bool _mapMyLuna = true;
   bool _openPricingOnStart = false;
 
-  @override
   StreamSubscription? _fcmSub;
 
+  @override
   void initState() {
     super.initState();
     switch (widget.initialExit) {

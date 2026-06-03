@@ -4,7 +4,6 @@ import '../core/theme/app_colors.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../services/onboarding_service.dart';
 import '../widgets/design/condition_pip.dart';
-import '../widgets/design/logo.dart';
 
 const _kAccent = Color(0xFFE60012);
 const _kSelectedBg = Color(0xFFFFF5F5);
