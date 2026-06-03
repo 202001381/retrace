@@ -1,6 +1,7 @@
-"""POST /api/story — 어트랙션 ID로 서사 텍스트 반환 (로컬 JSON 캐시).
+"""POST /api/story — 어트랙션 ID + 언어로 서사 텍스트 반환 (로컬 JSON 캐시).
 
-Firestore 결제 풀리면 캐시 위치를 attractions/{id}/stories/{story_id} 로 이전.
+캐시 키는 attraction_id + language 조합 — 같은 어트랙션의 다국어 응답을 각각 보관.
+Firestore 결제 풀리면 캐시 위치를 attractions/{id}/stories/{lang} 로 이전.
 """
 import json
 import os
@@ -17,12 +18,12 @@ story_bp = Blueprint("story", __name__)
 _CACHE_DIR = "./cache/stories"
 
 
-def _cache_path(attraction_id: str) -> str:
-    return os.path.join(_CACHE_DIR, f"{attraction_id}.json")
+def _cache_path(attraction_id: str, language: str) -> str:
+    return os.path.join(_CACHE_DIR, f"{attraction_id}.{language}.json")
 
 
-def _load_cache(attraction_id: str) -> dict | None:
-    path = _cache_path(attraction_id)
+def _load_cache(attraction_id: str, language: str) -> dict | None:
+    path = _cache_path(attraction_id, language)
     if not os.path.exists(path):
         return None
     try:
@@ -32,9 +33,9 @@ def _load_cache(attraction_id: str) -> dict | None:
         return None
 
 
-def _save_cache(attraction_id: str, data: dict) -> None:
+def _save_cache(attraction_id: str, language: str, data: dict) -> None:
     os.makedirs(_CACHE_DIR, exist_ok=True)
-    with open(_cache_path(attraction_id), "w", encoding="utf-8") as f:
+    with open(_cache_path(attraction_id, language), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
@@ -52,7 +53,7 @@ def post_story():
             }
         }), 404
 
-    cached = _load_cache(payload.attraction_id)
+    cached = _load_cache(payload.attraction_id, payload.language)
     if cached:
         return jsonify({"data": StoryResponse(
             attraction_id=payload.attraction_id,
@@ -60,10 +61,11 @@ def post_story():
             body=cached["body"],
             cached=True,
             model=cached.get("model", "unknown"),
+            language=cached.get("language", payload.language),
         ).model_dump()})
 
-    story = generate_story(attraction)
-    _save_cache(payload.attraction_id, story)
+    story = generate_story(attraction, language=payload.language)
+    _save_cache(payload.attraction_id, payload.language, story)
 
     return jsonify({"data": StoryResponse(
         attraction_id=payload.attraction_id,
@@ -71,4 +73,5 @@ def post_story():
         body=story["body"],
         cached=False,
         model=story["model"],
+        language=story["language"],
     ).model_dump()})

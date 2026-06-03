@@ -2,11 +2,17 @@
 
 실 운영에서는 과거 방문/예약/날씨 결합 데이터셋으로 재학습 필요.
 실행: python train_model.py
+
+명세(6.2 핵심 기술 스택)대로 scikit-learn 으로 80:20 train/test split 적용,
+RMSE/MAE 평가 지표 출력.
 """
+import math
 import os
 
 import numpy as np
 import xgboost as xgb
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import train_test_split
 
 from xgboost_model import FEATURE_ORDER
 
@@ -50,7 +56,15 @@ def _synth_dataset(n: int = 5000, seed: int = 42):
 
 def train(output_path: str) -> None:
     X, y = _synth_dataset()
-    dtrain = xgb.DMatrix(X, label=y, feature_names=FEATURE_ORDER)
+
+    # scikit-learn 으로 80:20 train/test split (명세 6.2 항목)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+    print(f"데이터 분할 — train {len(X_train)}개 / test {len(X_test)}개 (80:20)")
+
+    dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=FEATURE_ORDER)
+    dtest = xgb.DMatrix(X_test, label=y_test, feature_names=FEATURE_ORDER)
     params = {
         "objective": "reg:squarederror",
         "eta": 0.1,
@@ -59,6 +73,12 @@ def train(output_path: str) -> None:
         "verbosity": 0,
     }
     booster = xgb.train(params, dtrain, num_boost_round=200)
+
+    # 평가
+    y_pred = booster.predict(dtest)
+    rmse = math.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+    print(f"검증 — RMSE {rmse:.3f}  MAE {mae:.3f}  (점수 0–100 범위 기준)")
 
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     booster.save_model(output_path)

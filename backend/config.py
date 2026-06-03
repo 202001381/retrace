@@ -24,6 +24,9 @@ class Config:
     auth_required: bool  # true 면 /api/* 에 Firebase ID Token 필수
     internal_job_token: Optional[str]  # 설정 시 /internal/jobs/* 에 X-Internal-Token 헤더 검증
 
+    # LLM
+    llm_model: str  # Claude 모델 ID (예: claude-sonnet-4-6, claude-haiku-4-5)
+
 
 def _required(key: str) -> str:
     value = os.environ.get(key)
@@ -49,4 +52,5 @@ def load_config() -> Config:
         timezone=os.environ.get("TIMEZONE", "Asia/Seoul"),
         auth_required=os.environ.get("AUTH_REQUIRED", "false").lower() == "true",
         internal_job_token=os.environ.get("INTERNAL_JOB_TOKEN") or None,
+        llm_model=os.environ.get("LLM_MODEL", "claude-sonnet-4-6"),
     )

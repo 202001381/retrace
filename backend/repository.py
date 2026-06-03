@@ -22,6 +22,7 @@ if _backend == "firestore":
         list_attractions,
         list_chapters,
         list_facilities,
+        list_fnb_coupons,
         list_zones,
     )
 elif _backend == "mock":
@@ -35,6 +36,7 @@ elif _backend == "mock":
         list_attractions,
         list_chapters,
         list_facilities,
+        list_fnb_coupons,
         list_zones,
     )
 else:
@@ -52,5 +54,6 @@ __all__ = [
     "list_attractions",
     "list_chapters",
     "list_facilities",
+    "list_fnb_coupons",
     "list_zones",
 ]

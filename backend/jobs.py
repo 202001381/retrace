@@ -17,6 +17,7 @@ from firebase_admin import firestore as fs
 
 from config import Config
 from fcm_sender import send_to_tokens
+from llm_client import generate_push_message
 from weather_client import fetch_features
 from xgboost_model import VisitValueModel
 
@@ -86,27 +87,29 @@ def send_revisit_pushes(config: Config, db) -> Dict[str, Dict[str, int]]:
             tokens_season.append(token)
 
     summary: Dict[str, Dict[str, int]] = {}
+    # 트리거별로 LLM 메시지 1회씩 생성 (해당 트리거의 모든 사용자에게 동일 메시지 전송)
+    # — Claude 호출 3회/일 한도. 비용 미미.
     if tokens_30d_incomplete:
+        m = generate_push_message("incomplete_chapter_30d")
         summary["incomplete_30d"] = send_to_tokens(
             tokens_30d_incomplete,
-            title="아직 완성하지 못한 챕터가 기다리고 있어요",
-            body="잠시 들러 빠진 책을 모아 챕터를 완성해 보세요.",
+            title=m["title"], body=m["body"],
             data={"trigger": "incomplete_chapter_30d"},
             dry_run=config.fcm_dry_run,
         )
     if tokens_14d:
+        m = generate_push_message("elapsed_14d")
         summary["elapsed_14d"] = send_to_tokens(
             tokens_14d,
-            title="서울랜드, 다시 만날 시간!",
-            body="2주 만에 방문해 새로운 어트랙션 추천을 받아보세요.",
+            title=m["title"], body=m["body"],
             data={"trigger": "elapsed_14d"},
             dry_run=config.fcm_dry_run,
         )
     if tokens_season:
+        m = generate_push_message("season_refresh")
         summary["season_refresh"] = send_to_tokens(
             tokens_season,
-            title="새 계절 챕터가 열렸어요",
-            body="이번 시즌 한정 책을 모아 연대기를 완성해 보세요.",
+            title=m["title"], body=m["body"],
             data={"trigger": "season_refresh"},
             dry_run=config.fcm_dry_run,
         )

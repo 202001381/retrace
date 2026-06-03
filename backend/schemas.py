@@ -32,6 +32,8 @@ class PricingResponse(BaseModel):
     discounts: list[DiscountInfo]
     visit_value_score: int  # 0-100
     congestion_by_zone: dict[str, int]  # zone_id -> 0-5
+    congestion_grade: str  # '낮음' | '보통' | '혼잡'  (구역별 평균 → 등급 매핑)
+    dynamic_discount_rate: float  # 0.0~0.30  (혼잡도 낮을수록 ↑, 수요 분산 인센티브)
 
 
 # ──────────────── /api/recommend ────────────────
@@ -71,6 +73,7 @@ class RecommendResponse(BaseModel):
 class StoryRequest(BaseModel):
     model_config = _STRICT
     attraction_id: str
+    language: str = Field(default="ko", pattern="^(ko|en|ja|zh)$")  # 한·영·일·중
 
 
 class StoryResponse(BaseModel):
@@ -79,6 +82,7 @@ class StoryResponse(BaseModel):
     body: str
     cached: bool
     model: str  # 'claude-haiku-4-5' | 'stub' 등
+    language: str  # 'ko' | 'en' | 'ja' | 'zh'
 
 
 # ──────────────── /api/route ────────────────
@@ -188,3 +192,72 @@ class RewardCheckResponse(BaseModel):
 
 class RewardListResponse(BaseModel):
     items: list[RewardInfo]
+
+
+# ──────────────── /api/events ────────────────
+
+_EVENT_TYPES = (
+    "coupon_click",       # KPI 1: 쿠폰 클릭
+    "ticket_purchase",    # KPI 1: 입장 전환
+    "visit_arrive",       # KPI 2, 5: 어트랙션 도착
+    "visit_leave",        # KPI 2: 어트랙션 떠남
+    "attraction_select",  # KPI 5: 추천 후보 중 선택
+    "coupon_redeem",      # KPI 4: 쿠폰 사용
+    "fnb_purchase",       # KPI 4: F&B 결제 (객단가)
+)
+
+
+class EventCreateRequest(BaseModel):
+    model_config = _STRICT
+    type: str = Field(pattern="^(" + "|".join(_EVENT_TYPES) + ")$")
+    properties: Optional[dict] = None  # 예: {coupon_id, attraction_id, amount, ...}
+
+
+class EventCreateResponse(BaseModel):
+    event_id: str
+    type: str
+    recorded_at: str
+
+
+# ──────────────── /api/admin/stats/* ────────────────
+
+class CouponFunnelStats(BaseModel):
+    # KPI 1: Luna Pricing
+    coupon_id: Optional[str] = None  # None 이면 전체 쿠폰 집계
+    click_count: int
+    purchase_count: int
+    click_to_purchase_rate: float  # 클릭한 사용자 중 입장권 구매까지 간 비율
+
+
+class RouteEffectivenessStats(BaseModel):
+    # KPI 2: My Luna 동선
+    recommended_group_avg_stay_min: float
+    recommended_group_avg_attractions: float
+    control_group_avg_stay_min: float
+    control_group_avg_attractions: float
+    sample_size_recommended: int
+    sample_size_control: int
+
+
+class EasterEggParticipationStats(BaseModel):
+    # KPI 3: 이스터에그
+    total_users: int
+    participating_users: int  # 1개 이상 발견
+    participation_rate: float
+    chapter_completion: list[dict]  # [{chapter_id, name, avg_unlocked, total_books}]
+
+
+class FnbStats(BaseModel):
+    # KPI 4: F&B 쿠폰
+    coupon_click_count: int
+    coupon_redeem_count: int
+    redemption_rate: float
+    fnb_purchase_count: int
+    avg_basket_size: float  # 객단가
+
+
+class AttractionDistributionStats(BaseModel):
+    # KPI 5: 추천 분산
+    by_attraction: list[dict]  # [{attraction_id, name, visit_count, share}]
+    top3_concentration: float  # 상위 3개 점유율
+    alternative_selection_rate: float  # 추천 1위 외 선택 비율

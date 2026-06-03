@@ -4,7 +4,15 @@ repository_firestore.py와 동일한 함수 시그니처를 유지한다.
 """
 from typing import Optional
 
-from mock_data import ATTRACTIONS, CHAPTERS, CONGESTION, DISCOUNTS, FACILITIES, ZONES
+from mock_data import (
+    ATTRACTIONS,
+    CHAPTERS,
+    CONGESTION,
+    DISCOUNTS,
+    FACILITIES,
+    FNB_COUPONS,
+    ZONES,
+)
 
 
 def list_attractions() -> list[dict]:
@@ -56,3 +64,7 @@ def get_chapter(chapter_id: str) -> Optional[dict]:
         if c["id"] == chapter_id:
             return c
     return None
+
+
+def list_fnb_coupons() -> list[dict]:
+    return [c for c in FNB_COUPONS if c.get("active")]

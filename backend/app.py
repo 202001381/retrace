@@ -24,6 +24,7 @@ import logging
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from analytics import admin_stats_bp, events_bp
 from auth import require_internal_job
 from config import load_config
 from firestore_client import get_db, init_firebase
@@ -74,6 +75,8 @@ def create_app() -> Flask:
     app.register_blueprint(users_bp, url_prefix="/api/users")
     app.register_blueprint(users_rewards_bp, url_prefix="/api/users")
     app.register_blueprint(rewards_bp, url_prefix="/api/rewards")
+    app.register_blueprint(events_bp, url_prefix="/api/events")
+    app.register_blueprint(admin_stats_bp, url_prefix="/api/admin/stats")
 
     log.info("내부 잡(/internal/jobs/*)은 Cloud Scheduler 가 외부에서 호출")
 

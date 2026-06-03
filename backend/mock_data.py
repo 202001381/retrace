@@ -406,6 +406,44 @@ CHAPTERS: list[dict] = [
 ]
 
 
+# ────────────────────────────────────────────────────────────────────
+#  FNB_COUPONS — F&B 쿠폰 4개 (KPI 4: 쿠폰 사용률 / 객단가 측정용)
+# ────────────────────────────────────────────────────────────────────
+
+FNB_COUPONS: list[dict] = [
+    {
+        "id": "korean_diner_10",
+        "title": "한식관 10% 할인",
+        "outlet_id": "korean_diner",   # mock_data FACILITIES 의 id
+        "discount_rate": 0.10,
+        "active": True,
+    },
+    {
+        "id": "food_court_combo",
+        "title": "푸드코트 콤보 +1000원 할인",
+        "outlet_id": "food_court",
+        "discount_rate": 0.0,
+        "discount_amount": 1000,
+        "active": True,
+    },
+    {
+        "id": "dessert_cafe_bogo",
+        "title": "디저트 카페 1+1 음료",
+        "outlet_id": "dessert_cafe",
+        "discount_rate": 0.50,  # 사실상 50% 효과
+        "active": True,
+    },
+    {
+        "id": "chicken_shop_15",
+        "title": "치킨 샵 15% 할인 (평일 한정)",
+        "outlet_id": "chicken_shop",
+        "discount_rate": 0.15,
+        "active": True,
+        "condition": {"type": "time", "value": "weekday"},
+    },
+]
+
+
 DISCOUNTS: list[dict] = [
     {
         "id": "rainy_day",

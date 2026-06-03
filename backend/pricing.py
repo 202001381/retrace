@@ -26,6 +26,21 @@ def _condition_label(features: dict) -> str:
     return "sunny"
 
 
+def _compute_dynamic_pricing(congestion_by_zone: dict[str, int]) -> tuple[str, float]:
+    """구역별 혼잡도 평균 → 등급 + 동적 할인율.
+
+    수요 분산 원칙: 한산할수록 할인율 ↑ (방문 유도), 혼잡할수록 할인 ↓.
+    """
+    if not congestion_by_zone:
+        return "보통", 0.10
+    avg = sum(congestion_by_zone.values()) / len(congestion_by_zone)
+    if avg <= 1.5:
+        return "낮음", 0.30
+    if avg <= 3.0:
+        return "보통", 0.15
+    return "혼잡", 0.0
+
+
 def _discount_matches(discount: dict, weather_label: str, now: datetime) -> bool:
     cond = discount.get("condition", {})
     ctype = cond.get("type")
@@ -69,10 +84,15 @@ def post_pricing():
         if _discount_matches(d, weather_label, now)
     ]
 
+    congestion = repository.get_all_congestion()
+    grade, dyn_rate = _compute_dynamic_pricing(congestion)
+
     response = PricingResponse(
         weather=WeatherInfo(condition=weather_label, temp_c=features["temp_c"]),
         discounts=matched_discounts,
         visit_value_score=score,
-        congestion_by_zone=repository.get_all_congestion(),
+        congestion_by_zone=congestion,
+        congestion_grade=grade,
+        dynamic_discount_rate=dyn_rate,
     )
     return jsonify({"data": response.model_dump()})

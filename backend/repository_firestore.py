@@ -82,3 +82,11 @@ def get_chapter(chapter_id: str) -> Optional[dict]:
     if not doc.exists:
         return None
     return _doc_to_dict(doc)
+
+
+def list_fnb_coupons() -> list[dict]:
+    return [
+        _doc_to_dict(d)
+        for d in get_db().collection("fnb_coupons").stream()
+        if (d.to_dict() or {}).get("active")
+    ]
