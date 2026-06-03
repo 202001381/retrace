@@ -632,11 +632,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           ),
           _TopBar(
             routeOn: _showRoute,
-            gpsLoading: _gpsLoading,
             searchController: _searchCtrl,
             onSearchChanged: (q) => setState(() => _searchQuery = q),
             onToggleRoute: _toggleRoute,
-            onGps: _moveToGps,
+          ),
+          // GPS — 지도 우측 floating (디자인 spec — 상단 바와 분리, 지도 위 떠 있음)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 84,
+            right: 16,
+            child: _GpsCircleButton(
+              loading: _gpsLoading,
+              onTap: _moveToGps,
+            ),
           ),
           if (_showRoute || _navTarget != null)
             Positioned(
@@ -882,18 +889,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 // ─── 상단 바 ───────────────────────────────────────────────
 class _TopBar extends StatelessWidget {
   final bool routeOn;
-  final bool gpsLoading;
   final TextEditingController searchController;
   final void Function(String) onSearchChanged;
   final VoidCallback onToggleRoute;
-  final VoidCallback onGps;
   const _TopBar({
     required this.routeOn,
-    required this.gpsLoading,
     required this.searchController,
     required this.onSearchChanged,
     required this.onToggleRoute,
-    required this.onGps,
   });
 
   @override
@@ -951,11 +954,6 @@ class _TopBar extends StatelessWidget {
                 _RouteTogglePill(
                   active: routeOn,
                   onTap: onToggleRoute,
-                ),
-                const SizedBox(width: 6),
-                _GpsCircleButton(
-                  loading: gpsLoading,
-                  onTap: onGps,
                 ),
               ],
             ),
