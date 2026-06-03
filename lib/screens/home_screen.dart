@@ -10,6 +10,7 @@ import '../models/route_response.dart';
 import '../services/analytics_service.dart';
 import '../services/easter_egg_service.dart';
 import '../services/luna_pricing_service.dart';
+import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
 import '../services/visit_history_service.dart';
@@ -57,8 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
   PricingState? _pricing;
   bool _pricingExpired = false;
 
-  String _companion = '가족';
-  String _style = '스릴·액티비티';
+  // Locale 변경에 따라 라벨이 바뀌므로 nullable + 표시 시 fallback.
+  String? _companion;
+  String? _style;
 
   // 7회 연속 탭 → 온보딩 초기화 (숨겨진 디버그 제스처).
   int _logoTapCount = 0;
@@ -94,6 +96,14 @@ class _HomeScreenState extends State<HomeScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _autoOpenPricingIfDue());
     }
     _loadRoute('initial');
+    // 마이루나에서 조건 변경 → store push → 홈 카드도 즉시 갱신.
+    LunaRecommendationStore.instance.notifier.addListener(_onLunaStoreChanged);
+  }
+
+  void _onLunaStoreChanged() {
+    if (!mounted) return;
+    // 마이루나가 새 fetch 했으니 홈도 같은 survey 로 재요청 (호환 routeresponse 변환).
+    _loadRoute('store_push');
   }
 
   Future<void> _loadPricing() async {
@@ -107,6 +117,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    LunaRecommendationStore.instance.notifier
+        .removeListener(_onLunaStoreChanged);
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -289,13 +301,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openSettingsSheet() {
+    final l = AppL10n.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => CompanionBottomSheet(
-        initialCompanion: _companion,
-        initialStyle: _style,
+        initialCompanion: _companion ?? l.companion_family,
+        initialStyle: _style ?? l.style_thrill,
         onConfirm: (c, s) async {
           final newSurvey = await _applyCompanionToSurvey(c, s);
           if (!mounted) return;
@@ -450,8 +463,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 14),
             // 4. 마이 루나 카드
             _MyLunaCard(
-              companion: _companion,
-              style: _style,
+              companion: _companion ?? AppL10n.of(context)!.companion_family,
+              style: _style ?? AppL10n.of(context)!.style_thrill,
               surveyLabel: _surveyLabelOf(_survey),
               items: _routeItems,
               rationale: _route?.rationale,

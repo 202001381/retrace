@@ -54,9 +54,10 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   // 윈도우 만료 버튼 노출 트리거 — 1분마다 재평가.
   Timer? _windowTicker;
 
-  // 사용자가 임의로 선택한 companion/style (CompanionBottomSheet).
-  String _companion = '가족';
-  String _style = '스릴·액티비티';
+  // 사용자가 임의로 선택한 companion/style — locale 변경 시 재계산되도록
+  // build 안에서만 비교. 초기엔 null = 미선택.
+  String? _companion;
+  String? _style;
 
   // 데모 시나리오 (백엔드 연동 전 한정) — null = 기본 추천 로직.
   DemoScenario? _activeScenario;
@@ -244,13 +245,14 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   }
 
   void _openCompanionSheet() {
+    final l = AppL10n.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => CompanionBottomSheet(
-        initialCompanion: _companion,
-        initialStyle: _style,
+        initialCompanion: _companion ?? l.companion_family,
+        initialStyle: _style ?? l.style_thrill,
         onConfirm: (c, s) async {
           final newSurvey = await _applyCompanionToSurvey(c, s);
           if (!mounted) return;
