@@ -144,6 +144,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
               children: [
                 Stamp(
                   code: Stamp.codeFromName(a.name),
+                  emoji: a.icon,
                   tone: Stamp.toneFromHints(
                     category: a.category,
                     thrillLevel: a.thrillLevel,

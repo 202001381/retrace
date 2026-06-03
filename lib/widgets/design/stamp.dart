@@ -36,6 +36,9 @@ class Stamp extends StatelessWidget {
   final StampTone tone;
   final double rotate; // degrees, ±10 for hand-stamp feel
   final TextStyle? textStyle;
+  /// 이모지로 표시. 비어있으면 [code] 텍스트로 fallback.
+  /// 지도 마커처럼 시각 강조가 필요한 곳에서 사용.
+  final String? emoji;
 
   const Stamp({
     super.key,
@@ -44,6 +47,7 @@ class Stamp extends StatelessWidget {
     this.tone = StampTone.navy,
     this.rotate = 0,
     this.textStyle,
+    this.emoji,
   });
 
   /// 어트랙션명에서 2~3 글자 도장 코드를 도출.
@@ -90,7 +94,10 @@ class Stamp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = _kStampPalette[tone] ?? _kStampPalette[StampTone.navy]!;
-    final fs = code.length >= 3 ? size * 0.28 : size * 0.34;
+    final useEmoji = (emoji != null && emoji!.isNotEmpty);
+    final fs = useEmoji
+        ? size * 0.55
+        : (code.length >= 3 ? size * 0.28 : size * 0.34);
     final stamp = Container(
       width: size,
       height: size,
@@ -101,7 +108,7 @@ class Stamp extends StatelessWidget {
         border: Border.all(color: p.border, width: 1.5),
       ),
       child: Text(
-        code,
+        useEmoji ? emoji! : code,
         style: (textStyle ?? const TextStyle()).copyWith(
           color: p.ink,
           fontSize: fs,

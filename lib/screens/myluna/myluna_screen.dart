@@ -688,6 +688,7 @@ class _HeroNextCard extends StatelessWidget {
                     children: [
                       Stamp(
                         code: Stamp.codeFromName(spot.name),
+                        emoji: spot.icon,
                         tone: Stamp.toneFromHints(
                           category: spot.category,
                           thrillLevel: spot.thrillLevel,
@@ -922,6 +923,7 @@ class _NextItemRow extends StatelessWidget {
               ],
               Stamp(
                 code: Stamp.codeFromName(spot.name),
+                emoji: spot.icon,
                 tone: Stamp.toneFromHints(
                   category: spot.category,
                   thrillLevel: spot.thrillLevel,

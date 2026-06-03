@@ -466,7 +466,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ],
         ),
-        child: Stamp(code: code, tone: tone, size: 33),
+        child: Stamp(code: code, emoji: a.icon, tone: tone, size: 33),
       );
 
       return Marker(
@@ -1245,6 +1245,7 @@ class _AttractionCard extends StatelessWidget {
             children: [
               Stamp(
                 code: Stamp.codeFromName(attraction.name),
+                emoji: attraction.icon,
                 tone: Stamp.toneFromHints(
                   category: attraction.category,
                   thrillLevel: attraction.thrillLevel,
