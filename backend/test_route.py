@@ -174,6 +174,49 @@ def test_predicted_crowd_high_increases_wait(gate_req):
     assert high_resp.total_min >= low_resp.total_min
 
 
+def test_rain_prob_high_boosts_indoor_attractions(gate_req):
+    """rain_prob ≥ 60 시 실내 어트랙션 비중 ↑."""
+    catalog = {a["id"]: a for a in route._load()}
+    gate_req.favorite_type = route.FAVORITE_THRILL
+    gate_req.purpose = route.PURPOSE_RIDES
+    dry_resp = route.recommend_route(gate_req, rain_prob=0)
+    wet_resp = route.recommend_route(gate_req, rain_prob=80)
+    indoor_dry = sum(1 for s in dry_resp.route if catalog[s.id].get("indoor"))
+    indoor_wet = sum(1 for s in wet_resp.route if catalog[s.id].get("indoor"))
+    assert indoor_wet >= indoor_dry, (
+        f"비올 때 실내 더 많아야: indoor_dry={indoor_dry} indoor_wet={indoor_wet}"
+    )
+
+
+def test_profile_changed_rationale_priority(gate_req):
+    """request_reason=profile_changed 면 사용자 의도가 rationale 1순위."""
+    gate_req.request_reason = "profile_changed"
+    gate_req.favorite_type = route.FAVORITE_THRILL
+    resp = route.recommend_route(gate_req)
+    assert "다시" in resp.rationale or "스릴" in resp.rationale, resp.rationale
+
+
+def test_rain_rationale_overrides_intent(gate_req):
+    """비 사유는 사용자 의도(스릴/데이트) 보다 우선 표시 — 안전·상황 중요."""
+    gate_req.favorite_type = route.FAVORITE_THRILL
+    gate_req.purpose = route.PURPOSE_RIDES
+    resp = route.recommend_route(gate_req, rain_prob=80)
+    assert "비" in resp.rationale or "실내" in resp.rationale, resp.rationale
+
+
+def test_lunch_hour_rationale(gate_req):
+    """11~13시 hour 면 점심 사유 표시."""
+    resp = route.recommend_route(gate_req, hour=12)
+    assert "점심" in resp.rationale, resp.rationale
+
+
+def test_cache_key_includes_time_vars(gate_req):
+    """같은 survey 라도 시점 변수 다르면 cache_key 가 달라야 함."""
+    r1 = route.recommend_route(gate_req, rain_prob=10, hour=10)
+    r2 = route.recommend_route(gate_req, rain_prob=80, hour=12)
+    assert r1.cache_key != r2.cache_key
+
+
 def test_to_dict_serialization(gate_req):
     """RouteResponse.to_dict() 가 Flutter fromJson 과 호환되는 키 셋."""
     resp = route.recommend_route(gate_req)

@@ -74,7 +74,18 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
     _windowTicker = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) setState(() {}); // 만료 시점 UI 갱신용
     });
+    // 5분 주기 — 시간대/혼잡도가 바뀌면 새 동선 자동 제안 (lock window 만료 후).
+    _hourTicker = Timer.periodic(const Duration(minutes: 5), (_) {
+      if (!mounted) return;
+      // lockedAt 으로부터 windowMin 지난 경우만 (사용자 보고 있는 동안 추천 안 갈리게).
+      final rec = _rec;
+      if (rec != null && rec.remainingWindow() > Duration.zero) return;
+      if (_activeScenario != null) return;
+      _fetch(reason: 'tick');
+    });
   }
+
+  Timer? _hourTicker;
 
   Future<void> _loadDemoDismissed() async {
     final prefs = await SharedPreferences.getInstance();
@@ -92,6 +103,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   @override
   void dispose() {
     _windowTicker?.cancel();
+    _hourTicker?.cancel();
     super.dispose();
   }
 

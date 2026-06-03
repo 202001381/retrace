@@ -54,13 +54,37 @@ class RouteService {
 
   RouteResponse? get cached => _cached;
 
+  /// 시점 features 자동 구성 — 현재 시각/요일을 기준으로 백엔드 점수 함수에
+  /// 들어가는 변수를 채움. forecast_* 는 호출 측에서 알면 override, 없으면
+  /// 기본 가정으로. 모델 미가용 시에도 rain_prob/hour 만으로도 점수에 반영됨.
+  Map<String, Object?> _autoFeatures({
+    double? rainProb,
+    double? forecastTemp,
+    double? forecastPop,
+  }) {
+    final now = DateTime.now();
+    final weekday = now.weekday; // 1=Mon..7=Sun
+    final hour = now.hour;
+    // 한국 휴일 판단은 별도 캘린더 필요 — 일단 false 기본.
+    return {
+      'rain_prob': rainProb ?? 0.0,
+      'weekday': weekday,
+      'is_holiday': 0,
+      'hour': hour,
+      'forecast_temp': forecastTemp ?? 20.0,
+      'forecast_pop': forecastPop ?? (rainProb ?? 0.0),
+    };
+  }
+
   // ── HTTP ────────────────────────────────────────────────
   Future<RouteResponse> _fetchFromBackend(RouteRequest req) async {
     final uri = Uri.parse('$_baseUrl/api/route');
+    final payload = req.toJson();
+    payload['features'] = _autoFeatures(rainProb: req.rainProb);
     final resp = await http.post(
       uri,
       headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode(req.toJson()),
+      body: jsonEncode(payload),
     );
     if (resp.statusCode >= 400) {
       throw HttpException('route api ${resp.statusCode}: ${resp.body}');
@@ -72,6 +96,15 @@ class RouteService {
   // ── 목업 (백엔드 없을 때 fallback) ──────────────────────
   Future<RouteResponse> _generateMock(RouteRequest req) async {
     await Future.delayed(const Duration(milliseconds: 350));
+
+    // 백엔드 점수 함수와 동일 규칙 — 시점 변수 적용해 결과 일관성 확보.
+    final now = DateTime.now();
+    final hour = now.hour;
+    final weekday = now.weekday;
+    final rainHigh = (req.rainProb ?? 0) >= 60;
+    final isLunch = hour >= 11 && hour < 13;
+    final isDinner = hour >= 17 && hour < 19;
+    final crowdedDay = weekday >= 6; // 토·일
 
     Iterable<Attraction> pool = kAttractions
         .where((a) => a.isOperating)
@@ -94,7 +127,15 @@ class RouteService {
       if (req.onboarding.hasChild && a.category == '어트랙션' && a.thrillLevel <= 2) {
         score += 15;
       }
-      score += a.rating * (a.category == '어트랙션' ? 1.5 : 4);
+      // 우천 → 실내 가산
+      if (rainHigh && a.indoor) score += 18;
+      // 식사 시간 → 음식점/카페 가산
+      if ((isLunch || isDinner) && (a.category == '음식점' || a.category == '카페')) {
+        score += isLunch ? 22 : 16;
+      }
+      // 주말 → 인기 어트랙션 가중치 완화
+      final ratingMult = (crowdedDay ? 1.0 : 1.5) * (a.category == '어트랙션' ? 1.0 : 2.67);
+      score += a.rating * ratingMult;
       return (a: a, score: score);
     }).toList()
       ..sort((x, y) => y.score.compareTo(x.score));
@@ -160,15 +201,35 @@ class RouteService {
   }
 
   String _mockRationale(RouteRequest req, List<Attraction> route) {
+    // 백엔드 _rationale 와 동일 우선순위.
+    final now = DateTime.now();
+    final hour = now.hour;
+    final rainHigh = (req.rainProb ?? 0) >= 60;
+    // 1순위 — 사용자가 방금 조건 바꿈
+    if (req.requestReason == 'profile_changed') {
+      if (req.onboarding.purpose == VisitPurpose.date) return '데이트 모드로 다시 짰어요 💑';
+      if (req.onboarding.purpose == VisitPurpose.kidsOuting) return '아이와 함께할 코스로 다시 짰어요 🎠';
+      if (req.onboarding.favoriteType == FavoriteType.thrill) return '스릴 위주로 다시 짰어요 🎢';
+      if (req.onboarding.favoriteType == FavoriteType.family) return '가족·어린이 위주로 다시 짰어요 🎠';
+      return '새 조건으로 다시 짰어요 ✨';
+    }
+    // 2순위 — 동반자 제약
     if (req.onboarding.hasInfant) return '유아 동반 — 키 제한 어트랙션 빼고 짰어요 🍼';
-    final undiscoveredEggs =
-        route.where((a) => a.hasEasterEgg && !req.discoveredEggs.contains(a.id)).length;
-    if (undiscoveredEggs >= 2) return '못 찾은 이스터에그 $undiscoveredEggs개 포함했어요 🥚';
+    // 3순위 — 시점 변수
+    if (rainHigh) return '비 예보 — 실내 어트랙션 위주로 짰어요 ☔';
+    if (hour >= 11 && hour < 13) return '점심시간 — 식사 동선부터 짰어요 🍽️';
+    if (hour >= 17 && hour < 19) return '저녁시간 — 식사 동선 포함했어요 🍽️';
+    // 4순위 — GPS/완료
+    if (req.requestReason == 'gps_moved') return '이동하신 위치 기준으로 다시 짰어요 📍';
+    if (req.requestReason == 'attraction_completed') return '방금 다녀온 코스 빼고 갱신했어요 ✨';
+    // 5순위 — 의도
     if (req.onboarding.purpose == VisitPurpose.date) return '둘만의 데이트 코스로 짰어요 💑';
     if (req.onboarding.favoriteType == FavoriteType.thrill) return '스릴 위주 — 짜릿하게 즐겨보세요 🎢';
     if (req.onboarding.favoriteType == FavoriteType.family) return '가족이 함께 즐길 어트랙션 위주에요 🎠';
-    if (req.requestReason == 'gps_moved') return '이동하신 위치 기준으로 다시 짰어요 📍';
-    if (req.requestReason == 'attraction_completed') return '방금 다녀온 코스 빼고 갱신했어요 ✨';
+    // 6순위 — 이스터에그
+    final undiscoveredEggs =
+        route.where((a) => a.hasEasterEgg && !req.discoveredEggs.contains(a.id)).length;
+    if (undiscoveredEggs >= 2) return '못 찾은 이스터에그 $undiscoveredEggs개 포함했어요 🥚';
     return '오늘의 추천 동선이에요 ✨';
   }
 

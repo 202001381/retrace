@@ -145,8 +145,10 @@ def create_app() -> Flask:
     def api_route():
         """동선 추천 — RouteRequest JSON → RouteResponse JSON.
 
-        predictor 가 사용 가능하면 시점 혼잡도(low/mid/high)로 어트랙션 wait
-        보정. 모델 파일 없거나 predict 실패 시 정적 wait 으로 fallback.
+        body.features 가 있으면:
+          - predictor 로 시점 혼잡도(low/mid/high) 예측 → 어트랙션 wait 보정
+          - rain_prob, hour, weekday, is_holiday 도 점수·rationale 에 반영
+        모델 파일 없거나 predict 실패 시 정적 wait + features 만으로 fallback.
         """
         body = request.get_json(force=True, silent=True) or {}
         try:
@@ -154,10 +156,32 @@ def create_app() -> Flask:
         except (KeyError, ValueError, TypeError) as e:
             return jsonify(error=f"invalid request: {e}"), 400
 
-        # AI hook — 현재 시점 혼잡도 예측 (선택). 실패는 silently fallback.
         predicted_level: str | None = None
+        rain_prob: float | None = None
+        hour: int | None = None
+        weekday: int | None = None
+        is_holiday: bool | None = None
+
         pred_features = body.get("features") if isinstance(body, dict) else None
         if isinstance(pred_features, dict):
+            # 점수·rationale 에 직접 쓰이는 시점 변수 추출 (모델과 별개로 항상 사용).
+            try:
+                rain_prob = float(pred_features.get("rain_prob")) if "rain_prob" in pred_features else None
+            except (TypeError, ValueError):
+                rain_prob = None
+            try:
+                hour = int(pred_features.get("hour")) if "hour" in pred_features else None
+            except (TypeError, ValueError):
+                hour = None
+            try:
+                weekday = int(pred_features.get("weekday")) if "weekday" in pred_features else None
+            except (TypeError, ValueError):
+                weekday = None
+            try:
+                is_holiday = bool(pred_features.get("is_holiday")) if "is_holiday" in pred_features else None
+            except (TypeError, ValueError):
+                is_holiday = None
+            # AI 예측 — 모델 없으면 silently skip.
             try:
                 features = {k: pred_features[k] for k in config.FEATURE_ORDER}
                 pred = predict_one(features)
@@ -166,7 +190,14 @@ def create_app() -> Flask:
                 logger.info("route predictor fallback: %s", e)
 
         try:
-            resp = recommend_route(req, predicted_crowd_level=predicted_level)
+            resp = recommend_route(
+                req,
+                predicted_crowd_level=predicted_level,
+                rain_prob=rain_prob,
+                hour=hour,
+                weekday=weekday,
+                is_holiday=is_holiday,
+            )
         except Exception as e:
             logger.exception("route recommendation failed")
             return jsonify(error=str(e)), 500

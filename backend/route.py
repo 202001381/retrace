@@ -181,11 +181,23 @@ def recommend_route(
     req: RouteRequest,
     *,
     predicted_crowd_level: str | None = None,
+    rain_prob: float | None = None,
+    hour: int | None = None,
+    weekday: int | None = None,
+    is_holiday: bool | None = None,
 ) -> RouteResponse:
-    """동선 추천 — 룰 기반 스코어링 + 예측 혼잡도 보정 + nearest-neighbor 순서.
+    """동선 추천 — 룰 기반 스코어링 + 시점 보정 + nearest-neighbor 순서.
 
-    `predicted_crowd_level` (low/mid/high) 가 주어지면 어트랙션 wait 을
-    시점 보정. 보통 `predictor.predict_one()` 결과를 endpoint 에서 주입.
+    추천 점수에 들어가는 변수:
+      온보딩: favorite_type, purpose, members(infant/child)
+      위치: 사용자 lat/lng (가까울수록 +)
+      시점 혼잡도(predicted_crowd_level): 어트랙션 wait 조정
+      날씨(rain_prob): 비올 확률 높으면 실내 어트랙션 +
+      시간대(hour): 식사 시간이면 음식점/카페 +
+      요일(weekday): 평일/주말 가중 다름 (주말엔 인기 스폿 우대 ↓)
+      공휴일(is_holiday): True 면 혼잡 보정 +
+      방문 이력(completed_attraction_ids): 제외
+      이스터에그 미수집(discovered_eggs): 보너스
     """
     catalog = _load()
 
@@ -200,7 +212,19 @@ def recommend_route(
     if req.has_infant:
         pool = [a for a in pool if a["height_limit"] == 0]
 
-    # 3) 스코어링 (Flutter mock 과 동일 가중)
+    # 3) 비올 확률 높으면 (≥ 60%) 실내 어트랙션 우대 — 우선 필터링은 안 하고
+    #    점수 가산 (실내가 너무 적으면 빈 동선 위험).
+    indoor_bonus_active = rain_prob is not None and rain_prob >= 60
+
+    # 4) 시간대별 식사 부스트 — 11-13 점심, 17-19 저녁
+    is_lunch_time = hour is not None and 11 <= hour < 13
+    is_dinner_time = hour is not None and 17 <= hour < 19
+    meal_boost_active = is_lunch_time or is_dinner_time
+
+    # 5) 주말/공휴일이면 혼잡 더 심함 가정 — 인기(평점 높은) 스팟 가중치 ↓
+    crowded_day = (weekday is not None and weekday >= 5) or bool(is_holiday)
+
+    # 6) 스코어링
     scored: list[tuple[dict, float]] = []
     for a in pool:
         score = 0.0
@@ -226,8 +250,15 @@ def recommend_route(
             and a["thrill_level"] <= 2
         ):
             score += 15
-        # 평점 (음식·카페·포토 분류에 더 큰 영향)
-        score += a["rating"] * (1.5 if a["category"] == "어트랙션" else 4.0)
+        # 우천 시 실내 어트랙션 가산
+        if indoor_bonus_active and a.get("indoor"):
+            score += 18
+        # 식사 시간이면 음식점/카페 가산
+        if meal_boost_active and a["category"] in ("음식점", "카페"):
+            score += 22 if is_lunch_time else 16
+        # 주말/공휴일이면 인기 스팟 가중치 완화 (혼잡 회피)
+        rating_mult = (1.0 if crowded_day else 1.5) if a["category"] == "어트랙션" else 4.0
+        score += a["rating"] * rating_mult
         scored.append((a, score))
 
     scored.sort(key=lambda t: t[1], reverse=True)
@@ -274,14 +305,22 @@ def recommend_route(
         total_min += eta
         prev_lat, prev_lng = a["lat"], a["lng"]
 
-    # 8) rationale
-    rationale = _rationale(req, ordered)
+    # 8) rationale (시점 변수 포함)
+    rationale = _rationale(
+        req, ordered,
+        rain_prob=rain_prob,
+        hour=hour,
+        predicted_crowd_level=predicted_crowd_level,
+    )
 
-    # 9) cache key
+    # 9) cache key — survey + 시점 + 사용자 좌표 모두 반영 (캐시 충돌 방지)
     cache_key = (
         f"{req.lat:.3f}_{req.lng:.3f}_"
         f"{len(req.completed_attraction_ids)}_"
-        f"{req.purpose or ''}_{req.request_reason}"
+        f"{req.purpose or ''}_{req.favorite_type or ''}_"
+        f"{predicted_crowd_level or ''}_"
+        f"{int(rain_prob or 0)}_{hour or 0}_"
+        f"{req.request_reason}"
     )
 
     return RouteResponse(
@@ -315,10 +354,59 @@ def _nearest_neighbor(
     return result
 
 
-def _rationale(req: RouteRequest, route: Iterable[dict]) -> str:
+def _rationale(
+    req: RouteRequest,
+    route: Iterable[dict],
+    *,
+    rain_prob: float | None = None,
+    hour: int | None = None,
+    predicted_crowd_level: str | None = None,
+) -> str:
+    """Rationale 우선순위 — 명시적 사용자 의도/입력 > 상황 변수 > fallback.
+
+    이전 버전은 미발견 이스터에그가 2개 이상이면 무조건 그 사유 반환했는데,
+    사용자가 조건을 명시적으로 바꿨을 때 그 의도가 묻혀서 "왜 다른 동선인지"
+    안 보이는 문제가 있었음. 의도(profile_changed) 와 시점 사유를 위로.
+    """
     route_list = list(route)
+    # 1순위: 사용자가 방금 조건을 바꿨다 → 그 사실을 명시
+    if req.request_reason == "profile_changed":
+        if req.purpose == PURPOSE_DATE:
+            return "데이트 모드로 다시 짰어요 💑"
+        if req.purpose == PURPOSE_KIDS_OUTING:
+            return "아이와 함께할 코스로 다시 짰어요 🎠"
+        if req.favorite_type == FAVORITE_THRILL:
+            return "스릴 위주로 다시 짰어요 🎢"
+        if req.favorite_type == FAVORITE_FAMILY:
+            return "가족·어린이 위주로 다시 짰어요 🎠"
+        return "새 조건으로 다시 짰어요 ✨"
+    # 2순위: 안전·동반자 제약
     if req.has_infant:
         return "유아 동반 — 키 제한 어트랙션 빼고 짰어요 🍼"
+    # 3순위: 시점 변수 (날씨·시간·혼잡)
+    if rain_prob is not None and rain_prob >= 60:
+        return "비 예보 — 실내 어트랙션 위주로 짰어요 ☔"
+    if predicted_crowd_level == "high":
+        return "지금 혼잡해요 — 대기 짧은 곳 우선이에요 🟡"
+    if predicted_crowd_level == "low":
+        return "한산한 시간대예요 — 인기 어트랙션 추천해요 🟢"
+    if hour is not None and 11 <= hour < 13:
+        return "점심시간 — 식사 동선부터 짰어요 🍽️"
+    if hour is not None and 17 <= hour < 19:
+        return "저녁시간 — 식사 동선 포함했어요 🍽️"
+    # 4순위: GPS / 완료
+    if req.request_reason == "gps_moved":
+        return "이동하신 위치 기준으로 다시 짰어요 📍"
+    if req.request_reason == "attraction_completed":
+        return "방금 다녀온 코스 빼고 갱신했어요 ✨"
+    # 5순위: 의도가 명확한 경우 (initial)
+    if req.purpose == PURPOSE_DATE:
+        return "둘만의 데이트 코스로 짰어요 💑"
+    if req.favorite_type == FAVORITE_THRILL:
+        return "스릴 위주 — 짜릿하게 즐겨보세요 🎢"
+    if req.favorite_type == FAVORITE_FAMILY:
+        return "가족이 함께 즐길 어트랙션 위주에요 🎠"
+    # 6순위: 미발견 이스터에그 (보조 사유)
     undiscovered = sum(
         1
         for a in route_list
@@ -326,14 +414,4 @@ def _rationale(req: RouteRequest, route: Iterable[dict]) -> str:
     )
     if undiscovered >= 2:
         return f"못 찾은 이스터에그 {undiscovered}개 포함했어요 🥚"
-    if req.purpose == PURPOSE_DATE:
-        return "둘만의 데이트 코스로 짰어요 💑"
-    if req.favorite_type == FAVORITE_THRILL:
-        return "스릴 위주 — 짜릿하게 즐겨보세요 🎢"
-    if req.favorite_type == FAVORITE_FAMILY:
-        return "가족이 함께 즐길 어트랙션 위주에요 🎠"
-    if req.request_reason == "gps_moved":
-        return "이동하신 위치 기준으로 다시 짰어요 📍"
-    if req.request_reason == "attraction_completed":
-        return "방금 다녀온 코스 빼고 갱신했어요 ✨"
     return "오늘의 추천 동선이에요 ✨"

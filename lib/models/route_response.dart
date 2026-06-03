@@ -11,7 +11,9 @@ class RouteRequest {
   final SurveyAnswers onboarding;
   final Set<String> completedIds;
   final Set<String> discoveredEggs;
-  final String requestReason; // initial | gps_moved | manual_refresh | attraction_completed
+  final String requestReason; // initial | gps_moved | manual_refresh | attraction_completed | profile_changed | tick
+  /// 호출 측이 알면 주입, 없으면 RouteService 가 0 으로 자동 채움.
+  final double? rainProb;
 
   const RouteRequest({
     required this.uid,
@@ -22,6 +24,7 @@ class RouteRequest {
     required this.completedIds,
     required this.discoveredEggs,
     required this.requestReason,
+    this.rainProb,
   });
 
   Map<String, Object?> toJson() => {
