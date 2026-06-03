@@ -241,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return _RouteItem(
             name: a.name,
             code: Stamp.codeFromName(a.name),
+            emoji: a.icon,
             tone: Stamp.toneFromHints(
               category: a.category,
               thrillLevel: a.thrillLevel,
@@ -1209,12 +1210,14 @@ class _LunaPricingSheet extends StatelessWidget {
 // ─── 마이 루나 카드 ────────────────────────────────────────
 class _RouteItem {
   final String name, code, type, crowd;
+  final String? emoji;
   final StampTone tone;
   final int waitMin;
   final Color crowdColor;
   const _RouteItem({
     required this.name,
     required this.code,
+    required this.emoji,
     required this.tone,
     required this.type,
     required this.waitMin,
@@ -1485,7 +1488,7 @@ class _RouteRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Stamp(code: item.code, tone: item.tone, size: 34),
+        Stamp(code: item.code, emoji: item.emoji, tone: item.tone, size: 34),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
