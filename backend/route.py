@@ -307,12 +307,24 @@ def recommend_route(
         if a["category"] == "어트랙션":
             picked.append(a)
 
+    # extras — 카테고리 다양성 보장하되 순서는 점수 기반.
+    # 이전엔 고정 순서 ("카페" → "포토스팟" → "음식점") 였는데, N 작을 때
+    # (예: 데이트 N=4 → extra 슬롯 1개) 항상 카페만 들어가고 포토스팟이
+    # 빠지는 문제. 이제 점수 정렬에 따라 카테고리당 최상위 1개 고르고
+    # 그 안에서 다시 점수순 → date 모드의 포토스팟 +22 가 실제로 1번 extra 로
+    # 들어오게 됨.
     extras: list[dict] = []
-    for cat in ("카페", "포토스팟", "음식점"):
-        for a, _ in scored:
-            if a["category"] == cat:
-                extras.append(a)
-                break
+    seen_cats: set[str] = set()
+    for a, _ in scored:
+        cat = a["category"]
+        if cat == "어트랙션":
+            continue
+        if cat in seen_cats:
+            continue
+        extras.append(a)
+        seen_cats.add(cat)
+        if len(seen_cats) >= 3:
+            break
     for a in extras:
         if len(picked) >= n:
             break

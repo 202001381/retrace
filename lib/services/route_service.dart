@@ -171,12 +171,16 @@ class RouteService {
     final attractionCount = (N * 0.6).ceil().clamp(2, upper);
     final picked = <Attraction>[];
     picked.addAll(scored.where((s) => s.a.category == '어트랙션').take(attractionCount).map((s) => s.a));
-    final addedCafe = scored.where((s) => s.a.category == '카페').take(1).toList();
-    final addedPhoto = scored.where((s) => s.a.category == '포토스팟').take(1).toList();
-    final addedFood = scored.where((s) => s.a.category == '음식점').take(1).toList();
-    for (final s in [...addedCafe, ...addedPhoto, ...addedFood]) {
+    // extras — 카테고리당 최상위 1개를 점수 정렬 순서대로. 백엔드와 동일.
+    // 데이트 모드에선 포토스팟 +22 보너스로 카페보다 먼저 잡힘.
+    final seenExtra = <String>{};
+    for (final s in scored) {
       if (picked.length >= N) break;
+      final c = s.a.category;
+      if (c == '어트랙션' || seenExtra.contains(c)) continue;
       picked.add(s.a);
+      seenExtra.add(c);
+      if (seenExtra.length >= 3) break;
     }
 
     // 최고 점수 어트랙션을 STOP 01 로 고정, 나머지는 그 어트랙션 위치에서
