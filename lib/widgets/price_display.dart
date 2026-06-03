@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
-
+import '../l10n/generated/app_localizations.dart';
 import '../models/pricing_state.dart';
 
 enum PriceDisplaySize { compact, hero }
@@ -28,18 +28,18 @@ class PriceDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (size) {
       case PriceDisplaySize.compact:
-        return _compact();
+        return _compact(context);
       case PriceDisplaySize.hero:
-        return _hero();
+        return _hero(context);
     }
   }
 
-  Widget _compact() {
+  Widget _compact(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text('정가 ₩${_fmt(state.basePrice)}',
+        Text(AppL10n.of(context)!.price_list_price(_fmt(state.basePrice)),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
@@ -62,12 +62,12 @@ class PriceDisplay extends StatelessWidget {
     );
   }
 
-  Widget _hero() {
+  Widget _hero(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('정가 ₩${_fmt(state.basePrice)}',
+        Text(AppL10n.of(context)!.price_list_price(_fmt(state.basePrice)),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,

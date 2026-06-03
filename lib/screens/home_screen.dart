@@ -620,7 +620,7 @@ class _ConditionStrip extends StatelessWidget {
         children: [
           ConditionPip(icon: Icons.cloud_outlined, label: weatherShort, tint: PipTint.sky),
           ConditionPip(icon: Icons.directions_walk_rounded, label: crowdShort, tint: PipTint.sun),
-          const ConditionPip(icon: Icons.access_time_rounded, label: '대기 7분', tint: PipTint.mint),
+          ConditionPip(icon: Icons.access_time_rounded, label: AppL10n.of(context)!.wait_short(7), tint: PipTint.mint),
         ],
       ),
     );
@@ -712,8 +712,8 @@ class _VisitDetailSheet extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('💰 오늘 할인 자세히 보기',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+              child: Text(AppL10n.of(context)!.home_today_discount_detail,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
         ],
@@ -1058,7 +1058,7 @@ class _LunaPricingSheet extends StatelessWidget {
     final saved = pricing.discountAmount;
     // 사유 표시는 PricingState.reason 이 결정 + 보조 입력(재방문·미수집 에그) 가산.
     final reasons = <(String, String, String)>[
-      (pricing.reasonEmoji, pricing.reasonLabel, '+${pricing.discountPercent - _bonusPct()}%'),
+      (pricing.reasonEmoji, DiscountCauseLabel.reasonLabel(context, pricing), '+${pricing.discountPercent - _bonusPct()}%'),
       if (lastVisitDaysAgo == null)
         ('🎉', l.home_first_visit_welcome, '+5%')
       else
@@ -1107,12 +1107,12 @@ class _LunaPricingSheet extends StatelessWidget {
                       letterSpacing: -0.6,
                     ),
                     children: [
-                      const TextSpan(text: '오늘 루나가 '),
+                      TextSpan(text: AppL10n.of(context)!.home_why_offer_prefix),
                       TextSpan(
                         text: '${pricing.discountPercent}%',
                         style: const TextStyle(color: AppColors.red),
                       ),
-                      const TextSpan(text: '\n드리는 이유'),
+                      TextSpan(text: AppL10n.of(context)!.home_why_offer_suffix),
                     ],
                   ),
                 ),
@@ -1165,7 +1165,7 @@ class _LunaPricingSheet extends StatelessWidget {
           // 정가·할인가 hero 표시.
           PriceDisplay(state: pricing, size: PriceDisplaySize.hero),
           const SizedBox(height: 6),
-          Text('오늘 ${_fmt(saved)}원 아끼는 중',
+          Text(AppL10n.of(context)!.home_saving_today(_fmt(saved)),
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 8),
           DiscountCountdown(
@@ -1189,7 +1189,7 @@ class _LunaPricingSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(99)),
               ),
-              child: Text('루나 티켓 ${_fmt(saved)}원 아끼기',
+              child: Text(AppL10n.of(context)!.home_save_with_luna_ticket(_fmt(saved)),
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
@@ -1288,8 +1288,8 @@ class _MyLunaCard extends StatelessWidget {
                 child: const MoonMark(size: 16, color: AppColors.blue, filled: true),
               ),
               const SizedBox(width: 8),
-              const Text('마이 루나',
-                  style: TextStyle(
+              Text(AppL10n.of(context)!.myluna_title,
+                  style: const TextStyle(
                     color: AppColors.ink900,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -1532,7 +1532,7 @@ class _RouteRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 2),
-              Text('⏱ 예상 대기 ${item.waitMin}분',
+              Text(AppL10n.of(context)!.home_wait_eta_short(item.waitMin),
                   style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
             ],
           ),

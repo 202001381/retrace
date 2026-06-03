@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../models/attraction.dart';
 import '../../services/path_graph.dart';
 
@@ -87,7 +88,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
           backgroundColor: AppColors.ink900,
           duration: const Duration(seconds: 5),
           content: Text(
-            '🎯 거의 다 왔어요! ${widget.target.name}',
+            AppL10n.of(context)!.nav_arrival_close(widget.target.name),
             style: const TextStyle(
               color: AppColors.bgCard,
               fontSize: 14,
@@ -278,10 +279,10 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                       const Icon(Icons.info_outline_rounded,
                           size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          '폰을 보지 않으셔도 돼요 — 50m 안으로 들어가면 알려드릴게요.',
-                          style: TextStyle(
+                          AppL10n.of(context)!.nav_arrival_hint,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
@@ -383,7 +384,7 @@ class _DistanceCard extends StatelessWidget {
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text('도보 약 $walkMin분',
+                child: Text(AppL10n.of(context)!.nav_walk_eta_short(walkMin),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,

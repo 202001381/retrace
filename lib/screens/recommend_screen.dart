@@ -16,9 +16,20 @@ class _RecommendScreenState extends State<RecommendScreen> {
   List<Attraction> _top3 = const [];
   bool _loading = true;
 
-  // 하단 카테고리 및 세부 필터용 상태 변수
+  // 하단 카테고리 및 세부 필터용 상태 변수 (값은 데이터 일치를 위해 한국어 키 유지).
   String _selectedCategory = '어트랙션';
   final List<String> _categories = ['어트랙션', '음식점', '공연', '편의시설'];
+
+  String _localCategory(BuildContext context, String cat) {
+    final l = AppL10n.of(context)!;
+    switch (cat) {
+      case '어트랙션': return l.cat_attraction;
+      case '음식점':   return l.cat_restaurant;
+      case '공연':     return l.cat_show;
+      case '편의시설': return l.cat_facility;
+    }
+    return cat;
+  }
 
   // 🚀 기획서 반영: 세부 토글 필터 상태
   bool _showOperatingOnly = false;
@@ -162,8 +173,8 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   const Divider(height: 1, color: Color(0xFFDDDDDD)),
                   const SizedBox(height: 24),
 
-                  const Text('🎢 전체 둘러보기',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
+                  Text(AppL10n.of(context)!.rec_browse_all,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
                   const SizedBox(height: 16),
 
                   // 메인 카테고리 칩
@@ -173,7 +184,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                       children: _categories.map((cat) => Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          label: Text(cat,
+                          label: Text(_localCategory(context, cat),
                             style: TextStyle(fontWeight: FontWeight.w700, color: _selectedCategory == cat ? Colors.white : const Color(0xFF555555))),
                           selected: _selectedCategory == cat,
                           selectedColor: const Color(0xFFE60012),
@@ -193,7 +204,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   Row(
                     children: [
                       FilterChip(
-                        label: const Text('✅ 운영중'),
+                        label: Text(AppL10n.of(context)!.rec_filter_operating),
                         selected: _showOperatingOnly,
                         onSelected: (val) => setState(() => _showOperatingOnly = val),
                         backgroundColor: Colors.white,
@@ -208,7 +219,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
-                        label: const Text('✨ 이스터에그'),
+                        label: Text(AppL10n.of(context)!.rec_filter_egg),
                         selected: _showEasterEggOnly,
                         onSelected: (val) => setState(() => _showEasterEggOnly = val),
                         backgroundColor: Colors.white,
@@ -317,6 +328,13 @@ class _Chip extends StatelessWidget {
   }
 }
 
+String _crowdLabel(BuildContext context, int waitMinutes) {
+  final l = AppL10n.of(context)!;
+  if (waitMinutes <= 5) return l.home_crowd_low;
+  if (waitMinutes <= 20) return l.home_crowd_mid;
+  return l.home_crowd_high;
+}
+
 class _AttractionCard extends StatelessWidget {
   final int index;
   final Attraction item;
@@ -349,7 +367,7 @@ class _AttractionCard extends StatelessWidget {
               children: [
                 Text(item.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 4),
-                Text('${item.zone} · ${item.indoor ? '실내' : '실외'} · 스릴 ${item.thrillLevel}/5', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+                Text('${item.zone} · ${item.indoor ? AppL10n.of(context)!.common_indoor : AppL10n.of(context)!.common_outdoor} · ${AppL10n.of(context)!.rec_thrill_level(item.thrillLevel)}', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center,
@@ -357,9 +375,9 @@ class _AttractionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(color: _crowdColor.withOpacity(0.12), borderRadius: BorderRadius.circular(99)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 6, height: 6, decoration: BoxDecoration(color: _crowdColor, shape: BoxShape.circle)), const SizedBox(width: 4), Text(item.crowdLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _crowdColor))]),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 6, height: 6, decoration: BoxDecoration(color: _crowdColor, shape: BoxShape.circle)), const SizedBox(width: 4), Text(_crowdLabel(context, item.waitMinutes), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _crowdColor))]),
                     ),
-                    Text('⏱ 예상 ${item.waitMinutes}분', style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
+                    Text(AppL10n.of(context)!.rec_wait_eta_short(item.waitMinutes), style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
                     if (item.heightLimit > 0) Text('📏 ${item.heightLimit}cm+', style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
                   ],
                 ),
@@ -401,7 +419,7 @@ class _AllAttractionCard extends StatelessWidget {
                 Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 4),
                 // 🚀 기획서 반영: 대기시간 및 구역 표시
-                Text('${item.zone} · ⏱ 예상 ${item.waitMinutes}분', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
+                Text(AppL10n.of(context)!.rec_zone_wait_eta(item.zone, item.waitMinutes), style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
               ],
             ),
           ),
@@ -410,11 +428,11 @@ class _AllAttractionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(color: const Color(0xFFFFF7E6), borderRadius: BorderRadius.circular(8)),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.stars_rounded, color: Color(0xFFFFB800), size: 14),
-                  SizedBox(width: 4),
-                  Text('이스터에그', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFFB800))),
+                  const Icon(Icons.stars_rounded, color: Color(0xFFFFB800), size: 14),
+                  const SizedBox(width: 4),
+                  Text(AppL10n.of(context)!.common_easter_egg, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFFB800))),
                 ],
               ),
             ),

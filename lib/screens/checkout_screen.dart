@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
-
+import '../l10n/generated/app_localizations.dart';
 import '../models/pricing_state.dart';
 import '../services/visit_history_service.dart';
 import '../widgets/design/condition_pip.dart';
+import '../widgets/discount_cause_label.dart';
 import '../widgets/discount_countdown.dart';
 
 /// v3 ticket purchase — dark BG + perforated ticket card hero + 결제하기 CTA.
@@ -37,15 +38,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _showExpiredAndPop() async {
+    final l = AppL10n.of(context)!;
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('할인이 만료됐어요'),
-        content: const Text('오늘의 루나 프라이싱 유효 시간이 지났습니다.\n홈으로 돌아갑니다.'),
+        title: Text(l.checkout_expired_title),
+        content: Text(l.checkout_discount_expired_msg),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('확인'),
+            child: Text(l.common_ok),
           ),
         ],
       ),
@@ -141,9 +143,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   const Eyebrow('STEP 01 · CONFIRM', color: AppColors.yellow),
                   const SizedBox(height: 8),
-                  const Text(
-                    '오늘만의\n루나 티켓',
-                    style: TextStyle(
+                  Text(
+                    AppL10n.of(context)!.checkout_special_ticket,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 36,
                       fontWeight: FontWeight.w900,
@@ -160,10 +162,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 20),
                   // 합계 row
-                  _SummaryRow(label: '소계', value: '₩${_fmt(p.basePrice * _qty)}'),
+                  _SummaryRow(label: AppL10n.of(context)!.common_subtotal, value: '₩${_fmt(p.basePrice * _qty)}'),
                   const SizedBox(height: 8),
                   _SummaryRow(
-                    label: '루나 할인 (${p.discountPercent}%)',
+                    label: AppL10n.of(context)!.checkout_luna_discount_pct(p.discountPercent),
                     value: '-₩${_fmt(saved)}',
                     valueColor: AppColors.yellow,
                   ),
@@ -174,13 +176,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 12),
                   _SummaryRow(
-                    label: '총 결제',
+                    label: AppL10n.of(context)!.common_total_payment,
                     value: '₩${_fmt(total)}',
                     bold: true,
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    '💡 이 할인은 표시된 시간까지 유효해요. 결제 후엔 가격 변동의 영향을 받지 않아요.',
+                    AppL10n.of(context)!.checkout_locked_disclaimer,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.55),
                       fontSize: 11,
@@ -220,8 +222,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         )
                       : Text(
                           _expired
-                              ? '할인 만료됨'
-                              : '₩${_fmt(total)} 결제하기',
+                              ? AppL10n.of(context)!.checkout_discount_expired
+                              : AppL10n.of(context)!.checkout_pay_now(_fmt(total)),
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w900),
                         ),
@@ -311,9 +313,9 @@ class _PerforatedTicket extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    '자유이용권 · 1일',
-                    style: TextStyle(
+                  Text(
+                    AppL10n.of(context)!.checkout_pass_1day,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -322,7 +324,7 @@ class _PerforatedTicket extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    pricing.reasonLabel,
+                    DiscountCauseLabel.reasonLabel(context, pricing),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 12,
@@ -339,9 +341,9 @@ class _PerforatedTicket extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
               child: Row(
                 children: [
-                  const Text(
-                    '수량',
-                    style: TextStyle(
+                  Text(
+                    AppL10n.of(context)!.common_quantity,
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.ink500,
                       fontWeight: FontWeight.w700,
@@ -542,9 +544,9 @@ class _QrSuccessSheet extends StatelessWidget {
                 size: 32, color: AppColors.mint),
           ),
           const SizedBox(height: 16),
-          const Text(
-            '결제 완료',
-            style: TextStyle(
+          Text(
+            AppL10n.of(context)!.checkout_payment_done,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
               color: AppColors.ink900,
@@ -573,9 +575,9 @@ class _QrSuccessSheet extends StatelessWidget {
             child: CustomPaint(painter: _MockQrPainter()),
           ),
           const SizedBox(height: 14),
-          const Text(
-            '입장 시 QR을 보여주세요',
-            style: TextStyle(
+          Text(
+            AppL10n.of(context)!.checkout_show_qr,
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.ink500,
@@ -594,10 +596,9 @@ class _QrSuccessSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(99)),
               ),
-              child: const Text(
-                '마이 루나 시작하기',
-                style:
-                    TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              child: Text(
+                AppL10n.of(context)!.checkout_start_my_luna,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -673,12 +674,15 @@ class _PaymentMethodSheetState extends State<_PaymentMethodSheet> {
         (m) => '${m[1]},',
       );
 
-  static const _methods = <(_PayMethod, String, Color, String)>[
-    (_PayMethod.kakao, '카카오페이', Color(0xFFFAE100), 'K'),
-    (_PayMethod.card, '신용·체크카드', Color(0xFF1F1F1F), 'CARD'),
-    (_PayMethod.naver, '네이버페이', Color(0xFF03C75A), 'N'),
-    (_PayMethod.bank, '계좌이체', Color(0xFF0084E0), '₩'),
-  ];
+  List<(_PayMethod, String, Color, String)> _methodsLocalized(BuildContext context) {
+    final l = AppL10n.of(context)!;
+    return [
+      (_PayMethod.kakao, l.checkout_kakao_pay, const Color(0xFFFAE100), 'K'),
+      (_PayMethod.card,  l.checkout_credit_card, const Color(0xFF1F1F1F), 'CARD'),
+      (_PayMethod.naver, l.checkout_naver_pay, const Color(0xFF03C75A), 'N'),
+      (_PayMethod.bank,  l.checkout_bank_transfer, const Color(0xFF0084E0), '₩'),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -705,9 +709,9 @@ class _PaymentMethodSheetState extends State<_PaymentMethodSheet> {
           const SizedBox(height: 18),
           const Eyebrow('STEP 02 · PAYMENT', color: AppColors.red),
           const SizedBox(height: 6),
-          const Text(
-            '어떻게 결제할까요?',
-            style: TextStyle(
+          Text(
+            AppL10n.of(context)!.checkout_how_pay,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
               color: AppColors.ink900,
@@ -715,7 +719,7 @@ class _PaymentMethodSheetState extends State<_PaymentMethodSheet> {
             ),
           ),
           const SizedBox(height: 18),
-          ..._methods.map((m) {
+          ..._methodsLocalized(context).map((m) {
             final selected = _selected == m.$1;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -798,16 +802,16 @@ class _PaymentMethodSheetState extends State<_PaymentMethodSheet> {
             ),
             child: Column(
               children: [
-                _summaryRow('소계', '₩${_fmt(widget.baseTotal)}'),
+                _summaryRow(AppL10n.of(context)!.common_subtotal, '₩${_fmt(widget.baseTotal)}'),
                 const SizedBox(height: 6),
                 _summaryRow(
-                  '루나 할인',
+                  AppL10n.of(context)!.checkout_luna_discount,
                   '-₩${_fmt(widget.discount)}',
                   valueColor: AppColors.red,
                 ),
                 const Divider(height: 18, color: AppColors.line),
                 _summaryRow(
-                  '총 결제',
+                  AppL10n.of(context)!.common_total_payment,
                   '₩${_fmt(widget.finalTotal)}',
                   bold: true,
                 ),
@@ -828,7 +832,7 @@ class _PaymentMethodSheetState extends State<_PaymentMethodSheet> {
                     borderRadius: BorderRadius.circular(99)),
               ),
               child: Text(
-                '₩${_fmt(widget.finalTotal)} 결제하기',
+                AppL10n.of(context)!.checkout_pay_now(_fmt(widget.finalTotal)),
                 style: const TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w900),
               ),

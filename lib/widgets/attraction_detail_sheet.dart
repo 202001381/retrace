@@ -379,14 +379,14 @@ class _LunaLoadingDialog extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            SizedBox(
+          children: [
+            const SizedBox(
               width: 32, height: 32,
               child: CircularProgressIndicator(color: AppColors.grape, strokeWidth: 3),
             ),
-            SizedBox(height: 14),
-            Text('🌙 루나가 이야기를 찾고 있어요...',
-                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 14),
+            Text(AppL10n.of(context)!.attr_luna_finding_story,
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
           ],
         ),
       ),

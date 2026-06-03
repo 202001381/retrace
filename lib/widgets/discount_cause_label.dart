@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
-
+import '../l10n/generated/app_localizations.dart';
 import '../models/pricing_state.dart';
 
 /// 할인 인과 라벨 — "🌥 흐려서 한산 → 15% 할인" 한 줄.
@@ -18,6 +18,16 @@ class DiscountCauseLabel extends StatelessWidget {
     this.fontSize = 13,
   });
 
+  static String reasonLabel(BuildContext context, PricingState state) {
+    final l = AppL10n.of(context)!;
+    switch (state.reason) {
+      case DiscountReason.weather:   return l.discount_reason_weather;
+      case DiscountReason.weekday:   return l.discount_reason_weekday;
+      case DiscountReason.lowDemand: return l.discount_reason_low_demand;
+      case DiscountReason.event:     return l.discount_reason_event;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final labelColor = dark ? AppColors.textOnDark : AppColors.textPrimary;
@@ -29,7 +39,7 @@ class DiscountCauseLabel extends StatelessWidget {
         Text(state.reasonEmoji, style: TextStyle(fontSize: fontSize + 3)),
         const SizedBox(width: 4),
         Flexible(
-          child: Text(state.reasonLabel,
+          child: Text(reasonLabel(context, state),
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: labelColor,
@@ -42,7 +52,7 @@ class DiscountCauseLabel extends StatelessWidget {
           child: Icon(Icons.arrow_forward_rounded,
               size: fontSize + 1, color: arrowColor),
         ),
-        Text('${state.discountPercent}% 할인',
+        Text(AppL10n.of(context)!.price_off_pct(state.discountPercent),
             style: TextStyle(
               color: accentColor,
               fontSize: fontSize,

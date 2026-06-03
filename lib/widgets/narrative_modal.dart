@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../services/narrative_service.dart';
 
 /// Claude API 서사 결과를 보여주는 풀스크린 모달.
@@ -78,8 +79,8 @@ class NarrativeModal extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const Text('숨겨진 기억의 조각 발견!',
-                style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, height: 1.2)),
+            Text(AppL10n.of(context)!.narrative_found,
+                style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, height: 1.2)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -90,8 +91,8 @@ class NarrativeModal extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('[서사 텍스트]',
-                      style: TextStyle(color: Color(0xFFFF6B6B), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  Text(AppL10n.of(context)!.narrative_placeholder,
+                      style: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                   const SizedBox(height: 8),
                   Text('$attractionEmoji $attractionName',
                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
@@ -104,7 +105,7 @@ class NarrativeModal extends StatelessWidget {
                       }
                       if (snap.hasError) {
                         return Text(
-                          '서사를 가져오지 못했어요. 잠시 후 다시 시도해주세요.\n(${snap.error})',
+                          AppL10n.of(context)!.narrative_load_error('${snap.error}'),
                           style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13, height: 1.5),
                         );
                       }
@@ -130,8 +131,8 @@ class NarrativeModal extends StatelessWidget {
                   foregroundColor: const Color(0xFF1E2D4E),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('📖 연대기(Chronicle)에 수집하기',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                child: Text(AppL10n.of(context)!.narrative_save_chronicle,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
               ),
             ),
           ],

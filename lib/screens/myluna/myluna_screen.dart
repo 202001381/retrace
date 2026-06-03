@@ -737,13 +737,13 @@ class _HeroNextCard extends StatelessWidget {
                   // 도보 · 대기 · 총 3분할
                   Row(
                     children: [
-                      _StatCell(label: '도보', value: '$walkMin분'),
+                      _StatCell(label: AppL10n.of(context)!.myluna_stat_walk, value: AppL10n.of(context)!.myluna_stat_min(walkMin)),
                       _StatDivider(),
-                      _StatCell(label: '대기', value: '$waitMin분'),
+                      _StatCell(label: AppL10n.of(context)!.myluna_stat_wait, value: AppL10n.of(context)!.myluna_stat_min(waitMin)),
                       _StatDivider(),
                       _StatCell(
-                        label: '총',
-                        value: '$totalMin분',
+                        label: AppL10n.of(context)!.myluna_stat_total,
+                        value: AppL10n.of(context)!.myluna_stat_min(totalMin),
                         accent: true,
                       ),
                     ],

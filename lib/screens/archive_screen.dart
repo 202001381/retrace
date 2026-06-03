@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 
 /// 아카이브 — '일일 탐험 매거진' 컨셉.
@@ -1262,7 +1263,7 @@ class _DiaryDialogState extends State<_DiaryDialog> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('사진을 가져오지 못했어요: $e')),
+        SnackBar(content: Text(AppL10n.of(context)!.archive_photo_load_failed('$e'))),
       );
     }
   }

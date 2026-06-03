@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../widgets/spot_detail_sheet.dart';
 import '../models/spot_model.dart';
 import 'package:latlong2/latlong.dart';
@@ -82,7 +83,7 @@ class _RouteScreenState extends State<RouteScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${widget.companionEmoji} ${widget.companion} 맞춤 동선 추천',
+                            Text(AppL10n.of(context)!.route_custom_recommend('${widget.companionEmoji} ${widget.companion}'),
                                 style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
                             Text(widget.preference,
                                 style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
@@ -97,9 +98,9 @@ class _RouteScreenState extends State<RouteScreen> {
                     child: Wrap(
                       spacing: 8,
                       children: [
-                        _HeaderChip(text: '🗺️ ${_stops.length}개 스팟'),
+                        _HeaderChip(text: AppL10n.of(context)!.route_stops_count(_stops.length)),
                         _HeaderChip(text: '⏱️ $_total'),
-                        _HeaderChip(text: '🎯 AI 최적 동선'),
+                        _HeaderChip(text: AppL10n.of(context)!.route_ai_optimal),
                       ],
                     ),
                   ),

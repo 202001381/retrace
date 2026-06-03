@@ -657,7 +657,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   if (_navTarget != null)
                     _StatusBadge(
                       color: AppColors.red,
-                      text: '➜ ${_navTarget!.name} (도보 ${_navWalkMin ?? 0}분)',
+                      text: AppL10n.of(context)!.map_nav_status(_navTarget!.name, _navWalkMin ?? 0),
                       onClose: () => setState(() {
                         _navTarget = null;
                         _navWalkMin = null;
@@ -852,7 +852,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           ),
                           const Divider(height: 1, color: AppColors.line, indent: 20, endIndent: 20),
                           _FilterToggleRow(
-                            label: '✨ 내 이스터에그',
+                            label: AppL10n.of(context)!.map_filter_my_eggs,
                             value: _filter.onlyMyEasterEggs,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyMyEasterEggs: v)),
