@@ -311,6 +311,20 @@ class AppL10nKo extends AppL10n {
   @override String get archive_hint => '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요.\n사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.';
   @override String get archive_close_label => '닫기';
   @override String get notif_set_marketing_gate_hint => '※ 카카오·SMS 채널은 마케팅 정보 수신 동의 후 사용 가능합니다';
+  @override String archive_events_books_count(int events, int books) => '행사 $events · $books권';
+  @override String archive_season_range_label(String season, String range) => '$season $range · 서울랜드';
+  @override String get archive_next_event_placeholder => '다음 행사 칸 · 방문하면 채워져요';
+  @override String get archive_stat_event_chapters => '행사 챕터';
+  @override String archive_event_books_badge(int count) => '$count권';
+  @override String get archive_search_title => '책 / 행사 검색';
+  @override String get archive_search_hint => '책 제목 또는 행사명';
+  @override String get archive_search_empty => '검색 결과가 없어요';
+  @override String get archive_add_book_title => '새 추억 추가';
+  @override String get archive_add_book_headline_label => '한 줄 요약';
+  @override String get archive_add_book_headline_hint => '예: 벚꽃 흩날리던 봄날';
+  @override String get archive_add_book_event_label => '행사 챕터';
+  @override String get archive_add_book_save => '저장';
+  @override String get archive_add_book_coming_soon => '수동 추가는 곧 열려요';
 
   @override String get fav_thrill => '스릴 어트랙션 위주';
   @override String get fav_family => '가족·어린이 위주';

@@ -311,6 +311,20 @@ class AppL10nEn extends AppL10n {
   @override String get archive_hint => 'Open a book and three pages appear (cover · log · memory).\nPhotos are optional — vintage stamps will hold the space.';
   @override String get archive_close_label => 'Close';
   @override String get notif_set_marketing_gate_hint => '※ Kakao/SMS channels require marketing consent';
+  @override String archive_events_books_count(int events, int books) => '$events events · $books books';
+  @override String archive_season_range_label(String season, String range) => '$season $range · Seoul Land';
+  @override String get archive_next_event_placeholder => 'Next event slot — visit to unlock';
+  @override String get archive_stat_event_chapters => 'Event chapters';
+  @override String archive_event_books_badge(int count) => '$count';
+  @override String get archive_search_title => 'Search books & events';
+  @override String get archive_search_hint => 'Book title or event name';
+  @override String get archive_search_empty => 'No matches';
+  @override String get archive_add_book_title => 'Add a memory';
+  @override String get archive_add_book_headline_label => 'One-line summary';
+  @override String get archive_add_book_headline_hint => 'e.g., Cherry blossoms in the breeze';
+  @override String get archive_add_book_event_label => 'Event chapter';
+  @override String get archive_add_book_save => 'Save';
+  @override String get archive_add_book_coming_soon => 'Manual add coming soon';
 
   @override String get fav_thrill => 'Thrill rides';
   @override String get fav_family => 'Family-friendly';

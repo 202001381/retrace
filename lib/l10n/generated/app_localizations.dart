@@ -343,6 +343,20 @@ abstract class AppL10n {
   String get archive_hint;
   String get archive_close_label;
   String get notif_set_marketing_gate_hint;
+  String archive_events_books_count(int events, int books);
+  String archive_season_range_label(String season, String range);
+  String get archive_next_event_placeholder;
+  String get archive_stat_event_chapters;
+  String archive_event_books_badge(int count);
+  String get archive_search_title;
+  String get archive_search_hint;
+  String get archive_search_empty;
+  String get archive_add_book_title;
+  String get archive_add_book_headline_label;
+  String get archive_add_book_headline_hint;
+  String get archive_add_book_event_label;
+  String get archive_add_book_save;
+  String get archive_add_book_coming_soon;
 
   String get fav_thrill;
   String get fav_family;

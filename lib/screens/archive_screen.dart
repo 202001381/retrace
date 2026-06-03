@@ -180,6 +180,196 @@ const Map<_Season, _SeasonConfig> _kConfigs = {
   ),
 };
 
+// ─── 이벤트(행사) 챕터 ────────────────────────────────
+/// 시즌 안의 행사 chapters. 시드 책은 date 기준으로 자동 매핑.
+/// 시즌 갱신일(3/1, 6/1, 9/1, 12/1) 과 별개로 행사는 더 짧은 윈도우.
+class _EventChapter {
+  final String id;
+  final _Season season;
+  final _LocPair title;          // "벚꽃 페스티벌" / "Cherry Blossom Festival"
+  final String displayRange;     // "4.1—4.20" (UI 노출)
+  final (int, int) matchStart;   // (month, day) — 책 자동 매핑 윈도우 시작
+  final (int, int) matchEnd;     // (month, day) — 끝
+  final String emoji;            // 카드 좌측 점 옆 작은 데코
+  final Color accent;            // 점/뱃지 컬러
+
+  const _EventChapter({
+    required this.id,
+    required this.season,
+    required this.title,
+    required this.displayRange,
+    required this.matchStart,
+    required this.matchEnd,
+    required this.emoji,
+    required this.accent,
+  });
+
+  /// 시즌 cross-year (겨울 11→2월) 대응 (m,d) 비교.
+  bool contains(DateTime d) {
+    final md = (d.month, d.day);
+    int rank((int, int) v) => v.$1 * 100 + v.$2;
+    final s = rank(matchStart);
+    final e = rank(matchEnd);
+    final cur = rank(md);
+    if (s <= e) return cur >= s && cur <= e;
+    // 윈도우가 연말→연초 (겨울 루나 라이트 11.20–2.10 등)
+    return cur >= s || cur <= e;
+  }
+}
+
+const Map<_Season, List<_EventChapter>> _kEventCatalog = {
+  _Season.spring: [
+    _EventChapter(
+      id: 'spring_cherry',
+      season: _Season.spring,
+      title: _LocPair('벚꽃 페스티벌', 'Cherry Blossom Festival'),
+      displayRange: '4.1—4.30',
+      matchStart: (4, 1), matchEnd: (4, 30),
+      emoji: '🌸',
+      accent: Color(0xFFE8688A),
+    ),
+    _EventChapter(
+      id: 'spring_kids',
+      season: _Season.spring,
+      title: _LocPair('어린이날 페스타', "Children's Day Fest"),
+      displayRange: '5.1—5.7',
+      matchStart: (5, 1), matchEnd: (5, 7),
+      emoji: '🎈',
+      accent: Color(0xFFF5A623),
+    ),
+    _EventChapter(
+      id: 'spring_garden',
+      season: _Season.spring,
+      title: _LocPair('봄 플라워가든', 'Spring Flower Garden'),
+      displayRange: '5.8—5.31',
+      matchStart: (5, 8), matchEnd: (5, 31),
+      emoji: '🌼',
+      accent: Color(0xFF7AB55C),
+    ),
+  ],
+  _Season.summer: [
+    _EventChapter(
+      id: 'summer_extreme',
+      season: _Season.summer,
+      title: _LocPair('익스트림 데이즈', 'Extreme Days'),
+      displayRange: '6.20—7.15',
+      matchStart: (6, 20), matchEnd: (7, 15),
+      emoji: '🪂',
+      accent: Color(0xFF2A8FD6),
+    ),
+    _EventChapter(
+      id: 'summer_night',
+      season: _Season.summer,
+      title: _LocPair('야간개장 위크', 'Night Park Week'),
+      displayRange: '7.16—7.31',
+      matchStart: (7, 16), matchEnd: (7, 31),
+      emoji: '🌃',
+      accent: Color(0xFF6E5BC9),
+    ),
+    _EventChapter(
+      id: 'summer_water',
+      season: _Season.summer,
+      title: _LocPair('물놀이 페스티벌', 'Water Festival'),
+      displayRange: '8.1—8.31',
+      matchStart: (8, 1), matchEnd: (8, 31),
+      emoji: '💦',
+      accent: Color(0xFF39B5D6),
+    ),
+  ],
+  _Season.autumn: [
+    _EventChapter(
+      id: 'autumn_lights',
+      season: _Season.autumn,
+      title: _LocPair('가을 야경', 'Autumn Lights'),
+      displayRange: '9.15—10.14',
+      matchStart: (9, 15), matchEnd: (10, 14),
+      emoji: '✨',
+      accent: Color(0xFFC9A04A),
+    ),
+    _EventChapter(
+      id: 'autumn_maple',
+      season: _Season.autumn,
+      title: _LocPair('단풍 페스티벌', 'Maple Festival'),
+      displayRange: '10.15—11.15',
+      matchStart: (10, 15), matchEnd: (11, 15),
+      emoji: '🍁',
+      accent: Color(0xFFB5491E),
+    ),
+    _EventChapter(
+      id: 'autumn_halloween',
+      season: _Season.autumn,
+      title: _LocPair('할로윈 위크', 'Halloween Week'),
+      displayRange: '10.25—10.31',
+      matchStart: (10, 25), matchEnd: (10, 31),
+      emoji: '🎃',
+      accent: Color(0xFFE0742C),
+    ),
+  ],
+  _Season.winter: [
+    _EventChapter(
+      id: 'winter_luna',
+      season: _Season.winter,
+      title: _LocPair('루나 라이트', 'Luna Lights'),
+      displayRange: '11.20—2.10',
+      matchStart: (11, 20), matchEnd: (2, 10),
+      emoji: '🌙',
+      accent: Color(0xFF85A8C4),
+    ),
+    _EventChapter(
+      id: 'winter_xmas',
+      season: _Season.winter,
+      title: _LocPair('크리스마스 마켓', 'Christmas Market'),
+      displayRange: '12.10—12.25',
+      matchStart: (12, 10), matchEnd: (12, 25),
+      emoji: '🎄',
+      accent: Color(0xFFD4361F),
+    ),
+    _EventChapter(
+      id: 'winter_new',
+      season: _Season.winter,
+      title: _LocPair('새해 페스타', 'New Year Fest'),
+      displayRange: '12.31—1.5',
+      matchStart: (12, 31), matchEnd: (1, 5),
+      emoji: '🎊',
+      accent: Color(0xFFE0B84A),
+    ),
+  ],
+};
+
+/// 시즌 KST 갱신일 기준 displayRange (예: 봄 3—5월).
+const Map<_Season, _LocPair> _kSeasonRange = {
+  _Season.spring: _LocPair('3—5월', 'Mar—May'),
+  _Season.summer: _LocPair('6—8월', 'Jun—Aug'),
+  _Season.autumn: _LocPair('9—11월', 'Sep—Nov'),
+  _Season.winter: _LocPair('12—2월', 'Dec—Feb'),
+};
+
+/// 책을 (가능하면) 이벤트 챕터에 자동 매핑. 매칭 안 되면 null.
+_EventChapter? _matchEventFor(_DiaryBook book) {
+  final cands = _kEventCatalog[_seasonOf(book.date)] ?? const [];
+  // 짧은 윈도우 우선(더 구체적인 이벤트가 우선) — 예: 어린이날(5.1-5.7) > 봄가든(5.8-)
+  // 정렬 후 첫 매치 반환.
+  final sorted = [...cands]..sort((a, b) {
+    int span(_EventChapter e) {
+      final s = e.matchStart.$1 * 100 + e.matchStart.$2;
+      final t = e.matchEnd.$1 * 100 + e.matchEnd.$2;
+      return t >= s ? t - s : (1200 - s) + t;
+    }
+    return span(a).compareTo(span(b));
+  });
+  for (final e in sorted) {
+    if (e.contains(book.date)) return e;
+  }
+  return null;
+}
+
+_Season _seasonOf(DateTime d) {
+  if (d.month >= 3 && d.month <= 5) return _Season.spring;
+  if (d.month >= 6 && d.month <= 8) return _Season.summer;
+  if (d.month >= 9 && d.month <= 11) return _Season.autumn;
+  return _Season.winter;
+}
+
 // ─── 데이터 모델 ─────────────────────────────────────────
 /// 방문 날짜 = 고유키. 같은 날짜에 두 권이 생기지 않도록 데이터 단에서 보장.
 class _DiaryBook {
@@ -310,7 +500,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         bottom: false,
         child: Column(
           children: [
-            _Header(season: _season, onChange: _onTabChange),
+            _Header(
+              season: _season,
+              onChange: _onTabChange,
+              currentSeasonBooks: _diaries[_season] ?? const [],
+              onSearch: _openSearch,
+              onAdd: _openAddBook,
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _seasonPager,
@@ -329,12 +525,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       140 + MediaQuery.of(context).viewPadding.bottom,
                     ),
                     children: [
-                      _Bookshelf(
-                          config: cfg,
-                          books: list,
-                          onBookTap: (idx) => _openDiaryForSeason(s, idx)),
+                      _EventShelf(
+                        season: s,
+                        config: cfg,
+                        books: list,
+                        onBookTap: (book) => _openDiaryForBook(s, book),
+                      ),
                       const SizedBox(height: 20),
-                      _DiaryStats(books: list, config: cfg),
+                      _DiaryStats(books: list, config: cfg, season: s),
                       const SizedBox(height: 16),
                       _RewardProgressCard(season: s),
                       const SizedBox(height: 16),
@@ -354,6 +552,38 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   void dispose() {
     _seasonPager.dispose();
     super.dispose();
+  }
+
+  void _openSearch() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ArchiveSearchSheet(
+        allBooks: _diaries,
+        onBookTap: (s, book) {
+          Navigator.of(context).pop();
+          _openDiaryForBook(s, book);
+        },
+      ),
+    );
+  }
+
+  void _openAddBook() {
+    final l = AppL10n.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.archive_add_book_coming_soon),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _openDiaryForBook(_Season s, _DiaryBook book) {
+    final all = _diaries[s] ?? const <_DiaryBook>[];
+    final idx = all.indexWhere((b) => b.id == book.id);
+    _openDiaryForSeason(s, idx >= 0 ? idx : 0);
   }
 
   void _openDiaryForSeason(_Season s, int index) {
@@ -664,7 +894,16 @@ class _PaperGrainPainter extends CustomPainter {
 class _Header extends StatelessWidget {
   final _Season season;
   final ValueChanged<_Season> onChange;
-  const _Header({required this.season, required this.onChange});
+  final List<_DiaryBook> currentSeasonBooks;
+  final VoidCallback onSearch;
+  final VoidCallback onAdd;
+  const _Header({
+    required this.season,
+    required this.onChange,
+    required this.currentSeasonBooks,
+    required this.onSearch,
+    required this.onAdd,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -682,9 +921,9 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // v3 — 작은 RETRACE ARCHIVE eyebrow + 28px 큰 헤드라인
+          // RETRACE ARCHIVE eyebrow.
           Text(
-            'RETRACE ARCHIVE · vol.1',
+            'RETRACE ARCHIVE',
             style: _serif(
               size: 10,
               weight: FontWeight.w800,
@@ -692,26 +931,52 @@ class _Header extends StatelessWidget {
               letterSpacing: 1.6,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            AppL10n.of(context)!.archive_bookshelf_title,
-            style: _serif(
-              size: 28,
-              weight: FontWeight.w900,
-              color: _Vintage.inkDark,
-              letterSpacing: -0.6,
-            ),
-          ),
           const SizedBox(height: 4),
-          Text(
-            AppL10n.of(context)!.archive_bookshelf_subtitle,
-            style: _serif(
-              size: 12,
-              weight: FontWeight.w500,
-              color: _Vintage.inkMid,
-            ),
+          // 타이틀 + 연도 + 우상단 액션.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      AppL10n.of(context)!.archive_bookshelf_title,
+                      style: _serif(
+                        size: 28,
+                        weight: FontWeight.w900,
+                        color: _Vintage.inkDark,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        '${DateTime.now().year}',
+                        style: const TextStyle(
+                          color: Color(0xFF9A8A7A),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _CircleAction(
+                icon: Icons.search_rounded,
+                onTap: onSearch,
+              ),
+              const SizedBox(width: 8),
+              _CircleAction(
+                icon: Icons.add_rounded,
+                onTap: onAdd,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           // v3 시즌 탭 — bgCardWarm pill bar + active=ink900 채움 + 컬러 dot
           Container(
             padding: const EdgeInsets.all(4),
@@ -790,7 +1055,63 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          // 시즌 tagline (왼쪽) + 행사·권 카운트 (오른쪽).
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _kConfigs[season]!.tagline.of(context),
+                  style: const TextStyle(
+                    color: Color(0xFF6E5A4A),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              Text(
+                AppL10n.of(context)!.archive_events_books_count(
+                  _EventShelf.eventChaptersUnlocked(currentSeasonBooks),
+                  currentSeasonBooks.length,
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF8A7A6A),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _CircleAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CircleAction({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.7),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: _Vintage.leather.withOpacity(0.18)),
+          ),
+          child: Icon(icon, size: 18, color: _Vintage.inkDark),
+        ),
       ),
     );
   }
@@ -848,11 +1169,16 @@ class _SeasonBanner extends StatelessWidget {
 }
 
 // ─── 책장 ────────────────────────────────────────────────
-class _Bookshelf extends StatelessWidget {
+/// 새 디자인 — 시즌 안의 이벤트 챕터 카드 스택.
+/// 각 카드: 이벤트 제목 + 권수 뱃지 + 책 spine row (있으면).
+/// 마지막은 점선 "다음 행사 칸" placeholder.
+class _EventShelf extends StatelessWidget {
+  final _Season season;
   final _SeasonConfig config;
   final List<_DiaryBook> books;
-  final void Function(int index) onBookTap;
-  const _Bookshelf({
+  final void Function(_DiaryBook book) onBookTap;
+  const _EventShelf({
+    required this.season,
     required this.config,
     required this.books,
     required this.onBookTap,
@@ -860,149 +1186,525 @@ class _Bookshelf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // v3 시즌 챕터 헤더 — CHAPTER · X 액센트 eyebrow + 20px 챕터명 + "N / 12" 모노
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    final l = AppL10n.of(context)!;
+    final events = _kEventCatalog[season] ?? const <_EventChapter>[];
+    final byEvent = <String, List<_DiaryBook>>{};
+    for (final b in books) {
+      final e = _matchEventFor(b);
+      if (e != null) byEvent.putIfAbsent(e.id, () => []).add(b);
+    }
+    final activeCount = byEvent.length;
+    final range = _kSeasonRange[season]!.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: config.bgColor.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: config.accentColor.withValues(alpha: 0.25)),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 시즌 eyebrow
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+            child: Text(
+              l.archive_season_range_label(config.label.en.toUpperCase(), range),
+              style: const TextStyle(
+                color: Color(0xFF6E5A4A),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          // 이벤트 카드들
+          for (final e in events) ...[
+            _EventCard(
+              event: e,
+              books: byEvent[e.id] ?? const [],
+              palettes: config.spines,
+              onBookTap: onBookTap,
+            ),
+            const SizedBox(height: 8),
+          ],
+          // 마지막 점선 placeholder
+          const _NextEventPlaceholder(),
+        ],
+      ),
+    );
+  }
+
+  static int eventChaptersUnlocked(List<_DiaryBook> books) {
+    final set = <String>{};
+    for (final b in books) {
+      final e = _matchEventFor(b);
+      if (e != null) set.add(e.id);
+    }
+    return set.length;
+  }
+}
+
+/// 행사 1건 카드 — 점/이모지 + 제목 + 날짜범위 + 우측 권수 뱃지 + 책 spine row.
+class _EventCard extends StatelessWidget {
+  final _EventChapter event;
+  final List<_DiaryBook> books;
+  final List<_SpinePalette> palettes;
+  final void Function(_DiaryBook book) onBookTap;
+
+  const _EventCard({
+    required this.event,
+    required this.books,
+    required this.palettes,
+    required this.onBookTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
+    final hasBooks = books.isNotEmpty;
+    return Container(
+      padding: EdgeInsets.fromLTRB(14, 12, 14, hasBooks ? 14 : 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'CHAPTER · ${config.label.en.toUpperCase()}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: config.accentColor,
-                        letterSpacing: 1.6,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      config.tagline.of(context),
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111111),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: event.accent,
+                  shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 12),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 2),
+              const SizedBox(width: 8),
+              Flexible(
                 child: Text(
-                  '${books.length} / 12',
+                  event.title.of(context),
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Menlo',
-                    fontFamilyFallback: ['Courier New', 'monospace'],
-                    fontSize: 11,
-                    color: Color(0xFF707070),
-                    letterSpacing: 1.0,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                    color: Color(0xFF1F1F1F),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.3,
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        // YEAR · 2026 mono + N권 — 시안 v3 shelf header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            children: [
+              const SizedBox(width: 6),
               Text(
-                'YEAR · ${DateTime.now().year}',
+                event.displayRange,
                 style: const TextStyle(
-                  fontFamily: 'Menlo',
-                  fontFamilyFallback: ['Courier New', 'monospace'],
-                  fontSize: 10,
-                  color: Color(0xFF707070),
-                  letterSpacing: 1.4,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                AppL10n.of(context)!.archive_books_count(books.length),
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFF707070),
+                  color: Color(0xFF888888),
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        // 책 영역 — 시즌별 옅은 bgColor + 책 + 빈 슬롯
-        Container(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-          decoration: BoxDecoration(
-            color: config.bgColor,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(8),
-            ),
-          ),
-          child: SizedBox(
-            height: 132,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // 실제 책 — 시안 v3 BookSpine 사용 (palette 매핑)
-                for (var i = 0; i < books.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: _BookSpine(
-                      book: books[i],
-                      palette: config
-                          .spines[i % config.spines.length],
-                      onTap: () => onBookTap(i),
+              const Spacer(),
+              // 권수 뱃지 — 책이 있을 때만.
+              if (hasBooks)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: event.accent.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    l.archive_event_books_badge(books.length),
+                    style: TextStyle(
+                      color: event.accent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                // 빈 슬롯 dashed 22×100
-                for (var i = 0; i < (5 - books.length).clamp(0, 5); i++)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 3),
-                    child: _EmptyBookSlot(),
-                  ),
-              ],
-            ),
+                ),
+            ],
           ),
+          if (hasBooks) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 96,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: books.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                itemBuilder: (_, i) {
+                  final b = books[i];
+                  return _MiniBookSpine(
+                    book: b,
+                    palette: palettes[i % palettes.length],
+                    onTap: () => onBookTap(b),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 이벤트 카드 안 작은 책 — 28×96 spine + 단축 제목 + 날짜.
+class _MiniBookSpine extends StatelessWidget {
+  final _DiaryBook book;
+  final _SpinePalette palette;
+  final VoidCallback onTap;
+  const _MiniBookSpine({
+    required this.book,
+    required this.palette,
+    required this.onTap,
+  });
+
+  String _spineTitle(BuildContext ctx) {
+    final cleaned = book.headline.of(ctx).replaceAll(RegExp(r'[\s·,.!?]'), '');
+    return cleaned.characters.take(4).toString();
+  }
+
+  String get _spineDate {
+    final m = book.date.month.toString();
+    final d = book.date.day.toString().padLeft(2, '0');
+    return '$m.$d';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 32,
+        decoration: BoxDecoration(
+          color: palette.spine,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(2),
+            bottom: Radius.circular(3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 3,
+              offset: const Offset(1, 1),
+            ),
+          ],
         ),
-        // Plank 그라디언트 bar (8px)
-        Container(
-          height: 8,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [config.plankTop, config.plankBottom],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 10),
+            for (final ch in _spineTitle(context).characters)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1),
+                child: Text(
+                  ch,
+                  style: TextStyle(
+                    color: palette.text,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                _spineDate,
+                style: TextStyle(
+                  fontFamily: 'Menlo',
+                  fontFamilyFallback: const ['Courier New', 'monospace'],
+                  color: palette.text.withValues(alpha: 0.7),
+                  fontSize: 7,
+                  letterSpacing: 0.4,
+                ),
+              ),
             ),
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(2),
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x30502810),
-                blurRadius: 4,
-                offset: Offset(0, 2),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 마지막 점선 placeholder — '다음 행사 칸 · 방문하면 채워져요'.
+class _NextEventPlaceholder extends StatelessWidget {
+  const _NextEventPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: CustomPaint(
+        painter: _DashedBoxPainter(
+          color: const Color(0xFF8A6A5A).withValues(alpha: 0.45),
+          radius: 14,
+          dash: 5,
+          gap: 4,
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.add_circle_outline_rounded,
+                  size: 16, color: Color(0xFF8A6A5A)),
+              const SizedBox(width: 6),
+              Text(
+                l.archive_next_event_placeholder,
+                style: const TextStyle(
+                  color: Color(0xFF6E5A4A),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
+
+class _DashedBoxPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double dash;
+  final double gap;
+  _DashedBoxPainter({
+    required this.color,
+    required this.radius,
+    required this.dash,
+    required this.gap,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final rect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rect);
+    final metrics = path.computeMetrics();
+    for (final m in metrics) {
+      double dist = 0;
+      while (dist < m.length) {
+        final seg = m.extractPath(dist, (dist + dash).clamp(0, m.length));
+        canvas.drawPath(seg, paint);
+        dist += dash + gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBoxPainter o) =>
+      o.color != color || o.radius != radius || o.dash != dash || o.gap != gap;
+}
+
+class _ArchiveSearchSheet extends StatefulWidget {
+  final Map<_Season, List<_DiaryBook>> allBooks;
+  final void Function(_Season season, _DiaryBook book) onBookTap;
+  const _ArchiveSearchSheet({required this.allBooks, required this.onBookTap});
+
+  @override
+  State<_ArchiveSearchSheet> createState() => _ArchiveSearchSheetState();
+}
+
+class _ArchiveSearchSheetState extends State<_ArchiveSearchSheet> {
+  final _ctrl = TextEditingController();
+  String _q = '';
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  List<(_Season, _DiaryBook)> _matches(BuildContext ctx) {
+    if (_q.trim().isEmpty) return const [];
+    final q = _q.trim().toLowerCase();
+    final out = <(_Season, _DiaryBook)>[];
+    for (final entry in widget.allBooks.entries) {
+      for (final b in entry.value) {
+        final hl = b.headline.of(ctx).toLowerCase();
+        final ev = _matchEventFor(b)?.title.of(ctx).toLowerCase() ?? '';
+        if (hl.contains(q) || ev.contains(q)) out.add((entry.key, b));
+      }
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
+    final results = _matches(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: viewInsets),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFFCF6),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0D5C0),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              l.archive_search_title,
+              style: _serif(
+                size: 18,
+                weight: FontWeight.w900,
+                color: _Vintage.inkDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search_rounded,
+                      size: 16, color: Color(0xFF8A7A6A)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _ctrl,
+                      autofocus: true,
+                      onChanged: (v) => setState(() => _q = v),
+                      style: const TextStyle(fontSize: 13),
+                      decoration: InputDecoration(
+                        isCollapsed: true,
+                        border: InputBorder.none,
+                        hintText: l.archive_search_hint,
+                        hintStyle:
+                            const TextStyle(color: Color(0xFFB0A090), fontSize: 13),
+                      ),
+                    ),
+                  ),
+                  if (_q.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        _ctrl.clear();
+                        setState(() => _q = '');
+                      },
+                      child: const Icon(Icons.close_rounded,
+                          size: 16, color: Color(0xFF8A7A6A)),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+              ),
+              child: _q.isEmpty
+                  ? const SizedBox.shrink()
+                  : (results.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 28),
+                          child: Center(
+                            child: Text(l.archive_search_empty,
+                                style: const TextStyle(
+                                    color: Color(0xFF8A7A6A), fontSize: 13)),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: results.length,
+                          separatorBuilder: (_, __) => const Divider(
+                              height: 14, color: Color(0xFFEFE6D5)),
+                          itemBuilder: (_, i) {
+                            final (s, b) = results[i];
+                            final ev = _matchEventFor(b);
+                            return InkWell(
+                              onTap: () => widget.onBookTap(s, b),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                child: Row(
+                                  children: [
+                                    Text(b.weather.icon,
+                                        style: const TextStyle(fontSize: 18)),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            b.headline.of(context),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF1F1F1F),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${b.date.year}.${b.date.month}.${b.date.day} · ${ev?.title.of(context) ?? ''}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF8A7A6A),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right_rounded,
+                                        size: 18, color: Color(0xFFB0A090)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        )),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 /// v3 책장 빈 슬롯 — 22×100 dashed 윤곽.
 class _EmptyBookSlot extends StatelessWidget {
@@ -2591,7 +3293,8 @@ class _PageIndicator extends StatelessWidget {
 class _DiaryStats extends StatelessWidget {
   final List<_DiaryBook> books;
   final _SeasonConfig config;
-  const _DiaryStats({required this.books, required this.config});
+  final _Season season;
+  const _DiaryStats({required this.books, required this.config, required this.season});
 
   @override
   Widget build(BuildContext context) {
@@ -2599,11 +3302,7 @@ class _DiaryStats extends StatelessWidget {
       return _PhotoStore.photoOf(b.id) != null ||
           b.sampleIllustration != null;
     }).length;
-    final firstDate = books.isEmpty ? null : books.first.date;
-    final lastDate = books.isEmpty ? null : books.last.date;
-
-    String fmt(DateTime? d) =>
-        d == null ? '-' : '${d.month}.${d.day}';
+    final eventChapters = _EventShelf.eventChaptersUnlocked(books);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2636,11 +3335,10 @@ class _DiaryStats extends StatelessWidget {
               color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
               child: _StatItem(
-                  label: AppL10n.of(context)!.archive_stat_record_period,
-                  value: '${fmt(firstDate)}~${fmt(lastDate)}',
+                  label: AppL10n.of(context)!.archive_stat_event_chapters,
+                  value: '$eventChapters',
                   unit: '',
-                  color: config.titleColor,
-                  compact: true)),
+                  color: config.titleColor)),
         ],
       ),
     );
