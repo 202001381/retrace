@@ -7,8 +7,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/walk_speed.dart';
 import '../../models/attraction.dart';
+import '../../services/path_graph.dart';
 
 /// "지금 출발" 모드 — 전체 화면 지도 + 큰 폰트 거리·방향.
 /// 폰을 계속 보지 않아도 되는 UX: 도착 50m 진입 시 1회만 인앱 SnackBar 발화.
@@ -117,10 +117,12 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
     return _haversineMeters(p, _kGate) <= _kRemoteThresholdM ? p : _kGate;
   }
 
-  double get _distMeters =>
-      _haversineMeters(_origin, widget.target.position);
+  RouteResult get _routed =>
+      PathGraph.route(_origin, widget.target.position);
 
-  int get _walkMin => (_distMeters / kWalkSpeedMpm).ceil();
+  double get _distMeters => _routed.meters;
+
+  int get _walkMin => _routed.walkMinutes;
 
   String get _bearingLabel {
     final from = _origin;
@@ -183,7 +185,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                 ),
                 PolylineLayer(polylines: [
                   Polyline(
-                    points: [_origin, widget.target.position],
+                    points: _routed.points,
                     color: AppColors.red,
                     strokeWidth: 5,
                   ),
