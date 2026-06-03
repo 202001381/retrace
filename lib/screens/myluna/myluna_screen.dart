@@ -158,24 +158,34 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   }
 
   // ── Fetch ────────────────────────────────────────────────
+  /// 생성 번호 — 동시에 여러 _fetch 가 떠도 가장 최신 것만 결과 적용.
+  /// 사용자가 조건 변경했는데 이전 initial fetch 가 _loading=true 라 막혔던
+  /// 회귀를 방지 (이전엔 `if (_loading) return;` 가 새 요청을 삼켰음).
+  int _fetchGen = 0;
+
   Future<void> _fetch({required String reason}) async {
-    if (_loading) return;
+    final myGen = ++_fetchGen;
     setState(() {
       _loading = true;
       _error = null;
     });
+    debugPrint('[myluna] _fetch start gen=$myGen reason=$reason '
+        'survey=${_survey?.favoriteType}/${_survey?.purpose}/${_survey?.total}명 '
+        'scenario=${_activeScenario?.name}');
 
     // 데모 시나리오 활성 → RouteService 우회.
     final scenario = _activeScenario;
     if (scenario != null) {
       final origin = _origin;
       await Future<void>.delayed(const Duration(milliseconds: 150));
-      if (!mounted) return;
+      if (!mounted || myGen != _fetchGen) return;
       _setRec(scenario.toRecommendation(
         originLat: origin.latitude,
         originLng: origin.longitude,
       ));
-      setState(() => _loading = false);
+      if (mounted && myGen == _fetchGen) {
+        setState(() => _loading = false);
+      }
       return;
     }
 
@@ -194,8 +204,15 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
         requestReason: reason,
       );
       final resp = await RouteService.instance.fetchRoute(req);
-      if (!mounted) return;
+      // 더 새 fetch 가 출발했으면 결과 무시 — race-free.
+      if (!mounted || myGen != _fetchGen) {
+        debugPrint('[myluna] _fetch gen=$myGen STALE (current=$_fetchGen)');
+        return;
+      }
       final spots = _resolveSpots(resp);
+      debugPrint('[myluna] _fetch gen=$myGen ok — '
+          'first=${spots.isEmpty ? "(empty)" : spots.first.id} '
+          'total=${resp.totalMin}min rationale="${resp.rationale}"');
       _setRec(LunaRecommendation(
         spots: spots,
         totalMin: resp.totalMin,
@@ -203,10 +220,11 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
         lockedAt: DateTime.now(),
       ));
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || myGen != _fetchGen) return;
+      debugPrint('[myluna] _fetch gen=$myGen FAILED: $e');
       setState(() => _error = '추천을 불러오지 못했어요');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && myGen == _fetchGen) setState(() => _loading = false);
     }
   }
 

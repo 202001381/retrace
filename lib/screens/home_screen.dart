@@ -162,23 +162,22 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) _openPricingPopup();
   }
 
+  /// 생성 번호 — 동시 _loadRoute 중 가장 최신 것만 결과 적용 (race 방지).
+  int _routeGen = 0;
+
   Future<void> _loadRoute(String reason) async {
-    if (_routeLoading) return;
+    final myGen = ++_routeGen;
     setState(() => _routeLoading = true);
+    debugPrint('[home _loadRoute] gen=$myGen reason=$reason');
     try {
-      // survey 읽기 자체가 실패해도(예: macOS dev 환경의 prefs init 지연)
-      // mock route 는 빈 survey 로도 동작하므로 fallback 진행.
       SurveyAnswers? survey = _survey;
       if (survey == null) {
         try {
           survey = await OnboardingService.read();
-        } catch (_) {
-          // prefs 미가용 → 빈 survey 로 mock 호출 (홈 카드가 영영 안 뜨는 것 방지).
-        }
+        } catch (_) {}
       }
       survey ??=
           const SurveyAnswers(members: {}, favoriteType: null, purpose: null);
-      // 홈 화면은 GPS 없이 정문 기준
       const gateLat = 37.4332, gateLng = 127.0174;
       final req = RouteRequest(
         uid: 'guest',
@@ -191,11 +190,15 @@ class _HomeScreenState extends State<HomeScreen> {
         requestReason: reason,
       );
       final resp = await RouteService.instance.fetchRoute(req);
-      if (!mounted) return;
+      if (!mounted || myGen != _routeGen) {
+        debugPrint('[home _loadRoute] gen=$myGen STALE (current=$_routeGen)');
+        return;
+      }
+      debugPrint('[home _loadRoute] gen=$myGen ok — first='
+          '${resp.route.isEmpty ? "(empty)" : resp.route.first.id} '
+          'rationale="${resp.rationale}"');
       setState(() => _route = resp);
     } catch (e, st) {
-      // mock RouteService 가 throw 하는 건 사실상 백엔드 전환 후 시나리오지만,
-      // 디버깅을 위해 analytics 에는 남기고 카드는 placeholder 로.
       AnalyticsService.instance
           .logScreenView('home_route_error: ${e.runtimeType}');
       assert(() {
@@ -203,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return true;
       }());
     } finally {
-      if (mounted) setState(() => _routeLoading = false);
+      if (mounted && myGen == _routeGen) setState(() => _routeLoading = false);
     }
   }
 
