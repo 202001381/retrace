@@ -67,3 +67,18 @@ def test_discount_pct_monotonic_in_rain_for_low_crowd():
     """하 등급에선 강수가 늘수록 할인율 단조 증가."""
     pcts = [discount.calc_discount("하", r)["discount_pct"] for r in (0, 30, 50, 70, 100)]
     assert pcts == sorted(pcts), f"not monotonic: {pcts}"
+
+
+def test_pricing_now_endpoint(monkeypatch):
+    """`/api/pricing/now` 가 날씨 fetch 실패 시에도 graceful 응답."""
+    from backend.app import create_app
+    app = create_app()
+    client = app.test_client()
+    resp = client.get('/api/pricing/now')
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body['discount_pct'] in (0, 10, 15, 18, 22, 25)
+    assert body['crowd_level'] in ('상', '중', '하')
+    assert 'weather' in body
+    assert 'temp' in body
+    assert 'computed_at' in body

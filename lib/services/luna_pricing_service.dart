@@ -19,14 +19,19 @@ class LunaPricingService {
   static const int _basePrice = 35000;
 
   /// 현재 시점의 프라이싱 상태. 백엔드 응답을 PricingState 로 매핑.
-  Future<PricingState> current({
-    String crowdLevel = '하',
-    double rainProb = 30,
-  }) async {
+  /// `/api/pricing/now` 가 내부에서 날씨 + 혼잡도 예측을 결합해서 반환 — Flutter
+  /// 는 인자 없이 호출.
+  Future<PricingState> current() async {
     if (_useMock) return _mockPricing();
     try {
-      final pct = await _fetchDiscountPct(crowdLevel, rainProb).timeout(_timeout);
-      return _buildState(pct, _reasonForBackend(crowdLevel, rainProb));
+      final result = await _fetchPricingNow().timeout(_timeout);
+      return _buildState(
+        result['discount_pct'] as int,
+        _reasonForBackend(
+          result['crowd_level'] as String? ?? '중',
+          (result['rain_prob'] as num?)?.toDouble() ?? 0,
+        ),
+      );
     } catch (e, st) {
       developer.log(
         'pricing backend failed, falling back to mock',
@@ -38,18 +43,13 @@ class LunaPricingService {
     }
   }
 
-  Future<int> _fetchDiscountPct(String crowdLevel, double rainProb) async {
-    final uri = Uri.parse('$_baseUrl/api/discount');
-    final resp = await http.post(
-      uri,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'crowd_level': crowdLevel, 'rain_prob': rainProb}),
-    );
+  Future<Map<String, Object?>> _fetchPricingNow() async {
+    final uri = Uri.parse('$_baseUrl/api/pricing/now');
+    final resp = await http.get(uri);
     if (resp.statusCode >= 400) {
-      throw HttpException('discount api ${resp.statusCode}: ${resp.body}');
+      throw HttpException('pricing api ${resp.statusCode}: ${resp.body}');
     }
-    final body = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, Object?>;
-    return (body['discount_pct'] as num).toInt();
+    return jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, Object?>;
   }
 
   PricingState _buildState(int discountPct, DiscountReason reason) {

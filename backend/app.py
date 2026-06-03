@@ -212,6 +212,61 @@ def create_app() -> Flask:
             return jsonify(error=str(e)), 500
         return jsonify(summary)
 
+    @app.get("/api/pricing/now")
+    def api_pricing_now():
+        """현재 시점의 루나 프라이싱 — 날씨 + 예측 + 할인 통합.
+
+        내부에서:
+          1. 기상청 동네예보 → 오늘 rain_prob, temp
+          2. XGBoost predictor → crowd_level
+          3. discount.calc_discount → 할인율
+
+        Flutter 홈 hero 카드는 이 엔드포인트 한 방으로 모든 시점 데이터 받음.
+        날씨 API 실패 / 모델 없음 시 graceful fallback (둘 다 기본값).
+        """
+        from datetime import datetime as _dt
+        from . import weather as _weather
+        from .predictor import predict_one as _predict_one
+
+        now = _dt.now()
+        rain_prob = 30.0
+        temp = 20.0
+        weather_label = "흐림"
+        try:
+            fcst = _weather.fetch_today()
+            rain_prob = float(fcst.rain_prob)
+            temp = float(fcst.temp_noon)
+            weather_label = fcst.weather
+        except Exception as e:
+            logger.info("pricing weather fallback: %s", e)
+
+        try:
+            features = {
+                "hour": now.hour,
+                "weekday": now.weekday(),
+                "is_holiday": 0,
+                "temp": temp,
+                "rain_prob": rain_prob,
+                "is_event": 0,
+                "pre_sales": 0,
+            }
+            pred = _predict_one(features)
+            ko_level = pred.crowd_level
+        except Exception as e:
+            logger.info("pricing predict fallback: %s", e)
+            ko_level = "중"
+
+        result = discount.calc_discount(
+            crowd_level=ko_level,
+            rain_prob=rain_prob,
+        )
+        return jsonify({
+            **result,
+            "weather": weather_label,
+            "temp": round(temp, 1),
+            "computed_at": now.isoformat(),
+        })
+
     if config.SCHEDULER_ENABLED:
         start_scheduler()
         atexit.register(shutdown_scheduler)
