@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../models/attraction.dart';
+import '../../services/osrm_router.dart';
 import '../../services/path_graph.dart';
 
 /// "지금 출발" 모드 — 전체 화면 지도 + 큰 폰트 거리·방향.
@@ -30,10 +31,15 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
   LatLng? _myPos;
   bool _arrivalNotified = false;
 
+  // OSRM 결과 캐시 — origin 50m 이상 이동 시 재페치.
+  RouteResult _route = const RouteResult(points: [], meters: 0, routed: false);
+  LatLng? _routeFor;
+
   @override
   void initState() {
     super.initState();
     _start();
+    _refreshRoute();
   }
 
   @override
@@ -73,6 +79,17 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
     final next = LatLng(p.latitude, p.longitude);
     setState(() => _myPos = next);
     _maybeNotifyArrival(next);
+    _refreshRoute();
+  }
+
+  Future<void> _refreshRoute() async {
+    final origin = _origin;
+    // 같은 출발점이면 재페치 스킵.
+    if (_routeFor != null && _haversineMeters(_routeFor!, origin) < 50) return;
+    _routeFor = origin;
+    final r = await OsrmRouter.route(origin, widget.target.position);
+    if (!mounted) return;
+    setState(() => _route = r);
   }
 
   void _maybeNotifyArrival(LatLng pos) {
@@ -118,8 +135,16 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
     return _haversineMeters(p, _kGate) <= _kRemoteThresholdM ? p : _kGate;
   }
 
-  RouteResult get _routed =>
-      PathGraph.route(_origin, widget.target.position);
+  /// 표시용 — 캐시된 OSRM 결과. 첫 페치 전엔 origin↔target 직선으로 대체.
+  RouteResult get _routed {
+    if (_route.points.length >= 2) return _route;
+    final straight = _haversineMeters(_origin, widget.target.position);
+    return RouteResult(
+      points: [_origin, widget.target.position],
+      meters: straight,
+      routed: false,
+    );
+  }
 
   double get _distMeters => _routed.meters;
 

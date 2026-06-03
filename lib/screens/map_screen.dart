@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/walk_speed.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
 import '../models/place_filter.dart';
@@ -17,6 +18,7 @@ import 'all_attractions_screen.dart';
 import '../services/easter_egg_service.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
+import '../services/osrm_router.dart';
 import '../services/path_graph.dart';
 import '../services/route_service.dart';
 import '../widgets/attraction_detail_sheet.dart';
@@ -61,6 +63,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Attraction? _navTarget;
   int? _navWalkMin;
   bool _navInProgress = false;
+
+  // OSRM 폴리라인 캐시
+  RouteResult _navRoute = const RouteResult(points: [], meters: 0, routed: false);
+  RouteResult _multiRoute = const RouteResult(points: [], meters: 0, routed: false);
 
   // 동선 추천 상태
   RouteResponse? _currentRoute;
@@ -134,6 +140,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         _currentRoute = resp;
         _lastRouteOrigin = origin;
       });
+      // 새 동선이 들어왔으면 OSRM 폴리라인 재페치.
+      _fetchMultiRoute();
     } catch (_) {
       // 실패 시 마지막 캐시 유지 (이미 _currentRoute 에 들어있음)
     } finally {
@@ -257,10 +265,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           _haversineMeters(_lastRouteOrigin!, next) >= 100) {
         _loadRoute('gps_moved');
       }
-      // 내비 중이면 도보 분 갱신 — 그래프 우회 거리 기준.
+      // 내비 중이면 OSRM 폴리라인 + 도보 분 재페치.
       if (_navTarget != null) {
-        final r = PathGraph.route(next, _navTarget!.position);
-        setState(() => _navWalkMin = r.walkMinutes);
+        _fetchNavRoute(next, _navTarget!.position);
       }
     }, onError: (_) {});
   }
@@ -268,7 +275,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ── 동선 / 필터 ──────────────────────────────────────────
   void _toggleRoute() {
     setState(() => _showRoute = !_showRoute);
-    if (_showRoute) _shrinkSheet();
+    if (_showRoute) {
+      _shrinkSheet();
+      _fetchMultiRoute(); // OSRM 폴리라인 페치 (캐시 hit 이면 즉시).
+    }
   }
 
   bool _matchesSearch(Attraction a) {
@@ -398,12 +408,19 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   void _startNavigation(Attraction target) {
     final origin = _currentOrigin;
-    final r = PathGraph.route(origin, target.position);
+    // 즉시 직선 거리로 walkMin 계산 (OSRM 응답 대기 중 표시용).
+    final straight = _haversineMeters(origin, target.position);
     setState(() {
       _navTarget = target;
-      _navWalkMin = r.walkMinutes;
+      _navWalkMin = (straight / kWalkSpeedMpm).ceil();
       _navInProgress = true;
+      _navRoute = RouteResult(
+        points: [origin, target.position],
+        meters: straight,
+        routed: false,
+      );
     });
+    _fetchNavRoute(origin, target.position);
     Navigator.of(context).maybePop();
     Future.delayed(const Duration(milliseconds: 250), () {
       if (!mounted) return;
@@ -555,24 +572,60 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return markers;
   }
 
-  // ── 동선 폴리라인 — PathGraph 그래프 우회 적용 ────────────
+  // ── 동선 폴리라인 — OSRM 비동기 결과 캐시 표시 ────────────────
+  /// 표시용 — 캐시된 멀티 stop OSRM 경로. 첫 페치 전엔 stops 직선 연결.
   List<Polyline> _buildRoute() {
     if (!_showRoute) return const [];
     final spots = _routeAttractions;
     if (spots.isEmpty) return const [];
-    final stops = <LatLng>[
+    final fallback = <LatLng>[
       _currentOrigin,
       ...spots.map((a) => LatLng(a.lat, a.lng)),
     ];
-    final r = PathGraph.routeMulti(stops);
+    final points = _multiRoute.points.length >= 2 ? _multiRoute.points : fallback;
     return [
       Polyline(
-        points: r.points,
+        points: points,
         strokeWidth: 3.0,
         color: AppColors.red,
         pattern: StrokePattern.dashed(segments: const [10, 5]),
       ),
     ];
+  }
+
+  /// `_navTarget` 폴리라인 — 캐시된 OSRM 결과 또는 직선 fallback.
+  List<LatLng> _navPolyline() {
+    if (_navRoute.points.length >= 2) return _navRoute.points;
+    if (_navTarget == null) return const [];
+    return [_currentOrigin, _navTarget!.position];
+  }
+
+  /// 단일 stop OSRM 페치 (navigation).
+  Future<void> _fetchNavRoute(LatLng origin, LatLng dest) async {
+    final r = await OsrmRouter.route(origin, dest);
+    if (!mounted) return;
+    setState(() {
+      _navRoute = r;
+      _navWalkMin = r.walkMinutes;
+    });
+  }
+
+  /// 멀티 stop OSRM 페치 (마이루나 동선 ON 시).
+  Future<void> _fetchMultiRoute() async {
+    final spots = _routeAttractions;
+    if (spots.isEmpty) {
+      if (_multiRoute.points.isNotEmpty) {
+        setState(() => _multiRoute = const RouteResult(points: [], meters: 0, routed: false));
+      }
+      return;
+    }
+    final stops = <LatLng>[
+      _currentOrigin,
+      ...spots.map((a) => LatLng(a.lat, a.lng)),
+    ];
+    final r = await OsrmRouter.routeMulti(stops);
+    if (!mounted) return;
+    setState(() => _multiRoute = r);
   }
 
   void _onMarkerTap(Attraction a) => _openDetail(a);
@@ -621,7 +674,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 if (_navTarget != null)
                   PolylineLayer(polylines: [
                     Polyline(
-                      points: PathGraph.route(_currentOrigin, _navTarget!.position).points,
+                      points: _navPolyline(),
                       color: AppColors.red,
                       strokeWidth: 4.5,
                     ),
