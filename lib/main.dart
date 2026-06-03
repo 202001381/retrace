@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,7 @@ import 'screens/map_screen.dart';
 import 'screens/myluna/myluna_screen.dart';
 import 'screens/mypage/mypage_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/fcm_service.dart';
 import 'services/locale_service.dart';
 import 'services/onboarding_service.dart';
 
@@ -26,6 +29,9 @@ void main() async {
   await LocaleService.instance.load();
   try {
     await Firebase.initializeApp();
+    // FCM 토큰 등록 + 토픽 구독 — Firebase 초기화 성공 시에만.
+    // 권한 거부·키 미설정 시 내부에서 silently skip.
+    unawaited(FcmService.instance.bootstrap());
   } catch (_) {/* config 미완료 — Firestore/FCM 의존 기능은 비활성 */}
   runApp(const SeoulLandApp());
 }
@@ -174,6 +180,8 @@ class _MainScreenState extends State<MainScreen> {
   bool _openPricingOnStart = false;
 
   @override
+  StreamSubscription? _fcmSub;
+
   void initState() {
     super.initState();
     switch (widget.initialExit) {
@@ -187,6 +195,35 @@ class _MainScreenState extends State<MainScreen> {
       case OnboardingExit.home:
         break;
     }
+    // 앱 켜있을 때 FCM 메시지 도착 → SnackBar in-app banner.
+    _fcmSub = FcmService.instance.inboundMessages.listen((msg) {
+      if (!mounted) return;
+      final n = msg.notification;
+      if (n == null) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 90),
+        duration: const Duration(seconds: 5),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if ((n.title ?? '').isNotEmpty)
+              Text(n.title!,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 14)),
+            if ((n.body ?? '').isNotEmpty)
+              Text(n.body!, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      ));
+    });
+  }
+
+  @override
+  void dispose() {
+    _fcmSub?.cancel();
+    super.dispose();
   }
 
   /// 마이 루나 = bottom nav 별도 탭(index 2). 홈 카드의 "전체 동선 보기" 도 여기로.

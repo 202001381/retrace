@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 import '../../models/user_preferences.dart';
+import '../../services/fcm_service.dart';
 import '../../services/preferences_service.dart';
 import '../../widgets/design/v3_sub_header.dart';
 import 'marketing_consent_modal.dart';
@@ -113,8 +114,11 @@ class _NotificationSettingsScreenState
                   title: l.notif_set_calm_desc,
                   subtitle: '',
                   value: s.lowCrowdAlertEnabled,
-                  onChanged: (v) =>
-                      _apply(s.copyWith(lowCrowdAlertEnabled: v)),
+                  onChanged: (v) async {
+                    await _apply(s.copyWith(lowCrowdAlertEnabled: v));
+                    // FCM 토픽 구독 동기화 — 켜면 luna_pricing 토픽 구독, 끄면 해제.
+                    await FcmService.instance.subscribeLunaPricing(enabled: v);
+                  },
                 ),
                 if (s.lowCrowdAlertEnabled) ...[
                   const Divider(height: 24, color: AppColors.line),
