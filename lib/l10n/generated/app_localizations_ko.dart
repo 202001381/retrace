@@ -338,4 +338,10 @@ class AppL10nKo extends AppL10n {
   @override String get map_btn_gps => 'GPS';
 
   @override String survey_headcount(int n) => '$n명';
+
+  @override String myluna_locked(String label) => '🔒 이 추천은 $label 동안 그대로 유지돼요';
+  @override String myluna_lock_label_min_sec(int min, String sec) => '$min분 $sec초';
+  @override String myluna_lock_label_sec(int sec) => '$sec초';
+  @override String get myluna_lock_expired => '📍 새 정보가 들어왔어요. 추천을 갱신할까요?';
+  @override String get myluna_refresh_now => '지금 갱신';
 }

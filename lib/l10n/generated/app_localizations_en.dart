@@ -338,4 +338,10 @@ class AppL10nEn extends AppL10n {
   @override String get map_btn_gps => 'GPS';
 
   @override String survey_headcount(int n) => '$n people';
+
+  @override String myluna_locked(String label) => '🔒 This recommendation holds for $label';
+  @override String myluna_lock_label_min_sec(int min, String sec) => '${min}m ${sec}s';
+  @override String myluna_lock_label_sec(int sec) => '${sec}s';
+  @override String get myluna_lock_expired => '📍 New info arrived. Refresh the recommendation?';
+  @override String get myluna_refresh_now => 'Refresh now';
 }

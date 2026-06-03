@@ -363,5 +363,19 @@
   "map_btn_gps": "GPS",
 
   "survey_headcount": "{n} people",
-  "@survey_headcount": { "placeholders": { "n": { "type": "int" } } }
+  "@survey_headcount": { "placeholders": { "n": { "type": "int" } } },
+
+  "myluna_locked": "🔒 This recommendation holds for {label}",
+  "@myluna_locked": { "placeholders": { "label": { "type": "String" } } },
+  "myluna_lock_label_min_sec": "{min}m {sec}s",
+  "@myluna_lock_label_min_sec": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "sec": { "type": "String" }
+    }
+  },
+  "myluna_lock_label_sec": "{sec}s",
+  "@myluna_lock_label_sec": { "placeholders": { "sec": { "type": "int" } } },
+  "myluna_lock_expired": "📍 New info arrived. Refresh the recommendation?",
+  "myluna_refresh_now": "Refresh now"
 }

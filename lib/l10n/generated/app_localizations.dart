@@ -370,6 +370,12 @@ abstract class AppL10n {
   String get map_btn_gps;
 
   String survey_headcount(int n);
+
+  String myluna_locked(String label);
+  String myluna_lock_label_min_sec(int min, String sec);
+  String myluna_lock_label_sec(int sec);
+  String get myluna_lock_expired;
+  String get myluna_refresh_now;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -999,12 +999,15 @@ class _WindowFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context)!;
     final m = remaining.inMinutes;
     final s = remaining.inSeconds % 60;
-    final label = m > 0 ? '$m분 ${s.toString().padLeft(2, '0')}초' : '$s초';
+    final label = m > 0
+        ? l.myluna_lock_label_min_sec(m, s.toString().padLeft(2, '0'))
+        : l.myluna_lock_label_sec(s);
     return Center(
       child: Text(
-        '🔒 이 추천은 $label 동안 그대로 유지돼요',
+        l.myluna_locked(label),
         style: const TextStyle(
           fontSize: 11,
           color: AppColors.textSecondary,

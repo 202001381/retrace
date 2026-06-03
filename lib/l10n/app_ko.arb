@@ -364,5 +364,19 @@
   "map_btn_gps": "GPS",
 
   "survey_headcount": "{n}명",
-  "@survey_headcount": { "placeholders": { "n": { "type": "int" } } }
+  "@survey_headcount": { "placeholders": { "n": { "type": "int" } } },
+
+  "myluna_locked": "🔒 이 추천은 {label} 동안 그대로 유지돼요",
+  "@myluna_locked": { "placeholders": { "label": { "type": "String" } } },
+  "myluna_lock_label_min_sec": "{min}분 {sec}초",
+  "@myluna_lock_label_min_sec": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "sec": { "type": "String" }
+    }
+  },
+  "myluna_lock_label_sec": "{sec}초",
+  "@myluna_lock_label_sec": { "placeholders": { "sec": { "type": "int" } } },
+  "myluna_lock_expired": "📍 새 정보가 들어왔어요. 추천을 갱신할까요?",
+  "myluna_refresh_now": "지금 갱신"
 }
