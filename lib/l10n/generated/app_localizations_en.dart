@@ -182,7 +182,7 @@ class AppL10nEn extends AppL10n {
   @override String get onboarding_just_3 => 'Just 3 questions 🙂';
   @override String get onboarding_q_purpose => "What's your\npurpose today?";
   @override String get onboarding_q_favorite => 'Which rides do you\nprefer more?';
-  @override String get onboarding_q_party => "Who's with\nyou?";
+  @override String get onboarding_q_party => 'How many people\nare with you?';
   @override String get onboarding_pick_accurate => 'Pick as accurately as you can';
   @override String get onboarding_party_count_msg => "We'll tailor the route to your group";
   @override String get onboarding_party_total => 'Total people';

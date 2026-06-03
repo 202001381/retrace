@@ -182,7 +182,7 @@ class AppL10nKo extends AppL10n {
   @override String get onboarding_just_3 => '딱 3가지만 물어볼게요 🙂';
   @override String get onboarding_q_purpose => '오늘 방문 목적은\n무엇인가요?';
   @override String get onboarding_q_favorite => '어떤 놀이기구를\n더 좋아하세요?';
-  @override String get onboarding_q_party => '이서\n오셨나요?';
+  @override String get onboarding_q_party => '오늘은 몇 명이서\n오셨나요?';
   @override String get onboarding_pick_accurate => '최대한 정확히 골라주세요';
   @override String get onboarding_party_count_msg => '인원에 맞게 동선을 짤게요';
   @override String get onboarding_party_total => '총 인원';
