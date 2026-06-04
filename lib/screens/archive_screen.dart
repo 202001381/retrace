@@ -840,10 +840,6 @@ class _BookSpine extends StatelessWidget {
               topLeft: Radius.circular(2),
               topRight: Radius.circular(2),
             ),
-            border: const Border(
-              left: BorderSide(color: Colors.white24, width: 2),
-              top: BorderSide(color: Colors.black26, width: 1),
-            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.25),
@@ -1586,24 +1582,35 @@ class _PageMemory extends StatelessWidget {
             color: config.titleColor,
           ),
           const SizedBox(height: 16),
-          // 스토리 (필기체 느낌 — 세리프 + 줄 라인)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+          // 스토리 (필기체 느낌 — 세리프 + 좌측 빨간 잉크 라인)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: ColoredBox(
               color: _Vintage.parchmentLight,
-              borderRadius: BorderRadius.circular(8),
-              border: Border(
-                left:
-                    BorderSide(color: _Vintage.stampRed.withOpacity(0.6), width: 3),
-              ),
-            ),
-            child: Text(
-              book.story,
-              style: _serif(
-                size: 14,
-                color: _Vintage.inkBody,
-                height: 1.9,
-                letterSpacing: 0.2,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: 3,
+                      color: _Vintage.stampRed.withOpacity(0.6),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          book.story,
+                          style: _serif(
+                            size: 14,
+                            color: _Vintage.inkBody,
+                            height: 1.9,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
