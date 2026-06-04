@@ -3098,12 +3098,27 @@ class _PaperHint extends StatelessWidget {
 class _L10n {
   const _L10n();
 
-  // ── archive_screen 에서 사용하는 키 ──
+  // ── 기본 헤더 / 책장 / 힌트 ──
+  String get archive_bookshelf_title => '기억의 책장';
+  String get archive_hint =>
+      '책을 펴면 3장(표지·탐험 일지·추억의 장)이 나타나요.\n사진은 옵션 — 비어 있어도 빈티지 도장이 자리를 지킵니다.';
+  String get archive_close_label => '닫기';
+
+  // ── 검색 / 추가 ──
   String get archive_search_title => '책 / 행사 검색';
   String get archive_search_hint => '책 제목 또는 행사명';
   String get archive_search_empty => '검색 결과가 없어요';
-  String get archive_next_event_placeholder => '다음 행사 칸 · 방문하면 채워져요';
   String get archive_add_book_coming_soon => '수동 추가는 곧 열려요';
+
+  // ── 이벤트 / 시즌 라벨 ──
+  String get archive_next_event_placeholder => '다음 행사 칸 · 방문하면 채워져요';
+  String archive_events_books_count(int events, int books) =>
+      '행사 $events · $books권';
+  String archive_event_books_badge(int count) => '$count권';
+  String archive_season_range_label(String season, String range) =>
+      '$season $range · 서울랜드';
+
+  // ── 요일 ──
   String get archive_weekday_sun => '일';
   String get archive_weekday_mon => '월';
   String get archive_weekday_tue => '화';
@@ -3111,14 +3126,39 @@ class _L10n {
   String get archive_weekday_thu => '목';
   String get archive_weekday_fri => '금';
   String get archive_weekday_sat => '토';
+  String archive_date_full(int month, int day, String wd) =>
+      '$month월 $day일 · $wd요일';
+
+  // ── CH·02 탐험 일지 ──
+  String get archive_ch_02_log => 'CH · 02 · 탐험 일지';
+  String archive_visited_count(int count) => '$count곳을 거쳤어요';
+  String get archive_no_attractions => '기록된 어트랙션이 없어요.';
+  String get archive_todays_missions => '오늘의 미션';
+  String get archive_earned_badges => '획득한 뱃지';
+
+  // ── CH·03 추억의 장 ──
+  String get archive_ch_03_memory => 'CH · 03 · 추억의 장';
+  String get archive_explore_success => '오늘의 탐험 성공';
+
+  // ── 사진 액션 ──
+  String get archive_photo_gallery => '갤러리';
+  String get archive_photo_camera => '촬영';
+  String get archive_photo_replace => '사진 변경';
+  String get archive_photo_delete => '삭제';
+  String archive_photo_load_failed(String error) => '사진을 가져오지 못했어요: $error';
+
+  // ── 통계 ──
+  String get archive_stat_collected => '수집한 추억';
+  String get archive_stat_photo_attached => '사진 첨부';
+  String get archive_stat_record_period => '기록 기간';
+  String get archive_stat_event_chapters => '행사 챕터';
+  String get archive_book_count_unit => '권';
+
+  // ── 보상 ──
   String get reward_progress_title => '🎁 시즌 보상';
   String get reward_progress_next_at_3 => '3개 발견 시 굿즈 쿠폰';
   String get reward_progress_next_at_5 => '5개 발견 시 자유이용권';
   String get reward_progress_completed => '이번 시즌 보상 전부 수령했어요 🎉';
   String get reward_action_view_code => '코드 보기';
-
-  String archive_date_full(int month, int day, String wd) => '$month월 $day일 · $wd요일';
-  String archive_event_books_badge(int count) => '$count권';
-  String archive_season_range_label(String season, String range) => '$season $range · 서울랜드';
   String reward_progress_books(int n, int total) => '발견 $n / $total';
 }
