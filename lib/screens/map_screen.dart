@@ -14,6 +14,7 @@ import '../services/easter_egg_service.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
 import '../services/route_service.dart';
+import '../widgets/ai_scan_modal.dart';
 import '../widgets/attraction_detail_sheet.dart';
 
 class MapScreen extends StatefulWidget {
@@ -102,6 +103,46 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final ids = await EasterEggService.discoveredAll();
     if (!mounted) return;
     setState(() => _discoveredEggs = ids);
+  }
+
+  /// AI 스캔 FAB — 미발견 이스터에그 어트랙션 중 현재 위치에서 가장 가까운 것 1개 sampling.
+  /// 미발견 없으면 안내 SnackBar. (실제 카메라/ML 연동 전 데모용 mock)
+  void _openAiScan() {
+    final origin = _currentOrigin;
+    final undiscovered = kAttractions
+        .where((a) => a.hasEasterEgg)
+        .where((a) => !_discoveredEggs.contains(a.id))
+        .toList();
+    if (undiscovered.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 이스터에그를 이미 발견하셨어요! 🥚')),
+      );
+      return;
+    }
+    undiscovered.sort((a, b) => _haversineMeters(origin, a.position)
+        .compareTo(_haversineMeters(origin, b.position)));
+    final target = undiscovered.first;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => AiScanModal(
+        spotName: target.name,
+        icon: target.icon,
+        description: target.description,
+        onCollect: () async {
+          Navigator.of(context).pop();
+          await EasterEggService.markDiscovered(target.id);
+          await _loadDiscoveredEggs();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('이스터에그 발견 — ${target.name} ${target.icon}'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _loadRoute(String reason) async {
@@ -820,6 +861,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           ),
                           const Divider(height: 1, color: AppColors.line, indent: 20, endIndent: 20),
                           _FilterToggleRow(
+                            label: '🥚 이스터에그 있음',
+                            value: _filter.onlyHasEasterEgg,
+                            onChanged: (v) => setState(
+                                () => _filter = _filter.copyWith(onlyHasEasterEgg: v)),
+                          ),
+                          const Divider(height: 1, color: AppColors.line, indent: 20, endIndent: 20),
+                          _FilterToggleRow(
                             label: '✨ 내 이스터에그',
                             value: _filter.onlyMyEasterEggs,
                             onChanged: (v) => setState(
@@ -847,6 +895,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 ),
               );
             },
+          ),
+          // AI 스캔 FAB — 미발견 이스터에그 어트랙션 중 가장 가까운 것 sampling.
+          // (mock — 실제 ML/카메라 연결 전까지 데모용)
+          Positioned(
+            right: 16,
+            bottom: MediaQuery.of(context).size.height *
+                    (_kSheetMini + 0.02) +
+                MediaQuery.of(context).padding.bottom,
+            child: FloatingActionButton(
+              backgroundColor: AppColors.red,
+              foregroundColor: AppColors.bgCard,
+              onPressed: _openAiScan,
+              tooltip: 'AI 스캔',
+              child: const Icon(Icons.auto_awesome_rounded),
+            ),
           ),
         ],
       ),

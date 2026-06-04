@@ -357,6 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
               items: _routeItems,
               rationale: _route?.rationale,
               totalMin: _route?.totalMin,
+              missingEggCount: _missingEggCount,
               loading: _routeLoading,
               onSettings: _openSettingsSheet,
               onOpenMap: widget.onOpenMyLuna,
@@ -899,6 +900,7 @@ class _MyLunaCard extends StatelessWidget {
   final List<_RouteItem> items;
   final String? rationale;
   final int? totalMin;
+  final int missingEggCount;
   final bool loading;
   final VoidCallback onSettings;
   final VoidCallback? onOpenMap;
@@ -910,6 +912,7 @@ class _MyLunaCard extends StatelessWidget {
     required this.items,
     required this.rationale,
     required this.totalMin,
+    required this.missingEggCount,
     required this.loading,
     required this.onSettings,
     required this.onOpenMap,
@@ -1015,10 +1018,21 @@ class _MyLunaCard extends StatelessWidget {
             rationale ?? '오늘의 추천 동선을 준비하고 있어요 🌙',
             style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w900),
           ),
-          if (totalMin != null) ...[
+          if (totalMin != null || missingEggCount > 0) ...[
             const SizedBox(height: 4),
-            Text('예상 소요 약 $totalMin분',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+            Row(
+              children: [
+                if (totalMin != null)
+                  Text('예상 소요 약 $totalMin분',
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+                if (totalMin != null && missingEggCount > 0)
+                  const Text('  ·  ',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                if (missingEggCount > 0)
+                  Text('🥚 못 찾은 이스터에그 $missingEggCount개 포함',
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+              ],
+            ),
           ],
           const SizedBox(height: 16),
           if (items.isEmpty)
