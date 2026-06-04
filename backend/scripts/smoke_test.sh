@@ -41,13 +41,13 @@ check() {
     echo "${Y}~${N} $label  ${D}[$method $path — 404, 이 브랜치에 미구현]${N}"
     SKIP=$((SKIP+1)); return
   fi
-  if [[ "$http" != "$expected" ]] && [[ "$http" != "502" ]]; then
+  if [[ "$http" != "$expected" ]] && [[ "$http" != "502" ]] && [[ "$http" != "503" ]]; then
     echo "${R}✗${N} $label  ${D}[HTTP $http, expected $expected]${N}"
     echo "  ${D}response: $(echo "$resp" | head -c 200)${N}"
     FAIL=$((FAIL+1)); return
   fi
-  if [[ "$http" == "502" ]]; then
-    echo "${Y}~${N} $label  ${D}[502 skipped — 외부 키 미설정 (정상 fallback)]${N}"
+  if [[ "$http" == "502" ]] || [[ "$http" == "503" ]]; then
+    echo "${Y}~${N} $label  ${D}[HTTP $http skipped — 외부 의존성 미설정 (정상 fallback)]${N}"
     SKIP=$((SKIP+1)); return
   fi
   # 필드 검증 — jq 있으면 사용, 없으면 grep

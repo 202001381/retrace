@@ -31,13 +31,36 @@ SCHEDULER_ENABLED=0 python -m backend.app
 | Method | Path | Body / Query | Response |
 |---|---|---|---|
 | GET  | `/healthz` | — | `{status, time}` |
+| GET  | `/healthz/full` | — | `{status, subsystems{catalog,predictor,weather,narrative_ai,firebase}}` |
+| GET  | `/api/pricing/now` | — | `{discount_pct, crowd_level, rain_prob, weather, temp, reason, computed_at}` — 날씨+예측+할인 통합 |
 | POST | `/api/discount` | `{crowd_level, rain_prob}` | `{crowd_level, rain_prob, discount_pct, reason}` |
 | POST | `/api/score` | `{crowd_level, weather, weekday, is_holiday, discount_pct}` | `{score, breakdown, inputs}` |
 | POST | `/api/predict` | 7개 피처 + `weather` (선택) | `{crowd_level, visitor_count, discount, score}` |
-| POST | `/api/run-pipeline?target=today\|tomorrow` | — | 파이프라인 결과 + FCM 발송 |
+| POST | `/api/route` | `RouteRequest`(uid, lat, lng, has_gps, onboarding, completed_attraction_ids, discovered_eggs, request_reason) + 선택 `features` | `{route[{id,order,eta_min_from_prev}], total_min, rationale, computed_at, cache_key}` |
+| POST | `/api/run-pipeline?target=today\|tomorrow` | — | 파이프라인 결과 + FCM 발송 (외부 키 없으면 502 skipped) |
 | GET  | `/api/crowd-level?visitor_count=N` | — | 임계치 기반 등급 |
-| POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` |
-| POST | `/api/revisit-push/run` | — | `{counts, sent}` (수동 실행) |
+| POST | `/api/narrative` | `{attraction_id, companion_type, season, weather, visit_count}` | `{attraction_id, attraction_name, narrative}` — ANTHROPIC_API_KEY 없으면 룰 fallback |
+| POST | `/api/revisit-push/run` | — | `{counts, sent}` (Firebase 없으면 502 skipped) |
+| POST | `/api/rewards/check` | `{uid}` | `{season, unlocked_count, newly_granted[], already_granted[]}` — 시즌 챕터 3개 → goods, 5개 → ticket. 트랜잭션 idempotent 발급 |
+| GET  | `/api/rewards/list?uid=...` | — | `{items[{reward_id,type,threshold,season,granted_at,redeemed_at,code}]}` |
+| POST | `/api/rewards/redeem` | `{uid, reward_id}` | 갱신된 reward (`redeemed_at` 채움) |
+
+### Narrative 디스크 캐시
+같은 `(attraction_id, locale, season, companion_type)` 4-튜플 조합은 변동 없는 결과 — 한 번 생성된 서사는 `./cache/narratives/{sha1[:16]}.json` 으로 보관. 재호출 시 Claude API 호출 없이 즉시 반환. 캐시 위치 변경: `NARRATIVE_CACHE_DIR=…` env. 룰 기반 fallback 응답은 캐시 안 함 (룰은 즉시 생성 가능).
+
+### FCM 다중 토큰 발송
+`fcm.send_to_tokens(tokens, title, body, data=)` — 최대 500개 multicast. 개인 보상 알림 등에 사용. 토픽 발송과 별개.
+
+### Beta 환경 — 외부 키 없이 동작
+
+| 의존성 | 미설정 시 동작 |
+|---|---|
+| `KMA_SERVICE_KEY` | `/api/pricing/now` 는 기본값 (rain=30, temp=20, 흐림) 으로 fallback |
+| `ANTHROPIC_API_KEY` | `/api/narrative` 는 룰 기반 fallback (season + companion 조합 8가지 톤) |
+| `secrets/firebase-admin.json` | `/api/run-pipeline` 과 `/api/revisit-push/run` 만 502 skipped, 나머지 정상 |
+| `artifacts/crowd_model.pkl` | `/api/route` 의 시점 wait 보정 안 됨 (정적 wait 사용), 그 외 정상 |
+
+`GET /healthz/full` 로 서브시스템 상태 한번에 확인.
 
 ### 예시
 
