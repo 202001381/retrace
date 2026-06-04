@@ -232,12 +232,12 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isActive = _currentIndex == index;
-    // 마이 루나 = 메인 기능. 다른 탭과 다른 브랜드 컬러(lunaNavy)로 항시 강조.
+    // 마이 루나 = 메인 기능. luna/AI 전용 블루(AppColors.blue)로 항시 강조.
     final isMyLuna = index == 2;
     final Color color = isMyLuna
         ? (isActive
-            ? AppColors.ink900
-            : AppColors.ink900.withValues(alpha: 0.7))
+            ? AppColors.blue
+            : AppColors.blue.withValues(alpha: 0.75))
         : (isActive ? AppColors.red : AppColors.textSecondary);
     return Expanded(
       child: GestureDetector(
