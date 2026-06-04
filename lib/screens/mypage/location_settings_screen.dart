@@ -93,7 +93,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -211,7 +211,7 @@ class _PermStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     if (granted) {
       return Row(
         children: [
@@ -250,7 +250,7 @@ class _PermStatusRow extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onOpenSettings,
             icon: const Icon(Icons.settings_rounded, size: 16),
-            label: Text(AppL10n.of(context)!.location_open_settings),
+            label: Text(AppL10n.of(context).location_open_settings),
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

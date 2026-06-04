@@ -14,7 +14,7 @@ class MarketingConsentModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(

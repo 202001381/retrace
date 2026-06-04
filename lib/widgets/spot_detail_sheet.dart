@@ -25,7 +25,7 @@ class SpotDetailSheet extends StatelessWidget {
   }
 
   String _catLabel(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     switch (spot.category) {
       case SpotCategory.attraction: return l.cat_attraction;
       case SpotCategory.food:       return l.cat_restaurant;
@@ -116,7 +116,7 @@ class SpotDetailSheet extends StatelessWidget {
                                     children: [
                                       const Text('🥚', style: TextStyle(fontSize: 10)),
                                       const SizedBox(width: 3),
-                                      Text(AppL10n.of(context)!.common_easter_egg,
+                                      Text(AppL10n.of(context).common_easter_egg,
                                         style: const TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
@@ -165,9 +165,9 @@ class SpotDetailSheet extends StatelessWidget {
                     const SizedBox(width: 8),
                     _infoChip(Icons.star_rounded, spot.rating.toStringAsFixed(1), const Color(0xFFFFB300)),
                     const SizedBox(width: 8),
-                    _infoChip(Icons.reviews_rounded, AppL10n.of(context)!.spot_reviews_count(spot.reviewCount), const Color(0xFF4CAF50)),
+                    _infoChip(Icons.reviews_rounded, AppL10n.of(context).spot_reviews_count(spot.reviewCount), const Color(0xFF4CAF50)),
                     const SizedBox(width: 8),
-                    _infoChip(Icons.schedule_rounded, AppL10n.of(context)!.spot_duration_min(spot.visitDurationMin), const Color(0xFF9E9E9E)),
+                    _infoChip(Icons.schedule_rounded, AppL10n.of(context).spot_duration_min(spot.visitDurationMin), const Color(0xFF9E9E9E)),
                   ],
                 ),
 
@@ -196,7 +196,7 @@ class SpotDetailSheet extends StatelessWidget {
                 if (spot.waitTime != null)
                   _extraInfoCard(
                     icon: '⏱️',
-                    label: AppL10n.of(context)!.spot_wait_now_label,
+                    label: AppL10n.of(context).spot_wait_now_label,
                     value: spot.waitTime!,
                     color: spot.waitTime == '없음'
                         ? const Color(0xFF4CAF50)
@@ -206,7 +206,7 @@ class SpotDetailSheet extends StatelessWidget {
                 if (spot.priceRange != null)
                   _extraInfoCard(
                     icon: '💰',
-                    label: AppL10n.of(context)!.spot_price_range_label,
+                    label: AppL10n.of(context).spot_price_range_label,
                     value: spot.priceRange!,
                     color: const Color(0xFFFF6D00),
                   ),
@@ -228,7 +228,7 @@ class SpotDetailSheet extends StatelessWidget {
                       children: [
                         Icon(Icons.directions_walk_rounded, size: 16, color: _catColor),
                         const SizedBox(width: 6),
-                        Text(AppL10n.of(context)!.attr_walk_eta(walkMinutes!),
+                        Text(AppL10n.of(context).attr_walk_eta(walkMinutes!),
                             style: TextStyle(color: _catColor, fontSize: 13, fontWeight: FontWeight.w800)),
                       ],
                     ),
@@ -246,8 +246,8 @@ class SpotDetailSheet extends StatelessWidget {
                     ),
                     label: Text(
                       isNavigating
-                          ? AppL10n.of(context)!.common_traveling
-                          : AppL10n.of(context)!.attr_go_here,
+                          ? AppL10n.of(context).common_traveling
+                          : AppL10n.of(context).attr_go_here,
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -354,7 +354,7 @@ class SpotDetailSheet extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppL10n.of(context)!.spot_photo_tip_title,
+                  AppL10n.of(context).spot_photo_tip_title,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,

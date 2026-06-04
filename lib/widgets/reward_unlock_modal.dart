@@ -66,7 +66,7 @@ class _RewardUnlockModalState extends State<RewardUnlockModal>
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final isTicket = widget.reward.type == 'ticket';
     final accent = isTicket ? AppColors.yellow : AppColors.red;
 

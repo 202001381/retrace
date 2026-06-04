@@ -275,7 +275,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   }
 
   void _openCompanionSheet() {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -311,7 +311,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
   /// 기존 _survey (온보딩 또는 직전 변경) 값을 보존 → 데이터 손실 방지.
   Future<SurveyAnswers> _applyCompanionToSurvey(
       String companion, String style) async {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final existing = _survey;
 
     Map<MemberCategory, int> members;
@@ -450,7 +450,7 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                       const SizedBox(height: 12),
                     ],
                     _MetaHeader(
-                      surveyLabel: _surveyLabelLocalized(AppL10n.of(context)!),
+                      surveyLabel: _surveyLabelLocalized(AppL10n.of(context)),
                       missingEggs: _missingEggCount,
                       totalMin: _rec?.totalMin,
                       onChangeConditions: _openCompanionSheet,
@@ -480,8 +480,8 @@ class _MyLunaScreenState extends State<MyLunaScreen> {
                       if (_rec!.spots.length > 1) ...[
                         _SectionTitle(
                           _activeScenario != null
-                              ? AppL10n.of(context)!.myluna_course_count(_rec!.spots.length)
-                              : AppL10n.of(context)!.myluna_next_candidate,
+                              ? AppL10n.of(context).myluna_course_count(_rec!.spots.length)
+                              : AppL10n.of(context).myluna_next_candidate,
                         ),
                         const SizedBox(height: 8),
                         // 데모 시나리오 = 전체 노출, 기본 = 2개 미리보기.
@@ -554,7 +554,7 @@ class _MetaHeader extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                AppL10n.of(context)!.navMyLuna,
+                AppL10n.of(context).navMyLuna,
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -582,7 +582,7 @@ class _MetaHeader extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onChangeConditions,
                 icon: const Icon(Icons.tune, size: 14),
-                label: Text(AppL10n.of(context)!.myluna_condition),
+                label: Text(AppL10n.of(context).myluna_condition),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 6),
@@ -601,8 +601,8 @@ class _MetaHeader extends StatelessWidget {
             Text(
               [
                 surveyLabel!,
-                if (missingEggs > 0) AppL10n.of(context)!.myluna_missing_eggs(missingEggs),
-                if (totalMin != null) AppL10n.of(context)!.myluna_total_min(totalMin!),
+                if (missingEggs > 0) AppL10n.of(context).myluna_missing_eggs(missingEggs),
+                if (totalMin != null) AppL10n.of(context).myluna_total_min(totalMin!),
               ].join(' · '),
               style: const TextStyle(
                 fontSize: 12,
@@ -668,7 +668,7 @@ class _HeroNextCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    AppL10n.of(context)!.myluna_next,
+                    AppL10n.of(context).myluna_next,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 11,
@@ -737,13 +737,13 @@ class _HeroNextCard extends StatelessWidget {
                   // 도보 · 대기 · 총 3분할
                   Row(
                     children: [
-                      _StatCell(label: AppL10n.of(context)!.myluna_stat_walk, value: AppL10n.of(context)!.myluna_stat_min(walkMin)),
+                      _StatCell(label: AppL10n.of(context).myluna_stat_walk, value: AppL10n.of(context).myluna_stat_min(walkMin)),
                       _StatDivider(),
-                      _StatCell(label: AppL10n.of(context)!.myluna_stat_wait, value: AppL10n.of(context)!.myluna_stat_min(waitMin)),
+                      _StatCell(label: AppL10n.of(context).myluna_stat_wait, value: AppL10n.of(context).myluna_stat_min(waitMin)),
                       _StatDivider(),
                       _StatCell(
-                        label: AppL10n.of(context)!.myluna_stat_total,
-                        value: AppL10n.of(context)!.myluna_stat_min(totalMin),
+                        label: AppL10n.of(context).myluna_stat_total,
+                        value: AppL10n.of(context).myluna_stat_min(totalMin),
                         accent: true,
                       ),
                     ],
@@ -763,7 +763,7 @@ class _HeroNextCard extends StatelessWidget {
                             onPressed: onNavigate,
                             icon: const Icon(Icons.directions_walk_rounded,
                                 size: 18),
-                            label: Text(AppL10n.of(context)!.myluna_navigate_start),
+                            label: Text(AppL10n.of(context).myluna_navigate_start),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.red,
                               foregroundColor: Colors.white,
@@ -1007,7 +1007,7 @@ class _RefreshInlineButton extends StatelessWidget {
       child: TextButton.icon(
         onPressed: onTap,
         icon: const Text('💫', style: TextStyle(fontSize: 14)),
-        label: Text(AppL10n.of(context)!.myluna_get_new_rec),
+        label: Text(AppL10n.of(context).myluna_get_new_rec),
         style: TextButton.styleFrom(
           foregroundColor: AppColors.ink900,
           textStyle:
@@ -1024,7 +1024,7 @@ class _WindowFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final m = remaining.inMinutes;
     final s = remaining.inSeconds % 60;
     final label = m > 0
@@ -1057,7 +1057,7 @@ class _LoadingHero extends StatelessWidget {
       child: Center(
         child: loading
             ? const CircularProgressIndicator()
-            : Text(AppL10n.of(context)!.myluna_loading_recs,
+            : Text(AppL10n.of(context).myluna_loading_recs,
                 style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
       ),
     );
@@ -1086,7 +1086,7 @@ class _ErrorBlock extends StatelessWidget {
                 color: AppColors.textSecondary,
               )),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: Text(AppL10n.of(context)!.common_retry)),
+          OutlinedButton(onPressed: onRetry, child: Text(AppL10n.of(context).common_retry)),
         ],
       ),
     );
@@ -1127,7 +1127,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                         const Text('🌙', style: TextStyle(fontSize: 14)),
                         const SizedBox(width: 6),
                         Text(
-                          AppL10n.of(context)!.myluna_sample_preview,
+                          AppL10n.of(context).myluna_sample_preview,
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.textPrimary,
@@ -1140,7 +1140,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Text(
-                        AppL10n.of(context)!.demo_payment_prompt,
+                        AppL10n.of(context).demo_payment_prompt,
                         style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary,
@@ -1171,7 +1171,7 @@ class _DemoScenarioPicker extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => onSelect(null),
                 child: Text(
-                  AppL10n.of(context)!.myluna_stop_sample,
+                  AppL10n.of(context).myluna_stop_sample,
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.ink900,
@@ -1217,7 +1217,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                             Text(s.emoji,
                                 style: const TextStyle(fontSize: 14)),
                             const SizedBox(width: 4),
-                            Text(s.localizedTitle(AppL10n.of(context)!),
+                            Text(s.localizedTitle(AppL10n.of(context)),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w900,
@@ -1228,7 +1228,7 @@ class _DemoScenarioPicker extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(s.localizedSubtitle(AppL10n.of(context)!),
+                        Text(s.localizedSubtitle(AppL10n.of(context)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -1268,7 +1268,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
           const Text('🌙',
               style: TextStyle(fontSize: 36)),
           const SizedBox(height: 12),
-          Text(AppL10n.of(context)!.myluna_change_conditions_prompt,
+          Text(AppL10n.of(context).myluna_change_conditions_prompt,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
@@ -1276,7 +1276,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
               )),
           const SizedBox(height: 6),
           Text(
-            AppL10n.of(context)!.myluna_skipped_too_many,
+            AppL10n.of(context).myluna_skipped_too_many,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 12,
@@ -1289,7 +1289,7 @@ class _SkipBlockedEmptyState extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onChangeConditions,
             icon: const Icon(Icons.tune, size: 16),
-            label: Text(AppL10n.of(context)!.myluna_change_conditions),
+            label: Text(AppL10n.of(context).myluna_change_conditions),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.red,
               foregroundColor: Colors.white,

@@ -68,7 +68,7 @@ class _CompanionBottomSheetState extends State<CompanionBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.bgCard,

@@ -83,7 +83,7 @@ class _RouteScreenState extends State<RouteScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(AppL10n.of(context)!.route_custom_recommend('${widget.companionEmoji} ${widget.companion}'),
+                            Text(AppL10n.of(context).route_custom_recommend('${widget.companionEmoji} ${widget.companion}'),
                                 style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
                             Text(widget.preference,
                                 style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
@@ -98,9 +98,9 @@ class _RouteScreenState extends State<RouteScreen> {
                     child: Wrap(
                       spacing: 8,
                       children: [
-                        _HeaderChip(text: AppL10n.of(context)!.route_stops_count(_stops.length)),
+                        _HeaderChip(text: AppL10n.of(context).route_stops_count(_stops.length)),
                         _HeaderChip(text: '⏱️ $_total'),
-                        _HeaderChip(text: AppL10n.of(context)!.route_ai_optimal),
+                        _HeaderChip(text: AppL10n.of(context).route_ai_optimal),
                       ],
                     ),
                   ),

@@ -129,7 +129,7 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
                         decoration: InputDecoration(
                           isCollapsed: true,
                           border: InputBorder.none,
-                          hintText: AppL10n.of(context)!.search_hint_all,
+                          hintText: AppL10n.of(context).search_hint_all,
                           hintStyle: const TextStyle(
                               color: AppColors.ink400, fontSize: 13),
                         ),
@@ -157,7 +157,7 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
                 itemCount: _categories.length + 1,
                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                 itemBuilder: (_, i) {
-                  final l = AppL10n.of(context)!;
+                  final l = AppL10n.of(context);
                   final isAll = i == 0;
                   final cat = isAll ? null : _categories[i - 1];
                   final label = isAll ? l.map_filter_all : _categoryLabel(l, cat!);
@@ -195,7 +195,7 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
               child: Row(
                 children: [
                   Text(
-                    AppL10n.of(context)!.map_result_count(list.length),
+                    AppL10n.of(context).map_result_count(list.length),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -211,7 +211,7 @@ class _AllAttractionsScreenState extends State<AllAttractionsScreen> {
               child: list.isEmpty
                   ? Center(
                       child: Text(
-                        AppL10n.of(context)!.search_no_results,
+                        AppL10n.of(context).search_no_results,
                         style: const TextStyle(
                           color: AppColors.ink400,
                           fontSize: 13,

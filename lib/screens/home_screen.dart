@@ -305,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openSettingsSheet() {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -331,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// myluna_screen 의 _applyCompanionToSurvey 와 동일 매핑·동일 보존 정책.
   Future<SurveyAnswers> _applyCompanionToSurvey(
       String companion, String style) async {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final existing = _survey;
 
     Map<MemberCategory, int> members;
@@ -468,8 +468,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 14),
             // 4. 마이 루나 카드
             _MyLunaCard(
-              companion: _companion ?? AppL10n.of(context)!.companion_family,
-              style: _style ?? AppL10n.of(context)!.style_thrill,
+              companion: _companion ?? AppL10n.of(context).companion_family,
+              style: _style ?? AppL10n.of(context).style_thrill,
               surveyLabel: _surveyLabelOf(_survey),
               items: _routeItems,
               rationale: _route?.rationale,
@@ -621,7 +621,7 @@ class _ConditionStrip extends StatelessWidget {
         children: [
           ConditionPip(icon: Icons.cloud_outlined, label: weatherShort, tint: PipTint.sky),
           ConditionPip(icon: Icons.directions_walk_rounded, label: crowdShort, tint: PipTint.sun),
-          ConditionPip(icon: Icons.access_time_rounded, label: AppL10n.of(context)!.wait_short(7), tint: PipTint.mint),
+          ConditionPip(icon: Icons.access_time_rounded, label: AppL10n.of(context).wait_short(7), tint: PipTint.mint),
         ],
       ),
     );
@@ -667,17 +667,17 @@ class _VisitDetailSheet extends StatelessWidget {
           // 날씨
           _SheetSection(
             icon: '☁️',
-            title: AppL10n.of(context)!.home_card_weather,
+            title: AppL10n.of(context).home_card_weather,
             lines: [weatherDetail, weatherRain],
           ),
           const Divider(height: 28, color: AppColors.line),
           // 혼잡도
           _SheetSection(
             icon: '🟡',
-            title: AppL10n.of(context)!.home_card_crowd,
+            title: AppL10n.of(context).home_card_crowd,
             lines: [
-              AppL10n.of(context)!.home_card_crowd_current(
-                AppL10n.of(context)!.home_crowd_mid,
+              AppL10n.of(context).home_card_crowd_current(
+                AppL10n.of(context).home_crowd_mid,
               ),
               crowdDetail,
             ],
@@ -689,7 +689,7 @@ class _VisitDetailSheet extends StatelessWidget {
               children: [
                 const Text('💰', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
-                Text(AppL10n.of(context)!.home_discount_label,
+                Text(AppL10n.of(context).home_discount_label,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -713,7 +713,7 @@ class _VisitDetailSheet extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text(AppL10n.of(context)!.home_today_discount_detail,
+              child: Text(AppL10n.of(context).home_today_discount_detail,
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
@@ -782,7 +782,7 @@ class _LunaPricingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final base = pricing.basePrice;
     final discounted = pricing.finalPrice;
     final pct = pricing.discountPercent;
@@ -1055,7 +1055,7 @@ class _LunaPricingSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final saved = pricing.discountAmount;
     // 사유 표시는 PricingState.reason 이 결정 + 보조 입력(재방문·미수집 에그) 가산.
     final reasons = <(String, String, String)>[
@@ -1108,12 +1108,12 @@ class _LunaPricingSheet extends StatelessWidget {
                       letterSpacing: -0.6,
                     ),
                     children: [
-                      TextSpan(text: AppL10n.of(context)!.home_why_offer_prefix),
+                      TextSpan(text: AppL10n.of(context).home_why_offer_prefix),
                       TextSpan(
                         text: '${pricing.discountPercent}%',
                         style: const TextStyle(color: AppColors.red),
                       ),
-                      TextSpan(text: AppL10n.of(context)!.home_why_offer_suffix),
+                      TextSpan(text: AppL10n.of(context).home_why_offer_suffix),
                     ],
                   ),
                 ),
@@ -1166,7 +1166,7 @@ class _LunaPricingSheet extends StatelessWidget {
           // 정가·할인가 hero 표시.
           PriceDisplay(state: pricing, size: PriceDisplaySize.hero),
           const SizedBox(height: 6),
-          Text(AppL10n.of(context)!.home_saving_today(_fmt(saved)),
+          Text(AppL10n.of(context).home_saving_today(_fmt(saved)),
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 8),
           DiscountCountdown(
@@ -1190,7 +1190,7 @@ class _LunaPricingSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(99)),
               ),
-              child: Text(AppL10n.of(context)!.home_save_with_luna_ticket(_fmt(saved)),
+              child: Text(AppL10n.of(context).home_save_with_luna_ticket(_fmt(saved)),
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
             ),
           ),
@@ -1252,7 +1252,7 @@ class _MyLunaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Material(
       color: AppColors.bgCard,
       borderRadius: BorderRadius.circular(16),
@@ -1291,7 +1291,7 @@ class _MyLunaCard extends StatelessWidget {
                 child: const MoonMark(size: 16, color: AppColors.blue, filled: true),
               ),
               const SizedBox(width: 8),
-              Text(AppL10n.of(context)!.myluna_title,
+              Text(AppL10n.of(context).myluna_title,
                   style: const TextStyle(
                     color: AppColors.ink900,
                     fontSize: 18,
@@ -1535,7 +1535,7 @@ class _RouteRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 2),
-              Text(AppL10n.of(context)!.home_wait_eta_short(item.waitMin),
+              Text(AppL10n.of(context).home_wait_eta_short(item.waitMin),
                   style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
             ],
           ),
@@ -1587,7 +1587,7 @@ class _TodayEventsSection extends StatelessWidget {
                   const Eyebrow('TODAY · EVENTS'),
                   const SizedBox(height: 4),
                   Text(
-                    AppL10n.of(context)!.home_today_events,
+                    AppL10n.of(context).home_today_events,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -1598,7 +1598,7 @@ class _TodayEventsSection extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text(AppL10n.of(context)!.home_view_all,
+              Text(AppL10n.of(context).home_view_all,
                   style: const TextStyle(fontSize: 12, color: AppColors.ink500, fontWeight: FontWeight.w700)),
               const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink500),
             ],
@@ -1655,7 +1655,7 @@ class _AllEventsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgPage,
       appBar: AppBar(
-        title: Text(AppL10n.of(context)!.home_today_events,
+        title: Text(AppL10n.of(context).home_today_events,
             style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: -0.5)),
         backgroundColor: AppColors.bgCard,
         elevation: 0,

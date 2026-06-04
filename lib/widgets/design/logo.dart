@@ -112,32 +112,3 @@ class MoonMark extends StatelessWidget {
   }
 }
 
-/// 초승달을 두 원의 차집합(difference)으로 그린다.
-/// SVG arcToPoint는 chord > diameter 조합에서 비정상 동작할 수 있어
-/// 차집합 방식이 더 안전하다.
-class _MoonPainter extends CustomPainter {
-  final Color color;
-  final bool filled;
-  _MoonPainter({required this.color, required this.filled});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width / 24;
-    // 큰 원 (전체 달)과 살짝 오른쪽으로 옮긴 작은 원의 차 = 초승달.
-    final outer = Path()
-      ..addOval(Rect.fromCircle(center: Offset(12 * s, 12 * s), radius: 8 * s));
-    final inner = Path()
-      ..addOval(Rect.fromCircle(center: Offset(15 * s, 10 * s), radius: 7 * s));
-    final crescent = Path.combine(PathOperation.difference, outer, inner);
-    final paint = Paint()
-      ..color = color
-      ..style = filled ? PaintingStyle.fill : PaintingStyle.stroke
-      ..strokeWidth = 1.6 * s
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(crescent, paint);
-  }
-
-  @override
-  bool shouldRepaint(_MoonPainter o) => o.color != color || o.filled != filled;
-}

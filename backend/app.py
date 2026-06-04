@@ -299,11 +299,12 @@ def create_app() -> Flask:
         Flutter 홈 hero 카드는 이 엔드포인트 한 방으로 모든 시점 데이터 받음.
         날씨 API 실패 / 모델 없음 시 graceful fallback (둘 다 기본값).
         """
-        from datetime import datetime as _dt
+        from datetime import datetime as _dt, timezone as _tz, timedelta as _td
         from . import weather as _weather
         from .predictor import predict_one as _predict_one
 
-        now = _dt.now()
+        # KST 명시 — 서버 timezone 무관 일관 동작.
+        now = _dt.now(_tz(_td(hours=9)))
         rain_prob = 30.0
         temp = 20.0
         temp_max: float | None = None

@@ -21,7 +21,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
   final List<String> _categories = ['어트랙션', '음식점', '공연', '편의시설'];
 
   String _localCategory(BuildContext context, String cat) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     switch (cat) {
       case '어트랙션': return l.cat_attraction;
       case '음식점':   return l.cat_restaurant;
@@ -160,7 +160,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
                       child: Center(
-                        child: Text(AppL10n.of(context)!.map_no_attractions_match, style: const TextStyle(color: Color(0xFF888888), fontWeight: FontWeight.w700)),
+                        child: Text(AppL10n.of(context).map_no_attractions_match, style: const TextStyle(color: Color(0xFF888888), fontWeight: FontWeight.w700)),
                       ),
                     )
                   else
@@ -173,7 +173,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   const Divider(height: 1, color: Color(0xFFDDDDDD)),
                   const SizedBox(height: 24),
 
-                  Text(AppL10n.of(context)!.rec_browse_all,
+                  Text(AppL10n.of(context).rec_browse_all,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
                   const SizedBox(height: 16),
 
@@ -204,7 +204,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   Row(
                     children: [
                       FilterChip(
-                        label: Text(AppL10n.of(context)!.rec_filter_operating),
+                        label: Text(AppL10n.of(context).rec_filter_operating),
                         selected: _showOperatingOnly,
                         onSelected: (val) => setState(() => _showOperatingOnly = val),
                         backgroundColor: Colors.white,
@@ -219,7 +219,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
-                        label: Text(AppL10n.of(context)!.rec_filter_egg),
+                        label: Text(AppL10n.of(context).rec_filter_egg),
                         selected: _showEasterEggOnly,
                         onSelected: (val) => setState(() => _showEasterEggOnly = val),
                         backgroundColor: Colors.white,
@@ -239,7 +239,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   if (filteredAttractions.isEmpty)
                     Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: Center(child: Text(AppL10n.of(context)!.no_facility_match, style: const TextStyle(color: Colors.grey))),
+                      child: Center(child: Text(AppL10n.of(context).no_facility_match, style: const TextStyle(color: Colors.grey))),
                     )
                   else
                     ...filteredAttractions.map((item) => Padding(
@@ -276,13 +276,13 @@ class _HeaderRow extends StatelessWidget {
           TextButton(
             onPressed: onChangeCondition,
             style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), minimumSize: Size.zero),
-            child: Text(AppL10n.of(context)!.home_change_conditions, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
+            child: Text(AppL10n.of(context).home_change_conditions, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF888888))),
           ),
           const SizedBox(width: 4),
           OutlinedButton.icon(
             onPressed: onRefresh,
             icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: Text(AppL10n.of(context)!.common_refresh, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+            label: Text(AppL10n.of(context).common_refresh, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF1E3158),
               side: const BorderSide(color: Color(0xFFDDDDDD)),
@@ -302,7 +302,7 @@ class _SummaryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (answers == null) return Text(AppL10n.of(context)!.no_survey_default, style: const TextStyle(color: Color(0xFF888888), fontSize: 12));
+    if (answers == null) return Text(AppL10n.of(context).no_survey_default, style: const TextStyle(color: Color(0xFF888888), fontSize: 12));
     final a = answers!;
     final memberText = MemberCategory.values.where((c) => a.count(c) > 0).map((c) => '${c.emoji}${a.count(c)}').join(' ');
     final chips = <String>[
@@ -329,7 +329,7 @@ class _Chip extends StatelessWidget {
 }
 
 String _crowdLabel(BuildContext context, int waitMinutes) {
-  final l = AppL10n.of(context)!;
+  final l = AppL10n.of(context);
   if (waitMinutes <= 5) return l.home_crowd_low;
   if (waitMinutes <= 20) return l.home_crowd_mid;
   return l.home_crowd_high;
@@ -367,7 +367,7 @@ class _AttractionCard extends StatelessWidget {
               children: [
                 Text(item.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 4),
-                Text('${item.zone} · ${item.indoor ? AppL10n.of(context)!.common_indoor : AppL10n.of(context)!.common_outdoor} · ${AppL10n.of(context)!.rec_thrill_level(item.thrillLevel)}', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+                Text('${item.zone} · ${item.indoor ? AppL10n.of(context).common_indoor : AppL10n.of(context).common_outdoor} · ${AppL10n.of(context).rec_thrill_level(item.thrillLevel)}', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center,
@@ -377,7 +377,7 @@ class _AttractionCard extends StatelessWidget {
                       decoration: BoxDecoration(color: _crowdColor.withOpacity(0.12), borderRadius: BorderRadius.circular(99)),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 6, height: 6, decoration: BoxDecoration(color: _crowdColor, shape: BoxShape.circle)), const SizedBox(width: 4), Text(_crowdLabel(context, item.waitMinutes), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _crowdColor))]),
                     ),
-                    Text(AppL10n.of(context)!.rec_wait_eta_short(item.waitMinutes), style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
+                    Text(AppL10n.of(context).rec_wait_eta_short(item.waitMinutes), style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
                     if (item.heightLimit > 0) Text('📏 ${item.heightLimit}cm+', style: const TextStyle(fontSize: 11, color: Color(0xFF555555), fontWeight: FontWeight.w700)),
                   ],
                 ),
@@ -419,7 +419,7 @@ class _AllAttractionCard extends StatelessWidget {
                 Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 4),
                 // 🚀 기획서 반영: 대기시간 및 구역 표시
-                Text(AppL10n.of(context)!.rec_zone_wait_eta(item.zone, item.waitMinutes), style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
+                Text(AppL10n.of(context).rec_zone_wait_eta(item.zone, item.waitMinutes), style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
               ],
             ),
           ),
@@ -432,7 +432,7 @@ class _AllAttractionCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.stars_rounded, color: Color(0xFFFFB800), size: 14),
                   const SizedBox(width: 4),
-                  Text(AppL10n.of(context)!.common_easter_egg, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFFB800))),
+                  Text(AppL10n.of(context).common_easter_egg, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFFB800))),
                 ],
               ),
             ),

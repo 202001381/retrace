@@ -20,7 +20,7 @@ class NotificationSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final height = MediaQuery.of(context).size.height * 0.78;
     final notifications = _buildMockNotifications(l);
     return Container(

@@ -31,49 +31,52 @@ class RewardController {
   /// 환경에서도 작동.
   Future<void> checkAfterDiscovery(BuildContext context) async {
     if (!RewardsService.instance.enabled) return;
-    final discovered = await EasterEggService.discoveredAll();
-    final result = await RewardsService.instance.checkAndGrant(_uid, discovered: discovered);
-    if (result == null || result.newlyGranted.isEmpty) return;
-    if (!context.mounted || _modalOpen) return;
-    // 우선순위: ticket > goods (큰 보상 먼저 보여줌).
-    final sorted = [...result.newlyGranted]
-      ..sort((a, b) => b.threshold.compareTo(a.threshold));
-    final r = sorted.first;
-    await _presentUnlock(context, r, result.unlockedCount);
-  }
-
-  Future<void> _presentUnlock(BuildContext context, Reward reward, int unlockedCount) async {
+    // 동시 다발 호출 race — 첫 호출만 통과시키고 나머지 일찍 종료.
+    if (_modalOpen) return;
     _modalOpen = true;
-    // 풀스크린 인커밍-콜 톤 — 강 진동 1회 (사용자 알아채기 위함).
-    HapticFeedback.heavyImpact();
     try {
-      await Navigator.of(context, rootNavigator: true).push(
-        PageRouteBuilder<void>(
-          opaque: false,
-          barrierColor: Colors.black87,
-          fullscreenDialog: true,
-          transitionDuration: const Duration(milliseconds: 320),
-          pageBuilder: (_, __, ___) => RewardUnlockModal(
-            reward: reward,
-            unlockedCount: unlockedCount,
-            uid: _uid,
-          ),
-          transitionsBuilder: (_, anim, __, child) {
-            return FadeTransition(
-              opacity: anim,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.94, end: 1.0).animate(
-                  CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
-                ),
-                child: child,
-              ),
-            );
-          },
-        ),
-      );
+      final discovered = await EasterEggService.discoveredAll();
+      final result = await RewardsService.instance.checkAndGrant(_uid, discovered: discovered);
+      if (result == null || result.newlyGranted.isEmpty) return;
+      // context 가 async 사이 unmount 됐을 수 있음.
+      if (!context.mounted) return;
+      // 우선순위: ticket > goods (큰 보상 먼저 보여줌).
+      final sorted = [...result.newlyGranted]
+        ..sort((a, b) => b.threshold.compareTo(a.threshold));
+      final r = sorted.first;
+      await _presentUnlock(context, r, result.unlockedCount);
     } finally {
       _modalOpen = false;
     }
+  }
+
+  Future<void> _presentUnlock(BuildContext context, Reward reward, int unlockedCount) async {
+    // 풀스크린 인커밍-콜 톤 — 강 진동 1회 (사용자 알아채기 위함).
+    HapticFeedback.heavyImpact();
+    await Navigator.of(context, rootNavigator: true).push(
+      PageRouteBuilder<void>(
+        opaque: false,
+        barrierColor: Colors.black87,
+        fullscreenDialog: true,
+        transitionDuration: const Duration(milliseconds: 320),
+        pageBuilder: (_, __, ___) => RewardUnlockModal(
+          reward: reward,
+          unlockedCount: unlockedCount,
+          uid: _uid,
+        ),
+        transitionsBuilder: (_, anim, __, child) {
+          return FadeTransition(
+            opacity: anim,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.94, end: 1.0).animate(
+                CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+              ),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   String get uid => _uid;

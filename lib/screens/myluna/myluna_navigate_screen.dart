@@ -89,6 +89,8 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
     _routeFor = origin;
     final r = await OsrmRouter.route(origin, widget.target.position);
     if (!mounted) return;
+    // GPS 빠른 갱신으로 더 최신 origin 이 이미 페치 중일 수 있음 — stale 폐기.
+    if (_routeFor != null && _haversineMeters(_routeFor!, origin) > 5) return;
     setState(() => _route = r);
   }
 
@@ -105,7 +107,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
           backgroundColor: AppColors.ink900,
           duration: const Duration(seconds: 5),
           content: Text(
-            AppL10n.of(context)!.nav_arrival_close(widget.target.name),
+            AppL10n.of(context).nav_arrival_close(widget.target.name),
             style: const TextStyle(
               color: AppColors.bgCard,
               fontSize: 14,
@@ -306,7 +308,7 @@ class _MyLunaNavigateScreenState extends State<MyLunaNavigateScreen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          AppL10n.of(context)!.nav_arrival_hint,
+                          AppL10n.of(context).nav_arrival_hint,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -409,7 +411,7 @@ class _DistanceCard extends StatelessWidget {
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text(AppL10n.of(context)!.nav_walk_eta_short(walkMin),
+                child: Text(AppL10n.of(context).nav_walk_eta_short(walkMin),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,

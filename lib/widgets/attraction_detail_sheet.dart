@@ -54,6 +54,8 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
 
   Future<void> _onEasterEggTap() async {
     setState(() => _eggLoading = true);
+    // 첫 await 전에 context-derived 값 추출 — 위젯 dispose 후 context 접근 방지.
+    final locale = Localizations.localeOf(context);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -71,7 +73,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
         weather: '맑음',
         visitCount: 1,
       ),
-      locale: Localizations.localeOf(context),
+      locale: locale,
     );
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
@@ -239,7 +241,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
             const SizedBox(height: 14),
             Row(
               children: [
-                _InfoChip(icon: '⏱', text: AppL10n.of(context)!.wait_short(a.waitMinutes)),
+                _InfoChip(icon: '⏱', text: AppL10n.of(context).wait_short(a.waitMinutes)),
                 const SizedBox(width: 6),
                 _InfoChip(icon: '⭐', text: '${a.rating}'),
                 if (a.heightLimit > 0) ...[
@@ -248,7 +250,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                 ],
                 if (a.indoor) ...[
                   const SizedBox(width: 6),
-                  _InfoChip(icon: '🏠', text: AppL10n.of(context)!.common_indoor),
+                  _InfoChip(icon: '🏠', text: AppL10n.of(context).common_indoor),
                 ],
               ],
             ),
@@ -264,7 +266,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                   children: [
                     Icon(Icons.directions_walk_rounded, size: 16, color: _catColor),
                     const SizedBox(width: 6),
-                    Text(AppL10n.of(context)!.attr_walk_eta(widget.walkMinutes!),
+                    Text(AppL10n.of(context).attr_walk_eta(widget.walkMinutes!),
                         style: TextStyle(color: _catColor, fontSize: 13, fontWeight: FontWeight.w800)),
                   ],
                 ),
@@ -280,7 +282,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                   widget.isNavigating ? Icons.hourglass_top_rounded : Icons.directions_walk_rounded,
                   size: 20,
                 ),
-                label: Text(widget.isNavigating ? AppL10n.of(context)!.common_traveling : AppL10n.of(context)!.attr_go_here,
+                label: Text(widget.isNavigating ? AppL10n.of(context).common_traveling : AppL10n.of(context).attr_go_here,
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _catColor,
@@ -332,7 +334,7 @@ class _EasterEggSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final bg = discovered ? AppColors.bgCardWarm : AppColors.bgPage;
     final border = discovered ? AppColors.textSecondary : AppColors.red;
     final btnLabel = discovered ? l.attr_story_replay : l.attr_story_listen;
@@ -390,7 +392,7 @@ class _LunaLoadingDialog extends StatelessWidget {
               child: CircularProgressIndicator(color: AppColors.grape, strokeWidth: 3),
             ),
             const SizedBox(height: 14),
-            Text(AppL10n.of(context)!.attr_luna_finding_story,
+            Text(AppL10n.of(context).attr_luna_finding_story,
                 style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
           ],
         ),
@@ -554,7 +556,7 @@ class _NarrativePopupState extends State<_NarrativePopup>
                                 borderRadius: BorderRadius.circular(99)),
                           ),
                           child: Text(
-                            AppL10n.of(context)!.attr_view_next_route,
+                            AppL10n.of(context).attr_view_next_route,
                             style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w900),
                           ),
@@ -687,7 +689,7 @@ class _NarrativePopupState extends State<_NarrativePopup>
           ),
           const SizedBox(height: 4),
           Text(
-            AppL10n.of(context)!.common_discovered,
+            AppL10n.of(context).common_discovered,
             style: const TextStyle(
               color: AppColors.red,
               fontSize: 38,

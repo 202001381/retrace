@@ -39,7 +39,7 @@ class PriceDisplay extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(AppL10n.of(context)!.price_list_price(_fmt(state.basePrice)),
+        Text(AppL10n.of(context).price_list_price(_fmt(state.basePrice)),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
@@ -67,7 +67,7 @@ class PriceDisplay extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(AppL10n.of(context)!.price_list_price(_fmt(state.basePrice)),
+        Text(AppL10n.of(context).price_list_price(_fmt(state.basePrice)),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,

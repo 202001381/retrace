@@ -79,7 +79,7 @@ class NarrativeModal extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Text(AppL10n.of(context)!.narrative_found,
+            Text(AppL10n.of(context).narrative_found,
                 style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, height: 1.2)),
             const SizedBox(height: 16),
             Container(
@@ -91,7 +91,7 @@ class NarrativeModal extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(AppL10n.of(context)!.narrative_placeholder,
+                  Text(AppL10n.of(context).narrative_placeholder,
                       style: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                   const SizedBox(height: 8),
                   Text('$attractionEmoji $attractionName',
@@ -105,7 +105,7 @@ class NarrativeModal extends StatelessWidget {
                       }
                       if (snap.hasError) {
                         return Text(
-                          AppL10n.of(context)!.narrative_load_error('${snap.error}'),
+                          AppL10n.of(context).narrative_load_error('${snap.error}'),
                           style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13, height: 1.5),
                         );
                       }
@@ -131,7 +131,7 @@ class NarrativeModal extends StatelessWidget {
                   foregroundColor: const Color(0xFF1E2D4E),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(AppL10n.of(context)!.narrative_save_chronicle,
+                child: Text(AppL10n.of(context).narrative_save_chronicle,
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
               ),
             ),

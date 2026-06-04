@@ -19,7 +19,7 @@ class DiscountCauseLabel extends StatelessWidget {
   });
 
   static String reasonLabel(BuildContext context, PricingState state) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     switch (state.reason) {
       case DiscountReason.weather:   return l.discount_reason_weather;
       case DiscountReason.weekday:   return l.discount_reason_weekday;
@@ -52,7 +52,7 @@ class DiscountCauseLabel extends StatelessWidget {
           child: Icon(Icons.arrow_forward_rounded,
               size: fontSize + 1, color: arrowColor),
         ),
-        Text(AppL10n.of(context)!.price_off_pct(state.discountPercent),
+        Text(AppL10n.of(context).price_off_pct(state.discountPercent),
             style: TextStyle(
               color: accentColor,
               fontSize: fontSize,

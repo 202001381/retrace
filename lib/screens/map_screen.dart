@@ -59,7 +59,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
-  Attraction? _selectedAttraction;
   Attraction? _navTarget;
   int? _navWalkMin;
   bool _navInProgress = false;
@@ -231,7 +230,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(20, 0, 20, 40),
           duration: const Duration(seconds: 3),
-          content: Text(AppL10n.of(context)!.map_gps_remote_snackbar),
+          content: Text(AppL10n.of(context).map_gps_remote_snackbar),
         ),
       );
     }
@@ -329,7 +328,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   /// 시트 카드 리스트가 빈 경우의 분기 — "내 이스터에그" 0건이 최우선.
   Widget _buildEmptyState() {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     if (_filter.onlyMyEasterEggs && _discoveredEggs.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -388,7 +387,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   // ── 인터랙션 ─────────────────────────────────────────────
   void _openDetail(Attraction a) {
-    setState(() => _selectedAttraction = a);
     _shrinkSheet();
     _mapController.move(a.position, 17.5);
     showModalBottomSheet(
@@ -401,9 +399,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         isNavigating: _navInProgress && _navTarget?.id == a.id,
         walkMinutes: _navTarget?.id == a.id ? _navWalkMin : null,
       ),
-    ).then((_) {
-      if (mounted) setState(() => _selectedAttraction = null);
-    });
+    );
   }
 
   void _startNavigation(Attraction target) {
@@ -600,10 +596,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return [_currentOrigin, _navTarget!.position];
   }
 
-  /// 단일 stop OSRM 페치 (navigation).
+  /// 단일 stop OSRM 페치 (navigation). 다중 호출 race 방지:
+  /// 응답 도착 시점에 _navTarget 이 다른 곳을 가리키거나 cleared 면 결과 폐기.
   Future<void> _fetchNavRoute(LatLng origin, LatLng dest) async {
     final r = await OsrmRouter.route(origin, dest);
     if (!mounted) return;
+    if (_navTarget == null || _navTarget!.position != dest) return;
     setState(() {
       _navRoute = r;
       _navWalkMin = r.walkMinutes;
@@ -611,6 +609,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   /// 멀티 stop OSRM 페치 (마이루나 동선 ON 시).
+  /// 다중 호출 race 방지 — 응답 도착 시점에 stops 가 바뀌었으면 결과 폐기.
   Future<void> _fetchMultiRoute() async {
     final spots = _routeAttractions;
     if (spots.isEmpty) {
@@ -623,9 +622,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _currentOrigin,
       ...spots.map((a) => LatLng(a.lat, a.lng)),
     ];
+    final requestedIds = spots.map((a) => a.id).toList();
     final r = await OsrmRouter.routeMulti(stops);
     if (!mounted) return;
+    // stops 가 바뀌었으면 stale.
+    final currentIds = _routeAttractions.map((a) => a.id).toList();
+    if (!_listEquals(requestedIds, currentIds)) return;
     setState(() => _multiRoute = r);
+  }
+
+  static bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   void _onMarkerTap(Attraction a) => _openDetail(a);
@@ -705,12 +716,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_showRoute)
-                    _StatusBadge(color: AppColors.red, text: AppL10n.of(context)!.map_route_on),
+                    _StatusBadge(color: AppColors.red, text: AppL10n.of(context).map_route_on),
                   if (_showRoute && _navTarget != null) const SizedBox(height: 8),
                   if (_navTarget != null)
                     _StatusBadge(
                       color: AppColors.red,
-                      text: AppL10n.of(context)!.map_nav_status(_navTarget!.name, _navWalkMin ?? 0),
+                      text: AppL10n.of(context).map_nav_status(_navTarget!.name, _navWalkMin ?? 0),
                       onClose: () => setState(() {
                         _navTarget = null;
                         _navWalkMin = null;
@@ -802,7 +813,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                             color: AppColors.red,
                                             borderRadius: BorderRadius.circular(99),
                                           ),
-                                          child: Text(AppL10n.of(context)!.map_rerecommend,
+                                          child: Text(AppL10n.of(context).map_rerecommend,
                                               style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
                                         ),
                                       ),
@@ -834,8 +845,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 children: [
                                   Text(
                                     _filter.isAnyActive
-                                        ? AppL10n.of(context)!.map_result_count(_visibleAttractions.length)
-                                        : AppL10n.of(context)!.map_total_count(_visibleAttractions.length),
+                                        ? AppL10n.of(context).map_result_count(_visibleAttractions.length)
+                                        : AppL10n.of(context).map_total_count(_visibleAttractions.length),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
@@ -848,7 +859,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                   const Spacer(),
                                   _PulseDot(),
                                   const SizedBox(width: 4),
-                                  Text(AppL10n.of(context)!.map_route_realtime,
+                                  Text(AppL10n.of(context).map_route_realtime,
                                       style: const TextStyle(fontSize: 11, color: AppColors.red, fontWeight: FontWeight.w600)),
                                 ],
                               ),
@@ -867,7 +878,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 itemBuilder: (_, i) {
                                   final isAll = i == 0;
                                   final cat = isAll ? null : PlaceCategory.values[i - 1];
-                                  final label = isAll ? AppL10n.of(context)!.map_filter_all : cat!.displayLabel(AppL10n.of(context)!);
+                                  final label = isAll ? AppL10n.of(context).map_filter_all : cat!.displayLabel(AppL10n.of(context));
                                   final active = _filter.category == cat;
                                   return GestureDetector(
                                     onTap: () => setState(() {
@@ -898,14 +909,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           const SizedBox(height: 12),
                           const Divider(height: 1, color: AppColors.line),
                           _FilterToggleRow(
-                            label: AppL10n.of(context)!.map_operating_only,
+                            label: AppL10n.of(context).map_operating_only,
                             value: _filter.onlyOperating,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyOperating: v)),
                           ),
                           const Divider(height: 1, color: AppColors.line, indent: 20, endIndent: 20),
                           _FilterToggleRow(
-                            label: AppL10n.of(context)!.map_filter_my_eggs,
+                            label: AppL10n.of(context).map_filter_my_eggs,
                             value: _filter.onlyMyEasterEggs,
                             onChanged: (v) => setState(
                                 () => _filter = _filter.copyWith(onlyMyEasterEggs: v)),
@@ -985,7 +996,7 @@ class _TopBar extends StatelessWidget {
                             decoration: InputDecoration(
                               isCollapsed: true,
                               border: InputBorder.none,
-                              hintText: AppL10n.of(context)!.map_search_hint,
+                              hintText: AppL10n.of(context).map_search_hint,
                               hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           ),
@@ -1025,7 +1036,7 @@ class _RouteTogglePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Semantics(
       button: true,
       selected: active,
@@ -1094,7 +1105,7 @@ class _GpsCircleButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: !loading,
-      label: AppL10n.of(context)!.map_btn_gps,
+      label: AppL10n.of(context).map_btn_gps,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -1126,54 +1137,6 @@ class _GpsCircleButton extends StatelessWidget {
                   color: AppColors.ink900,
                   strokeWidth: 2,
                 ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IconLabelButton extends StatelessWidget {
-  final String label;
-  final bool active;
-  final Color activeColor;
-  final bool loading;
-  final VoidCallback onTap;
-  const _IconLabelButton({
-    required this.label,
-    required this.active,
-    required this.activeColor,
-    this.loading = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: !loading,
-      selected: active,
-      label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: active ? activeColor : Colors.white,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: active ? activeColor : AppColors.line),
-          ),
-          alignment: Alignment.center,
-          child: loading
-              ? const SizedBox(
-                  width: 14, height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink900),
-                )
-              : Text(label,
-                  style: TextStyle(
-                    color: active ? Colors.white : AppColors.textPrimary,
-                    fontSize: 13, fontWeight: FontWeight.w800,
-                  )),
         ),
       ),
     );

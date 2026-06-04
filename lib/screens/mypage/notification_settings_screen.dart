@@ -84,7 +84,7 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final s = _state;
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(

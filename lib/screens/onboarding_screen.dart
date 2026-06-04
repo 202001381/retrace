@@ -36,9 +36,6 @@ const _kRedGradient = LinearGradient(
 //   5: survey 2 — 선호 어트랙션
 //   6: survey 3 — 방문 목적
 //   7: 완료
-const int _kPages = 8;
-const int _kFirstSurveyPage = 4;
-const int _kLastSurveyPage = 6;
 const int _kDonePage = 7;
 
 enum _CourseKind { family, thrill, date, custom }
@@ -142,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   /// 결과 화면 서브 텍스트 — locale-aware.
   String _summaryText(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final total = _total;
     switch (_resultKind()) {
       case _CourseKind.family:
@@ -165,7 +162,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  bool get _isIntroPage => _page <= 3;
   bool get _showSkip => _page <= 3;
   bool get _showBack => _page > 0 && _page != _kDonePage;
 
@@ -193,33 +189,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             _IntroExplainPage(
               icon: '🌙',
-              title: AppL10n.of(context)!.onboarding_my_luna_what,
+              title: AppL10n.of(context).onboarding_my_luna_what,
               cards: [
-                (icon: '🗺️', title: AppL10n.of(context)!.onboarding_for_you, desc: AppL10n.of(context)!.onboarding_personalized_desc),
-                (icon: '🔄', title: AppL10n.of(context)!.onboarding_anytime_new_course, desc: AppL10n.of(context)!.onboarding_personalized_desc),
+                (icon: '🗺️', title: AppL10n.of(context).onboarding_for_you, desc: AppL10n.of(context).onboarding_personalized_desc),
+                (icon: '🔄', title: AppL10n.of(context).onboarding_anytime_new_course, desc: AppL10n.of(context).onboarding_personalized_desc),
               ],
-              ctaLabel: AppL10n.of(context)!.common_next,
+              ctaLabel: AppL10n.of(context).common_next,
               onBack: _back,
               onSkip: _skipFromIntro,
               onNext: () => _goTo(2),
             ),
             _IntroExplainPage(
               icon: '💰',
-              title: AppL10n.of(context)!.onboarding_luna_pricing_what,
+              title: AppL10n.of(context).onboarding_luna_pricing_what,
               cards: [
-                (icon: '⏰', title: AppL10n.of(context)!.onboarding_realtime_discount, desc: AppL10n.of(context)!.onboarding_pricing_desc),
-                (icon: '🔔', title: AppL10n.of(context)!.onboarding_proactive_notif, desc: AppL10n.of(context)!.onboarding_notif_desc),
+                (icon: '⏰', title: AppL10n.of(context).onboarding_realtime_discount, desc: AppL10n.of(context).onboarding_pricing_desc),
+                (icon: '🔔', title: AppL10n.of(context).onboarding_proactive_notif, desc: AppL10n.of(context).onboarding_notif_desc),
               ],
-              ctaLabel: AppL10n.of(context)!.common_next,
+              ctaLabel: AppL10n.of(context).common_next,
               onBack: _back,
               onSkip: _skipFromIntro,
               onNext: () => _goTo(3),
             ),
             _IntroDarkCenterPage(
               icon: '✨',
-              title: AppL10n.of(context)!.onboarding_make_my_luna,
-              subtitle: AppL10n.of(context)!.onboarding_just_3,
-              ctaLabel: AppL10n.of(context)!.onboarding_start,
+              title: AppL10n.of(context).onboarding_make_my_luna,
+              subtitle: AppL10n.of(context).onboarding_just_3,
+              ctaLabel: AppL10n.of(context).onboarding_start,
               showBack: _showBack,
               showSkip: _showSkip,
               onBack: _back,
@@ -235,11 +231,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             _SingleChoiceSurveyPage(
               progress: 2,
-              title: AppL10n.of(context)!.onboarding_q_favorite,
+              title: AppL10n.of(context).onboarding_q_favorite,
               options: [
-                (emoji: '🎢', title: AppL10n.of(context)!.fav_thrill, desc: AppL10n.of(context)!.onboarding_thrill_fast, value: FavoriteType.thrill),
-                (emoji: '🎠', title: AppL10n.of(context)!.fav_family, desc: AppL10n.of(context)!.onboarding_family_together, value: FavoriteType.family),
-                (emoji: '✨', title: AppL10n.of(context)!.fav_either, desc: AppL10n.of(context)!.onboarding_either_ok, value: FavoriteType.both),
+                (emoji: '🎢', title: AppL10n.of(context).fav_thrill, desc: AppL10n.of(context).onboarding_thrill_fast, value: FavoriteType.thrill),
+                (emoji: '🎠', title: AppL10n.of(context).fav_family, desc: AppL10n.of(context).onboarding_family_together, value: FavoriteType.family),
+                (emoji: '✨', title: AppL10n.of(context).fav_either, desc: AppL10n.of(context).onboarding_either_ok, value: FavoriteType.both),
               ],
               selected: _favoriteType,
               onSelect: (v) => setState(() => _favoriteType = v),
@@ -248,12 +244,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             _SingleChoiceSurveyPage(
               progress: 3,
-              title: AppL10n.of(context)!.onboarding_q_purpose,
+              title: AppL10n.of(context).onboarding_q_purpose,
               options: [
-                (emoji: '🎡', title: AppL10n.of(context)!.purpose_rides, desc: null, value: VisitPurpose.rides),
-                (emoji: '🌿', title: AppL10n.of(context)!.purpose_picnic, desc: null, value: VisitPurpose.picnic),
-                (emoji: '👶', title: AppL10n.of(context)!.purpose_kids_outing, desc: null, value: VisitPurpose.kidsOuting),
-                (emoji: '💑', title: AppL10n.of(context)!.purpose_date, desc: null, value: VisitPurpose.date),
+                (emoji: '🎡', title: AppL10n.of(context).purpose_rides, desc: null, value: VisitPurpose.rides),
+                (emoji: '🌿', title: AppL10n.of(context).purpose_picnic, desc: null, value: VisitPurpose.picnic),
+                (emoji: '👶', title: AppL10n.of(context).purpose_kids_outing, desc: null, value: VisitPurpose.kidsOuting),
+                (emoji: '💑', title: AppL10n.of(context).purpose_date, desc: null, value: VisitPurpose.date),
               ],
               selected: _purpose,
               onSelect: (v) => setState(() => _purpose = v),
@@ -330,7 +326,7 @@ class _IntroWelcomePage extends StatelessWidget {
                       const Eyebrow('WELCOME', color: Colors.white, size: 11),
                       const SizedBox(height: 16),
                       Text(
-                        AppL10n.of(context)!.onboarding_welcome_title,
+                        AppL10n.of(context).onboarding_welcome_title,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 44,
@@ -341,7 +337,7 @@ class _IntroWelcomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        AppL10n.of(context)!.onboarding_intro_title,
+                        AppL10n.of(context).onboarding_intro_title,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -360,7 +356,7 @@ class _IntroWelcomePage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _BranchButton(
-                          label: AppL10n.of(context)!.onboarding_start,
+                          label: AppL10n.of(context).onboarding_start,
                           bg: Colors.white,
                           fg: AppColors.ink900,
                           onTap: onFirstTime,
@@ -369,7 +365,7 @@ class _IntroWelcomePage extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _BranchButton(
-                          label: AppL10n.of(context)!.onboarding_browse,
+                          label: AppL10n.of(context).onboarding_browse,
                           bg: Colors.white.withValues(alpha: 0.16),
                           fg: Colors.white,
                           border: Colors.white.withValues(alpha: 0.4),
@@ -714,7 +710,7 @@ class _ResultPage extends StatelessWidget {
                 const Text('🌙', style: TextStyle(fontSize: 56)),
                 const SizedBox(height: 20),
                 Text(
-                  AppL10n.of(context)!.onboarding_ready,
+                  AppL10n.of(context).onboarding_ready,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -763,7 +759,7 @@ class _ResultPage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(99)),
                           ),
                           child: Text(
-                            AppL10n.of(context)!.onboarding_result_see_route,
+                            AppL10n.of(context).onboarding_result_see_route,
                             style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w900),
                           ),
@@ -785,7 +781,7 @@ class _ResultPage extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(99)),
                             ),
                             child: Text(
-                              AppL10n.of(context)!.onboarding_result_get_ticket,
+                              AppL10n.of(context).onboarding_result_get_ticket,
                               style: const TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w800),
                             ),
@@ -823,13 +819,13 @@ class _PricingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(AppL10n.of(context)!.onboarding_pricing_short,
+                Text(AppL10n.of(context).onboarding_pricing_short,
                     style: const TextStyle(color: _kAccent, fontSize: 14, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 8),
-                Text(AppL10n.of(context)!.home_today_chill_day,
+                Text(AppL10n.of(context).home_today_chill_day,
                     style: const TextStyle(color: _kText, fontSize: 18, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
-                Text(AppL10n.of(context)!.onboarding_pricing_now_off(discountPct),
+                Text(AppL10n.of(context).onboarding_pricing_now_off(discountPct),
                     style: const TextStyle(color: _kMuted, fontSize: 14)),
               ],
             ),
@@ -873,7 +869,7 @@ class _MembersSurveyPage extends StatelessWidget {
               const Eyebrow('STEP 01 · WHO', color: AppColors.red),
               const SizedBox(height: 8),
               Text(
-                AppL10n.of(context)!.onboarding_q_party,
+                AppL10n.of(context).onboarding_q_party,
                 style: const TextStyle(
                   color: AppColors.ink900,
                   fontSize: 28,
@@ -883,7 +879,7 @@ class _MembersSurveyPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(AppL10n.of(context)!.onboarding_party_count_msg,
+              Text(AppL10n.of(context).onboarding_party_count_msg,
                   style: const TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
             ],
           ),
@@ -917,7 +913,7 @@ class _MembersSurveyPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(AppL10n.of(context)!.onboarding_party_total,
+                  Text(AppL10n.of(context).onboarding_party_total,
                       style: const TextStyle(color: _kMuted, fontSize: 13, fontWeight: FontWeight.w700)),
                   const Spacer(),
                   Text('$total',
@@ -930,7 +926,7 @@ class _MembersSurveyPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _PrimaryCta(
-                label: AppL10n.of(context)!.common_next,
+                label: AppL10n.of(context).common_next,
                 onTap: onNext,
                 color: _kAccent,
                 fg: Colors.white,
@@ -1080,7 +1076,7 @@ class _SingleChoiceSurveyPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(AppL10n.of(context)!.onboarding_pick_accurate,
+              Text(AppL10n.of(context).onboarding_pick_accurate,
                   style: const TextStyle(color: AppColors.ink500, fontSize: 13, fontWeight: FontWeight.w500)),
             ],
           ),
@@ -1135,7 +1131,7 @@ class _SingleChoiceSurveyPage extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: _PrimaryCta(label: AppL10n.of(context)!.common_next, onTap: onNext, color: _kAccent, fg: Colors.white),
+          child: _PrimaryCta(label: AppL10n.of(context).common_next, onTap: onNext, color: _kAccent, fg: Colors.white),
         ),
       ],
     );
@@ -1173,7 +1169,7 @@ class _OnboardingTopBar extends StatelessWidget {
           if (onSkip != null)
             TextButton(
               onPressed: onSkip,
-              child: Text(AppL10n.of(context)!.onboarding_skip,
+              child: Text(AppL10n.of(context).onboarding_skip,
                   style: TextStyle(
                     color: color.withValues(alpha: 0.75),
                     fontSize: 13,

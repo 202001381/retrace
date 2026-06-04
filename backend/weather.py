@@ -103,9 +103,11 @@ def _fetch_rows(now: datetime | None = None) -> list[dict]:
         "nx": config.SEOULLAND_NX,
         "ny": config.SEOULLAND_NY,
     }
-    resp = requests.get(config.KMA_VILAGE_FCST_URL, params=params, timeout=15)
-    resp.raise_for_status()
-    body = resp.json().get("response", {}).get("body", {})
+    with requests.get(
+        config.KMA_VILAGE_FCST_URL, params=params, timeout=15
+    ) as resp:
+        resp.raise_for_status()
+        body = resp.json().get("response", {}).get("body", {})
     items = body.get("items", {}).get("item", [])
     if not items:
         raise RuntimeError(f"KMA returned no items (base={base_date}/{base_time})")

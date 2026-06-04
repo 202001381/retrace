@@ -26,10 +26,6 @@ class RouteService {
   /// length 비교로 우회.
   static const bool _useMock = _baseUrl.length == 0;
 
-  /// 단순 메모리 캐시 — 같은 cache_key 면 재사용.
-  RouteResponse? _cached;
-  String? _cachedKey;
-
   /// HTTP 호출 timeout. 백엔드 predict 가 첫 호출 시 모델 로드 ~2s 들 수 있어 넉넉히.
   static const Duration _timeout = Duration(seconds: 8);
 
@@ -37,8 +33,6 @@ class RouteService {
     if (_useMock) return _generateMock(req);
     try {
       final resp = await _fetchFromBackend(req).timeout(_timeout);
-      _cached = resp;
-      _cachedKey = resp.cacheKey;
       return resp;
     } catch (e, st) {
       // 네트워크·타임아웃·5xx — mock 으로 graceful fallback.
@@ -51,8 +45,6 @@ class RouteService {
       return _generateMock(req);
     }
   }
-
-  RouteResponse? get cached => _cached;
 
   /// 시점 features 자동 구성 — 현재 시각/요일을 기준으로 백엔드 점수 함수에
   /// 들어가는 변수를 채움. forecast_* 는 호출 측에서 알면 override, 없으면
@@ -237,8 +229,6 @@ class RouteService {
       computedAt: DateTime.now(),
       cacheKey: cacheKey,
     );
-    _cached = resp;
-    _cachedKey = cacheKey;
     return resp;
   }
 

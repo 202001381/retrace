@@ -83,7 +83,7 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   String _localeLabel(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final current = LocaleService.instance.locale.value;
     if (current == null) return l.mypage_language_system;
     return current.languageCode == 'en'
@@ -92,7 +92,7 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   Future<void> _showLanguageSheet() async {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final current = LocaleService.instance.locale.value;
     // 'system' / 'ko' / 'en' — dismissed 면 null 로 들어와서 변경 없음.
     final code = await showModalBottomSheet<String>(
@@ -185,7 +185,7 @@ class _MypageScreenState extends State<MypageScreen> {
                 const Eyebrow('MY · RE·TRACE'),
                 const SizedBox(height: 6),
                 Text(
-                  AppL10n.of(context)!.mypage_title,
+                  AppL10n.of(context).mypage_title,
                   style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
@@ -201,7 +201,7 @@ class _MypageScreenState extends State<MypageScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
             child: _ProfileGradientCard(
-              surveySummary: _surveySummaryLocalized(AppL10n.of(context)!),
+              surveySummary: _surveySummaryLocalized(AppL10n.of(context)),
               eggsDiscovered: _discoveredEggs,
               eggsTotal: _kTotalEggCount,
               avgMinLabel: avgMin,
@@ -220,7 +220,7 @@ class _MypageScreenState extends State<MypageScreen> {
           const SizedBox(height: 14),
           // ── 설정 리스트 (컬러 아이콘 박스) ───────────────
           Builder(builder: (context) {
-            final l = AppL10n.of(context)!;
+            final l = AppL10n.of(context);
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: _SettingsCard(rows: [
@@ -284,8 +284,8 @@ class _MypageScreenState extends State<MypageScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
             child: _DashedButton(
-              label: AppL10n.of(context)!.mypage_feedback,
-              onTap: () => _snack(AppL10n.of(context)!.mypage_feedback),
+              label: AppL10n.of(context).mypage_feedback,
+              onTap: () => _snack(AppL10n.of(context).mypage_feedback),
             ),
           ),
         ],
@@ -420,7 +420,7 @@ class _ProfileGradientCard extends StatelessWidget {
                             Row(
                               children: [
                                 Text(
-                                  AppL10n.of(context)!.mypage_guest,
+                                  AppL10n.of(context).mypage_guest,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,
@@ -472,7 +472,7 @@ class _ProfileGradientCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Builder(builder: (context) {
-                    final l = AppL10n.of(context)!;
+                    final l = AppL10n.of(context);
                     return Row(
                       children: [
                         Expanded(child: _Stat(value: '${partyCount == 0 ? '—' : 3}', label: l.mypage_stat_visits)),
@@ -573,7 +573,7 @@ class _EggProgressCard extends StatelessWidget {
               const RetraceGlyph(name: 'egg', size: 18, color: Color(0xFF8A6300), strokeWidth: 2),
               const SizedBox(width: 8),
               Text(
-                AppL10n.of(context)!.mypage_egg_progress,
+                AppL10n.of(context).mypage_egg_progress,
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

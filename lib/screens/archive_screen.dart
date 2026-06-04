@@ -1,5 +1,4 @@
 import 'dart:io' as io;
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -34,11 +33,7 @@ class _Vintage {
   static const inkDark = Color(0xFF111111);       // ink900
   static const inkBody = Color(0xFF333333);       // ink700
   static const inkMid = Color(0xFF707070);        // ink500
-  static const inkFaded = Color(0xFF9A9A9A);      // ink400
   static const leather = Color(0xFF8A6300);       // 옅은 brown (eyebrow 용)
-  static const leatherDark = Color(0xFF5A3F18);
-  static const shelfWood = Color(0xFFEDDFBF);     // 시안 11 cream-tan plank
-  static const shelfShadow = Color(0xFFD8C594);
   static const gold = Color(0xFFC99500);
   static const stampRed = Color(0xFFE60023);      // 브랜드 레드
   static const stampInk = Color(0xFF111111);
@@ -570,7 +565,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   void _openAddBook() {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(l.archive_add_book_coming_soon),
@@ -591,7 +586,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       context: context,
       barrierColor: Colors.black.withOpacity(0.65),
       barrierDismissible: true,
-      barrierLabel: AppL10n.of(context)!.archive_close_label,
+      barrierLabel: AppL10n.of(context).archive_close_label,
       transitionDuration: const Duration(milliseconds: 360),
       pageBuilder: (ctx, anim, secAnim) {
         return _DiaryDialog(
@@ -874,23 +869,6 @@ class _ParchmentBackground extends StatelessWidget {
   }
 }
 
-class _PaperGrainPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rng = math.Random(42);
-    final paint = Paint()..color = _Vintage.inkFaded.withOpacity(0.05);
-    for (var i = 0; i < 80; i++) {
-      final x = rng.nextDouble() * size.width;
-      final y = rng.nextDouble() * size.height;
-      canvas.drawCircle(Offset(x, y), rng.nextDouble() * 0.8 + 0.2, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-// ─── 헤더 (시즌 탭) ──────────────────────────────────────
 class _Header extends StatelessWidget {
   final _Season season;
   final ValueChanged<_Season> onChange;
@@ -941,7 +919,7 @@ class _Header extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      AppL10n.of(context)!.archive_bookshelf_title,
+                      AppL10n.of(context).archive_bookshelf_title,
                       style: _serif(
                         size: 28,
                         weight: FontWeight.w900,
@@ -1071,7 +1049,7 @@ class _Header extends StatelessWidget {
                 ),
               ),
               Text(
-                AppL10n.of(context)!.archive_events_books_count(
+                AppL10n.of(context).archive_events_books_count(
                   _EventShelf.eventChaptersUnlocked(currentSeasonBooks),
                   currentSeasonBooks.length,
                 ),
@@ -1117,61 +1095,6 @@ class _CircleAction extends StatelessWidget {
   }
 }
 
-class _SeasonBanner extends StatelessWidget {
-  final _SeasonConfig config;
-  const _SeasonBanner({required this.config});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _Vintage.parchmentLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: config.titleColor.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(config.icon, color: config.titleColor, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppL10n.of(context)!.archive_chapter_label(config.label.of(context)),
-                  style: _serif(
-                    size: 18,
-                    weight: FontWeight.w900,
-                    color: config.titleColor,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  config.tagline.of(context),
-                  style: _serif(size: 12, color: _Vintage.inkMid),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 책장 ────────────────────────────────────────────────
-/// 새 디자인 — 시즌 안의 이벤트 챕터 카드 스택.
-/// 각 카드: 이벤트 제목 + 권수 뱃지 + 책 spine row (있으면).
-/// 마지막은 점선 "다음 행사 칸" placeholder.
 class _EventShelf extends StatelessWidget {
   final _Season season;
   final _SeasonConfig config;
@@ -1186,14 +1109,13 @@ class _EventShelf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final events = _kEventCatalog[season] ?? const <_EventChapter>[];
     final byEvent = <String, List<_DiaryBook>>{};
     for (final b in books) {
       final e = _matchEventFor(b);
       if (e != null) byEvent.putIfAbsent(e.id, () => []).add(b);
     }
-    final activeCount = byEvent.length;
     final range = _kSeasonRange[season]!.of(context);
 
     return Container(
@@ -1262,7 +1184,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final hasBooks = books.isNotEmpty;
     return Container(
       padding: EdgeInsets.fromLTRB(14, 12, 14, hasBooks ? 14 : 12),
@@ -1440,7 +1362,7 @@ class _NextEventPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     return Container(
       height: 54,
       decoration: BoxDecoration(
@@ -1551,7 +1473,7 @@ class _ArchiveSearchSheetState extends State<_ArchiveSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final results = _matches(context);
     final viewInsets = MediaQuery.viewInsetsOf(context).bottom;
     return Padding(
@@ -1707,247 +1629,6 @@ class _ArchiveSearchSheetState extends State<_ArchiveSearchSheet> {
 
 
 /// v3 책장 빈 슬롯 — 22×100 dashed 윤곽.
-class _EmptyBookSlot extends StatelessWidget {
-  const _EmptyBookSlot();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 22,
-      height: 100,
-      child: CustomPaint(painter: _DashedSlotPainter()),
-    );
-  }
-}
-
-class _DashedSlotPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD8D8D8) // lineStrong
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-    const dash = 3.0, gap = 3.0;
-    // 사각 점선 윤곽 (4변)
-    double x = 0;
-    while (x < size.width) {
-      canvas.drawLine(Offset(x, 0), Offset(x + dash, 0), paint);
-      canvas.drawLine(
-          Offset(x, size.height), Offset(x + dash, size.height), paint);
-      x += dash + gap;
-    }
-    double y = 0;
-    while (y < size.height) {
-      canvas.drawLine(Offset(0, y), Offset(0, y + dash), paint);
-      canvas.drawLine(
-          Offset(size.width, y), Offset(size.width, y + dash), paint);
-      y += dash + gap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedSlotPainter o) => false;
-}
-
-/// v3 책 spine — 시안 spec 그대로:
-/// - width = clamp(28 + title.length * 1.4, 36) ≈ 30~36px
-/// - 상·하 white-40% / black-18% 띠
-/// - vertical writing 헤드라인 (RotatedBox 90° + 한 글자씩)
-/// - vertical mono 날짜
-/// - 미세 random tilt
-/// - 인너 highlight gradient
-class _BookSpine extends StatelessWidget {
-  final _DiaryBook book;
-  final _SpinePalette palette;
-  final VoidCallback onTap;
-  const _BookSpine({
-    required this.book,
-    required this.palette,
-    required this.onTap,
-  });
-
-  String get _spineDate {
-    final m = book.date.month.toString();
-    final d = book.date.day.toString().padLeft(2, '0');
-    return '$m.$d';
-  }
-
-  /// 헤드라인에서 공백·구두점 제거, 최대 5자 (locale 별 텍스트 기준).
-  String _spineTitle(BuildContext context) {
-    final cleaned = book.headline.of(context).replaceAll(RegExp(r'[\s·,.!?]'), '');
-    return cleaned.characters.take(5).toString();
-  }
-
-  double _spineWidth(BuildContext context) {
-    final len = _spineTitle(context).characters.length;
-    return (28 + len * 1.4).clamp(28.0, 36.0);
-  }
-
-  double get _tilt {
-    // book.id hashCode 로 안정적 의사난수 tilt (-1.5 ~ +1.5deg)
-    final h = book.id.hashCode;
-    return ((h % 60) - 30) / 20.0 * 0.026; // ≈ ±1.5°
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasUserPhoto = _PhotoStore.photoOf(book.id) != null;
-    final hasSample = book.sampleIllustration != null;
-    final hasPhoto = hasUserPhoto || hasSample;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutBack,
-        builder: (context, t, child) {
-          return Transform.translate(
-            offset: Offset(0, (1 - t) * 12),
-            child: Opacity(opacity: t.clamp(0.0, 1.0), child: child),
-          );
-        },
-        child: Transform.rotate(
-          angle: _tilt,
-          child: Container(
-            width: _spineWidth(context),
-            height: 110,
-            decoration: BoxDecoration(
-              color: palette.spine,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(2),
-                topRight: Radius.circular(2),
-                bottomLeft: Radius.circular(1),
-                bottomRight: Radius.circular(1),
-              ),
-              // 인너 하이라이트 + 그림자 시뮬
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withOpacity(0.08),
-                  palette.spine,
-                  palette.spine,
-                  Colors.black.withOpacity(0.18),
-                ],
-                stops: const [0.0, 0.12, 0.88, 1.0],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0x30502810),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 좌·우 인너 에지 — 흰색 12%, 검정 20%
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                      width: 1.5,
-                      color: Colors.white.withOpacity(0.12)),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                      width: 1.5, color: Colors.black.withOpacity(0.2)),
-                ),
-                // 상단 흰 띠 (70% width)
-                Positioned(
-                  top: 8,
-                  child: Container(
-                    width: _spineWidth(context) * 0.7,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-                ),
-                // 하단 검정 띠 (70% width)
-                Positioned(
-                  bottom: 8,
-                  child: Container(
-                    width: _spineWidth(context) * 0.7,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-                ),
-                // 세로 적층 헤드라인 (한 글자씩 위→아래)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final ch in _spineTitle(context).characters)
-                        Text(
-                          ch,
-                          style: TextStyle(
-                            color: palette.text,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            height: 1.1,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                // 하단 작은 mono 날짜
-                Positioned(
-                  bottom: 16,
-                  child: RotatedBox(
-                    quarterTurns: 1,
-                    child: Text(
-                      _spineDate,
-                      style: TextStyle(
-                        fontFamily: 'Menlo',
-                        fontFamilyFallback: const [
-                          'Courier New',
-                          'monospace'
-                        ],
-                        color: palette.text.withOpacity(0.7),
-                        fontSize: 7,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.6,
-                      ),
-                    ),
-                  ),
-                ),
-                if (hasPhoto)
-                  Positioned(
-                    top: 3,
-                    right: 3,
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: palette.text.withOpacity(0.8),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 다이어리 다이얼로그 ──────────────────────────────────
 class _DiaryDialog extends StatefulWidget {
   final _SeasonConfig config;
   final List<_DiaryBook> books;
@@ -2000,7 +1681,7 @@ class _DiaryDialogState extends State<_DiaryDialog> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context)!.archive_photo_load_failed('$e'))),
+        SnackBar(content: Text(AppL10n.of(context).archive_photo_load_failed('$e'))),
       );
     }
   }
@@ -2210,7 +1891,7 @@ class _PageCover extends StatelessWidget {
   }
 
   String _formatKoreanDate(BuildContext ctx, DateTime d) {
-    final l = AppL10n.of(ctx)!;
+    final l = AppL10n.of(ctx);
     final wd = [
       l.archive_weekday_sun, l.archive_weekday_mon, l.archive_weekday_tue,
       l.archive_weekday_wed, l.archive_weekday_thu, l.archive_weekday_fri,
@@ -2470,7 +2151,7 @@ class _PageJournal extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
         children: [
           Text(
-            AppL10n.of(context)!.archive_ch_02_log,
+            AppL10n.of(context).archive_ch_02_log,
             style: TextStyle(
               color: const Color(0xFFE60023),
               fontSize: 11,
@@ -2480,7 +2161,7 @@ class _PageJournal extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            AppL10n.of(context)!.archive_visited_count(attrs.length),
+            AppL10n.of(context).archive_visited_count(attrs.length),
             style: const TextStyle(
               color: Color(0xFF111111),
               fontSize: 22,
@@ -2503,7 +2184,7 @@ class _PageJournal extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
-                AppL10n.of(context)!.archive_no_attractions,
+                AppL10n.of(context).archive_no_attractions,
                 style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
               ),
             )
@@ -2519,7 +2200,7 @@ class _PageJournal extends StatelessWidget {
           const SizedBox(height: 14),
           // 미션 섹션 (compact list)
           Text(
-            AppL10n.of(context)!.archive_todays_missions,
+            AppL10n.of(context).archive_todays_missions,
             style: TextStyle(
               color: const Color(0xFFE60023),
               fontSize: 11,
@@ -2564,7 +2245,7 @@ class _PageJournal extends StatelessWidget {
             const _JournalDashedRule(),
             const SizedBox(height: 14),
             Text(
-              AppL10n.of(context)!.archive_earned_badges,
+              AppL10n.of(context).archive_earned_badges,
               style: TextStyle(
                 color: const Color(0xFFE60023),
                 fontSize: 11,
@@ -2715,159 +2396,6 @@ class _JournalAttractionRow extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color color;
-  const _SectionTitle(
-      {required this.icon, required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: color),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: _serif(
-            size: 18,
-            weight: FontWeight.w900,
-            color: color,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _JournalGroup extends StatelessWidget {
-  final String label;
-  final Widget child;
-  const _JournalGroup({required this.label, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: _serif(
-            size: 11,
-            weight: FontWeight.w900,
-            color: _Vintage.inkMid,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _Vintage.parchmentLight,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _Vintage.leather.withOpacity(0.15)),
-          ),
-          child: child,
-        ),
-      ],
-    );
-  }
-}
-
-class _AttractionRow extends StatelessWidget {
-  final Attraction attraction;
-  final Color accent;
-  const _AttractionRow({required this.attraction, required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: accent.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(attraction.icon, style: const TextStyle(fontSize: 18)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  attraction.name,
-                  style: _serif(
-                      size: 13,
-                      weight: FontWeight.w800,
-                      color: _Vintage.inkDark),
-                ),
-                Text(
-                  '${attraction.category} · ${attraction.zone}',
-                  style: _serif(size: 10, color: _Vintage.inkFaded),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MissionRow extends StatelessWidget {
-  final _Mission mission;
-  final Color accent;
-  const _MissionRow({required this.mission, required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    final done = mission.completed;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Container(
-            width: 22, height: 22,
-            decoration: BoxDecoration(
-              color: done ? accent : _Vintage.parchment,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                  color:
-                      done ? accent : _Vintage.leather.withOpacity(0.3)),
-            ),
-            alignment: Alignment.center,
-            child: done
-                ? const Icon(Icons.check_rounded,
-                    size: 14, color: Colors.white)
-                : Icon(mission.icon,
-                    size: 12, color: _Vintage.inkFaded),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              mission.label.of(context),
-              style: _serif(
-                size: 12,
-                weight: done ? FontWeight.w700 : FontWeight.w500,
-                color: done ? _Vintage.inkDark : _Vintage.inkFaded,
-                style: done ? null : FontStyle.italic,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _BadgeChip extends StatelessWidget {
   final _BadgeSpec spec;
   const _BadgeChip({required this.spec});
@@ -2929,7 +2457,7 @@ class _PageMemory extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
         children: [
           Text(
-            AppL10n.of(context)!.archive_ch_03_memory,
+            AppL10n.of(context).archive_ch_03_memory,
             style: TextStyle(
               color: const Color(0xFFE60023),
               fontSize: 11,
@@ -2972,7 +2500,7 @@ class _PageMemory extends StatelessWidget {
                     caption: '${book.date.month}.${book.date.day}',
                   )
                 : _VintageStamp(
-                    main: AppL10n.of(context)!.archive_explore_success,
+                    main: AppL10n.of(context).archive_explore_success,
                     sub: 'MISSION COMPLETE',
                     color: _Vintage.stampRed,
                   ),
@@ -2985,28 +2513,28 @@ class _PageMemory extends StatelessWidget {
               if (userPhoto == null) ...[
                 _PhotoActionBtn(
                   icon: Icons.photo_library_rounded,
-                  label: AppL10n.of(context)!.archive_photo_gallery,
+                  label: AppL10n.of(context).archive_photo_gallery,
                   onTap: onPickGallery,
                   primary: true,
                 ),
                 const SizedBox(width: 10),
                 _PhotoActionBtn(
                   icon: Icons.camera_alt_rounded,
-                  label: AppL10n.of(context)!.archive_photo_camera,
+                  label: AppL10n.of(context).archive_photo_camera,
                   onTap: onPickCamera,
                   primary: false,
                 ),
               ] else ...[
                 _PhotoActionBtn(
                   icon: Icons.edit_rounded,
-                  label: AppL10n.of(context)!.archive_photo_replace,
+                  label: AppL10n.of(context).archive_photo_replace,
                   onTap: onPickGallery,
                   primary: true,
                 ),
                 const SizedBox(width: 10),
                 _PhotoActionBtn(
                   icon: Icons.delete_outline_rounded,
-                  label: AppL10n.of(context)!.archive_photo_delete,
+                  label: AppL10n.of(context).archive_photo_delete,
                   onTap: onRemovePhoto,
                   primary: false,
                 ),
@@ -3315,9 +2843,9 @@ class _DiaryStats extends StatelessWidget {
         children: [
           Expanded(
               child: _StatItem(
-                  label: AppL10n.of(context)!.archive_stat_collected,
+                  label: AppL10n.of(context).archive_stat_collected,
                   value: '${books.length}',
-                  unit: AppL10n.of(context)!.archive_book_count_unit,
+                  unit: AppL10n.of(context).archive_book_count_unit,
                   color: config.titleColor)),
           Container(
               width: 1,
@@ -3325,9 +2853,9 @@ class _DiaryStats extends StatelessWidget {
               color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
               child: _StatItem(
-                  label: AppL10n.of(context)!.archive_stat_photo_attached,
+                  label: AppL10n.of(context).archive_stat_photo_attached,
                   value: '$withPhoto',
-                  unit: AppL10n.of(context)!.archive_book_count_unit,
+                  unit: AppL10n.of(context).archive_book_count_unit,
                   color: config.titleColor)),
           Container(
               width: 1,
@@ -3335,7 +2863,7 @@ class _DiaryStats extends StatelessWidget {
               color: _Vintage.leather.withOpacity(0.15)),
           Expanded(
               child: _StatItem(
-                  label: AppL10n.of(context)!.archive_stat_event_chapters,
+                  label: AppL10n.of(context).archive_stat_event_chapters,
                   value: '$eventChapters',
                   unit: '',
                   color: config.titleColor)),
@@ -3348,13 +2876,11 @@ class _DiaryStats extends StatelessWidget {
 class _StatItem extends StatelessWidget {
   final String label, value, unit;
   final Color color;
-  final bool compact;
   const _StatItem({
     required this.label,
     required this.value,
     required this.unit,
     required this.color,
-    this.compact = false,
   });
 
   @override
@@ -3368,7 +2894,7 @@ class _StatItem extends StatelessWidget {
           children: [
             Text(value,
                 style: _serif(
-                  size: compact ? 13 : 20,
+                  size: 20,
                   weight: FontWeight.w900,
                   color: color,
                 )),
@@ -3450,7 +2976,7 @@ class _RewardProgressCardState extends State<_RewardProgressCard> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context)!;
+    final l = AppL10n.of(context);
     final total = (_targets[widget.season] ?? const []).length;
     final hasThreshold = _found >= 3;
     final allDone = _found >= 5;
@@ -3553,7 +3079,7 @@ class _PaperHint extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              AppL10n.of(context)!.archive_hint,
+              AppL10n.of(context).archive_hint,
               style: _serif(
                 size: 12,
                 color: const Color(0xFF5A3F18), // 충분히 진한 갈색 — 가독성
