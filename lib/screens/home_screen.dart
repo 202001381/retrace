@@ -9,6 +9,7 @@ import '../models/pricing_state.dart';
 import '../models/route_response.dart';
 import '../services/analytics_service.dart';
 import '../services/easter_egg_service.dart';
+import '../services/locale_labels.dart';
 import '../services/luna_pricing_service.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
@@ -1627,14 +1628,14 @@ class _TodayEventsSection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: e.bg, borderRadius: BorderRadius.circular(4)),
-                      child: Text(e.tag,
+                      child: Text(localizedEventTag(context, e.tag),
                           style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
                     ),
                     const SizedBox(height: 8),
                     Text(e.name,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                     const Spacer(),
-                    Text('⏱ ${e.time}',
+                    Text('⏱ ${localizedTime(context, e.time)}',
                         style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -1690,7 +1691,7 @@ class _AllEventsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    e.tag,
+                    localizedEventTag(context, e.tag),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -1713,7 +1714,7 @@ class _AllEventsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '⏱ ${e.time}',
+                        '⏱ ${localizedTime(context, e.time)}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,

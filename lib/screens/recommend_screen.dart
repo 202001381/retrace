@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/attraction.dart';
+import '../services/locale_labels.dart';
 import '../services/onboarding_service.dart';
 import 'onboarding_screen.dart'; // 조건 변경 시 이동할 온보딩 화면
 
@@ -367,7 +368,7 @@ class _AttractionCard extends StatelessWidget {
               children: [
                 Text(item.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 4),
-                Text('${item.zone} · ${item.indoor ? AppL10n.of(context).common_indoor : AppL10n.of(context).common_outdoor} · ${AppL10n.of(context).rec_thrill_level(item.thrillLevel)}', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+                Text('${localizedZone(context, item.zone)} · ${item.indoor ? AppL10n.of(context).common_indoor : AppL10n.of(context).common_outdoor} · ${AppL10n.of(context).rec_thrill_level(item.thrillLevel)}', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center,
@@ -419,7 +420,7 @@ class _AllAttractionCard extends StatelessWidget {
                 Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1F1F1F))),
                 const SizedBox(height: 4),
                 // 🚀 기획서 반영: 대기시간 및 구역 표시
-                Text(AppL10n.of(context).rec_zone_wait_eta(item.zone, item.waitMinutes), style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
+                Text(AppL10n.of(context).rec_zone_wait_eta(localizedZone(context, item.zone), item.waitMinutes), style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
               ],
             ),
           ),

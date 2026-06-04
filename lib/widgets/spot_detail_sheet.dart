@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/spot_model.dart';
+import '../services/locale_labels.dart';
 
 class SpotDetailSheet extends StatelessWidget {
   final Spot spot;
@@ -161,7 +162,7 @@ class SpotDetailSheet extends StatelessWidget {
                 // 정보 행
                 Row(
                   children: [
-                    _infoChip(Icons.location_on_rounded, spot.zone, const Color(0xFF1E3158)),
+                    _infoChip(Icons.location_on_rounded, localizedZone(context, spot.zone), const Color(0xFF1E3158)),
                     const SizedBox(width: 8),
                     _infoChip(Icons.star_rounded, spot.rating.toStringAsFixed(1), const Color(0xFFFFB300)),
                     const SizedBox(width: 8),

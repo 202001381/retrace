@@ -325,6 +325,19 @@ class AppL10nKo extends AppL10n {
   @override String get archive_add_book_event_label => '행사 챕터';
   @override String get archive_add_book_save => '저장';
   @override String get archive_add_book_coming_soon => '수동 추가는 곧 열려요';
+  @override String get zone_adventure => '모험의 나라';
+  @override String get zone_future => '미래의 나라';
+  @override String get zone_samcheonri => '삼천리 동산';
+  @override String get zone_world_plaza => '세계의 광장';
+  @override String get zone_character_town => '캐릭터 타운';
+  @override String get event_tag_dday => 'D-DAY';
+  @override String get event_tag_popular => '인기';
+  @override String get event_tag_new => '신규';
+  @override String get event_tag_night => '야간';
+  @override String get event_tag_weekend => '주말';
+  @override String get event_tag_family => '가족';
+  @override String time_pm(String hourMin) => '오후 $hourMin';
+  @override String time_am(String hourMin) => '오전 $hourMin';
 
   @override String get fav_thrill => '스릴 어트랙션 위주';
   @override String get fav_family => '가족·어린이 위주';

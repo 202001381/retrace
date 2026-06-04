@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../services/locale_labels.dart';
 import '../widgets/spot_detail_sheet.dart';
 import '../models/spot_model.dart';
 import 'package:latlong2/latlong.dart';
@@ -304,7 +305,7 @@ class _StopRow extends StatelessWidget {
                     children: [
                       Text(stop.category, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w800)),
                       const Text(' • ', style: TextStyle(color: Color(0xFFCCCCCC))),
-                      Text(stop.zone, style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
+                      Text(localizedZone(context, stop.zone), style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
                       const Text(' • ', style: TextStyle(color: Color(0xFFCCCCCC))),
                       Text('⏱ ${stop.duration}', style: const TextStyle(fontSize: 11, color: Color(0xFF888888))),
                     ],

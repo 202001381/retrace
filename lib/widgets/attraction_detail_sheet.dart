@@ -5,6 +5,7 @@ import '../l10n/generated/app_localizations.dart';
 
 import '../models/attraction.dart';
 import '../services/easter_egg_service.dart';
+import '../services/locale_labels.dart';
 import '../services/narrative_service.dart';
 import '../services/onboarding_service.dart';
 import '../services/reward_controller.dart';
@@ -174,7 +175,7 @@ class _AttractionDetailSheetState extends State<AttractionDetailSheet> {
                                 style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
                           ),
                           const SizedBox(width: 6),
-                          Text(a.zone,
+                          Text(localizedZone(context, a.zone),
                               style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                         ],
                       ),

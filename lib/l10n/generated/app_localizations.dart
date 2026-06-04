@@ -357,6 +357,21 @@ abstract class AppL10n {
   String get archive_add_book_event_label;
   String get archive_add_book_save;
   String get archive_add_book_coming_soon;
+  // 옵션 D: 어트랙션 zone 영문화 (이름은 한국어 유지).
+  String get zone_adventure;
+  String get zone_future;
+  String get zone_samcheonri;
+  String get zone_world_plaza;
+  String get zone_character_town;
+  // 오늘의 이벤트 태그 (홈 하단 카드).
+  String get event_tag_dday;
+  String get event_tag_popular;
+  String get event_tag_new;
+  String get event_tag_night;
+  String get event_tag_weekend;
+  String get event_tag_family;
+  String time_pm(String hourMin);
+  String time_am(String hourMin);
 
   String get fav_thrill;
   String get fav_family;

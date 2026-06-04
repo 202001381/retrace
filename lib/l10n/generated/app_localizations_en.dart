@@ -325,6 +325,19 @@ class AppL10nEn extends AppL10n {
   @override String get archive_add_book_event_label => 'Event chapter';
   @override String get archive_add_book_save => 'Save';
   @override String get archive_add_book_coming_soon => 'Manual add coming soon';
+  @override String get zone_adventure => 'Adventure Land';
+  @override String get zone_future => 'Future Land';
+  @override String get zone_samcheonri => 'Samcheonri Garden';
+  @override String get zone_world_plaza => 'World Plaza';
+  @override String get zone_character_town => 'Character Town';
+  @override String get event_tag_dday => 'D-DAY';
+  @override String get event_tag_popular => 'Popular';
+  @override String get event_tag_new => 'New';
+  @override String get event_tag_night => 'Night';
+  @override String get event_tag_weekend => 'Weekend';
+  @override String get event_tag_family => 'Family';
+  @override String time_pm(String hourMin) => '$hourMin PM';
+  @override String time_am(String hourMin) => '$hourMin AM';
 
   @override String get fav_thrill => 'Thrill rides';
   @override String get fav_family => 'Family-friendly';

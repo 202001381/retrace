@@ -16,6 +16,7 @@ import '../widgets/design/retrace_glyph.dart';
 import '../widgets/design/stamp.dart';
 import 'all_attractions_screen.dart';
 import '../services/easter_egg_service.dart';
+import '../services/locale_labels.dart';
 import '../services/luna_recommendation_store.dart';
 import '../services/onboarding_service.dart';
 import '../services/osrm_router.dart';
@@ -1287,7 +1288,7 @@ class _AttractionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${attraction.category} · ${attraction.zone}${attraction.category == '어트랙션' ? ' · 대기 ${attraction.waitMinutes}분' : ''}',
+                      '${attraction.category} · ${localizedZone(context, attraction.zone)}${attraction.category == '어트랙션' ? ' · 대기 ${attraction.waitMinutes}분' : ''}',
                       style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
                   ],

@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/walk_speed.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../services/locale_labels.dart';
 import '../../widgets/design/logo.dart';
 import '../../widgets/design/stamp.dart';
 
@@ -715,7 +716,7 @@ class _HeroNextCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${spot.category} · ${spot.zone}',
+                              '${spot.category} · ${localizedZone(context, spot.zone)}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.ink500,
