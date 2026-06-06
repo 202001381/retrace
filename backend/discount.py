@@ -9,6 +9,8 @@
   하 → 15% baseline + 강수 단계별 + 극한 가산 (최대 25% 캡)
 """
 
+from __future__ import annotations
+
 from typing import Literal, TypedDict
 
 CrowdLevel = Literal["상", "중", "하"]

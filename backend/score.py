@@ -5,6 +5,8 @@
 0~100으로 clamp.
 """
 
+from __future__ import annotations
+
 from typing import Literal, TypedDict
 
 CrowdLevel = Literal["상", "중", "하"]
